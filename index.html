@@ -581,6 +581,7 @@
         <button class="tab" id="stokTab-bahan" onclick="switchStokTab('bahan')">🧪 Stok Bahan Baku</button>
         <button class="tab" id="stokTab-kelola" onclick="switchStokTab('kelola')">🗂️ Kelola Bahan Baku</button>
         <button class="tab" id="stokTab-resep" onclick="switchStokTab('resep')">📋 Resep (BOM)</button>
+        <button class="tab hidden" id="stokTab-modal" onclick="switchStokTab('modal')">💰 Harga Modal</button>
       </div>
 
       <div class="stok-tab-content" id="stokTabContent-produk">
@@ -615,6 +616,14 @@
             <option value="">-- Pilih produk --</option>
           </select>
           <div id="resepProdukArea"></div>
+        </div>
+      </div>
+
+      <div class="stok-tab-content hidden" id="stokTabContent-modal">
+        <div class="dash-section" style="margin-bottom:0;">
+          <h3>💰 Harga Modal Produk (untuk hitung Laba)</h3>
+          <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:12px;">Isi harga modal tiap produk supaya Laba di Ringkasan terhitung akurat. Kalau belum diisi, dianggap 0.</p>
+          <div id="settingsModalProdukList"><div class="empty-msg">Memuat...</div></div>
         </div>
       </div>
     </div>
@@ -742,12 +751,6 @@
         <button class="header-btn gold" onclick="tambahCabangBaru()">+ Tambah Cabang</button>
       </div>
       <div id="settingsCabangList"><div class="empty-msg">Memuat...</div></div>
-    </div>
-
-    <div class="dash-section">
-      <h3>💰 Harga Modal Produk (untuk hitung Laba)</h3>
-      <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:12px;">Isi harga modal tiap produk supaya Laba di Ringkasan terhitung akurat. Kalau belum diisi, dianggap 0.</p>
-      <div id="settingsModalProdukList"><div class="empty-msg">Memuat...</div></div>
     </div>
 
     <div class="dash-section" style="margin-bottom:0;">
@@ -1998,9 +2001,14 @@ function showDashPanel(panelName){
     loadBahanBakuList();
     loadResepProdukSelect();
     const tambahBtn = document.getElementById('tambahBahanBakuBtn');
+    const isOwner = currentProfile && currentProfile.role === 'owner';
     if(tambahBtn){
-      const isOwner = currentProfile && currentProfile.role === 'owner';
       tambahBtn.classList.toggle('hidden', !isOwner);
+    }
+    const modalTab = document.getElementById('stokTab-modal');
+    if(modalTab){
+      modalTab.classList.toggle('hidden', !isOwner);
+      if(isOwner) loadModalProdukList();
     }
   }
 
@@ -2027,7 +2035,7 @@ function switchRingkasanTab(tabName){
 
 // folder tab di menu Stok: Stok Produk / Stok Bahan Baku / Kelola Bahan Baku / Resep (BOM)
 function switchStokTab(tabName){
-  ['produk','bahan','kelola','resep'].forEach(t=>{
+  ['produk','bahan','kelola','resep','modal'].forEach(t=>{
     document.getElementById('stokTabContent-' + t).classList.toggle('hidden', t !== tabName);
     document.getElementById('stokTab-' + t).classList.toggle('active', t === tabName);
   });
@@ -2041,7 +2049,6 @@ function showSettingsView(){
   setActiveNav('settingsBtn');
   loadKaryawan();
   loadCabangManageList();
-  loadModalProdukList();
   hentikanPollingAktif();
   simpanViewState({ type:'settings' });
 
