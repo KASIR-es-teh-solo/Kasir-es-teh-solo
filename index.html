@@ -586,7 +586,10 @@
 
       <div class="stok-tab-content" id="stokTabContent-produk">
         <div class="dash-section" style="margin-bottom:0;">
-          <h3>📦 Stok Produk</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 style="margin:0;">📦 Stok Produk</h3>
+            <button class="header-btn gold hidden" id="tambahProdukBtn" onclick="tambahProdukBaru()">+ Tambah Menu</button>
+          </div>
           <div id="dashStockList"><div class="empty-msg">Memuat...</div></div>
         </div>
       </div>
@@ -2005,6 +2008,10 @@ function showDashPanel(panelName){
     if(tambahBtn){
       tambahBtn.classList.toggle('hidden', !isOwner);
     }
+    const tambahProdukBtn = document.getElementById('tambahProdukBtn');
+    if(tambahProdukBtn){
+      tambahProdukBtn.classList.toggle('hidden', !isOwner);
+    }
     const modalTab = document.getElementById('stokTab-modal');
     if(modalTab){
       modalTab.classList.toggle('hidden', !isOwner);
@@ -2082,7 +2089,7 @@ async function loadProduk(){
 
   const { data, error } = await sb
     .from('stok_cabang')
-    .select('stok, produk:produk_id(id, nama, harga_kecil, harga_besar, aktif, kategori:kategori_id(nama))')
+    .select('stok, produk:produk_id(id, nama, harga_kecil, harga_besar, aktif, tipe_harga, kategori:kategori_id(nama), produk_varian(id, kode, label, harga, urutan))')
     .eq('cabang_id', cabangId);
 
   if(error){
@@ -2092,7 +2099,16 @@ async function loadProduk(){
 
   produkByKategori = {};
   data.filter(row => row.produk && row.produk.aktif).forEach(row=>{
-    const p = { id: row.produk.id, nama: row.produk.nama, harga_kecil: row.produk.harga_kecil, harga_besar: row.produk.harga_besar, stok: row.stok };
+    const varian = (row.produk.produk_varian || []).slice().sort((a,b)=>a.urutan-b.urutan);
+    const p = {
+      id: row.produk.id,
+      nama: row.produk.nama,
+      harga_kecil: row.produk.harga_kecil,
+      harga_besar: row.produk.harga_besar,
+      tipe_harga: row.produk.tipe_harga || 'kecil_besar',
+      varian: varian,
+      stok: row.stok
+    };
     const catName = row.produk.kategori ? row.produk.kategori.nama : 'Lainnya';
     if(!produkByKategori[catName]) produkByKategori[catName] = [];
     produkByKategori[catName].push(p);
@@ -2121,6 +2137,7 @@ const CATEGORY_STYLE = {
   'Other Series':  { color:'#6a3fa0', icon:'🧋', order:3 },
   'Fruit Series':  { color:'#d9720a', icon:'🍓', order:4 },
   'Coffee Series': { color:'#6b4423', icon:'☕', order:5 },
+  'Menu Nescafe':  { color:'#3d2314', icon:'🥤', order:6 },
 };
 function catStyle(cat){
   return CATEGORY_STYLE[cat] || { color:'var(--forest)', icon:'🍹', order:99 };
@@ -2158,13 +2175,30 @@ function renderCatalog(){
           <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${JSON.stringify(it).replace(/'/g,"&#39;")})`}'>
             <div class="item-name">${it.nama}</div>
             <div class="item-stock">${it.stok<=0 ? 'Stok habis' : 'Stok: '+it.stok}</div>
-            <div class="item-price"><span>Kecil</span><b style="color:${st.color}">${fmt(it.harga_kecil)}</b></div>
-            <div class="item-price"><span>Besar</span><b style="color:${st.color}">${fmt(it.harga_besar)}</b></div>
+            ${renderItemCardHarga(it, st)}
           </div>
         `).join('')}
       </div>
     </section>
   `}).join('');
+}
+
+function renderItemCardHarga(it, st){
+  if(it.tipe_harga === 'varian'){
+    const varian = it.varian || [];
+    if(varian.length === 0){
+      return `<div class="item-price"><span>Varian</span><b style="color:${st.color}">Belum diatur</b></div>`;
+    }
+    if(varian.length === 1){
+      return `<div class="item-price"><span>${varian[0].label}</span><b style="color:${st.color}">${fmt(varian[0].harga)}</b></div>`;
+    }
+    const min = Math.min(...varian.map(v=>Number(v.harga)));
+    return `<div class="item-price"><span>${varian.length} varian</span><b style="color:${st.color}">Mulai ${fmt(min)}</b></div>`;
+  }
+  return `
+    <div class="item-price"><span>Kecil</span><b style="color:${st.color}">${fmt(it.harga_kecil)}</b></div>
+    <div class="item-price"><span>Besar</span><b style="color:${st.color}">${fmt(it.harga_besar)}</b></div>
+  `;
 }
 
 function scrollToCat(cat, btn){
@@ -2211,8 +2245,7 @@ function filterMenuSearch(){
           <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${JSON.stringify(it).replace(/'/g,"&#39;")})`}'>
             <div class="item-name">${it.nama}</div>
             <div class="item-stock">${it.stok<=0 ? 'Stok habis' : 'Stok: '+it.stok}</div>
-            <div class="item-price"><span>Kecil</span><b style="color:${st.color}">${fmt(it.harga_kecil)}</b></div>
-            <div class="item-price"><span>Besar</span><b style="color:${st.color}">${fmt(it.harga_besar)}</b></div>
+            ${renderItemCardHarga(it, st)}
           </div>
         `}).join('')}
       </div>
@@ -2224,14 +2257,28 @@ function filterMenuSearch(){
 function openSizeModal(item){
   pendingItem = item;
   document.getElementById('sizeItemName').textContent = item.nama;
-  document.getElementById('sizeOptions').innerHTML = `
-    <div class="size-option" onclick="addToCart('Kecil', ${item.harga_kecil})">
-      <span>Kecil</span><b>${fmt(item.harga_kecil)}</b>
-    </div>
-    <div class="size-option" onclick="addToCart('Besar', ${item.harga_besar})">
-      <span>Besar</span><b>${fmt(item.harga_besar)}</b>
-    </div>
-  `;
+
+  if(item.tipe_harga === 'varian'){
+    const varian = item.varian || [];
+    if(varian.length === 0){
+      document.getElementById('sizeOptions').innerHTML = `<div class="empty-msg">Varian menu ini belum diatur. Hubungi Owner.</div>`;
+    } else {
+      document.getElementById('sizeOptions').innerHTML = varian.map(v=>`
+        <div class="size-option" onclick="addToCart('${v.label.replace(/'/g,"&#39;")}', ${v.harga}, '${v.kode}')">
+          <span>${v.label}</span><b>${fmt(v.harga)}</b>
+        </div>
+      `).join('');
+    }
+  } else {
+    document.getElementById('sizeOptions').innerHTML = `
+      <div class="size-option" onclick="addToCart('Kecil', ${item.harga_kecil})">
+        <span>Kecil</span><b>${fmt(item.harga_kecil)}</b>
+      </div>
+      <div class="size-option" onclick="addToCart('Besar', ${item.harga_besar})">
+        <span>Besar</span><b>${fmt(item.harga_besar)}</b>
+      </div>
+    `;
+  }
   document.getElementById('sizeOverlay').classList.add('show');
 }
 function closeSizeModal(){
@@ -2239,10 +2286,11 @@ function closeSizeModal(){
   pendingItem = null;
 }
 
-function addToCart(size, price){
+function addToCart(size, price, ukuranKey){
+  const key = ukuranKey || size.toLowerCase();
   const existing = cart.find(c => c.produk_id===pendingItem.id && c.size===size);
   if(existing){ existing.qty += 1; }
-  else{ cart.push({produk_id:pendingItem.id, nama:pendingItem.nama, size, price, qty:1}); }
+  else{ cart.push({produk_id:pendingItem.id, nama:pendingItem.nama, size, price, qty:1, ukuranKey:key}); }
   closeSizeModal();
   renderCart();
   if(window.innerWidth <= 880){ openCartMobile(); }
@@ -2363,7 +2411,7 @@ async function konfirmasiBayar(){
       const items = cartSnapshot.map(c => ({
         transaksi_id: tx.id,
         produk_id: c.produk_id,
-        ukuran: c.size.toLowerCase(),
+        ukuran: c.ukuranKey || c.size.toLowerCase(),
         harga_satuan: c.price,
         qty: c.qty,
         subtotal: c.price * c.qty
@@ -2414,7 +2462,7 @@ function queueOfflineTransaksi(items, total, subtotal, diskon, metodeBayar){
     metode_bayar: metodeBayar || 'tunai',
     items: items.map(c=>({
       produk_id: c.produk_id,
-      ukuran: c.size.toLowerCase(),
+      ukuran: c.ukuranKey || c.size.toLowerCase(),
       harga_satuan: c.price,
       qty: c.qty,
       subtotal: c.price * c.qty
@@ -2746,7 +2794,7 @@ async function loadRingkasan(){
 
   if(isOwner){
     let itemQuery = sb.from('transaksi_item')
-      .select('qty, subtotal, ukuran, produk:produk_id(harga_modal_kecil, harga_modal_besar), transaksi:transaksi_id!inner(status, created_at, cabang_id)')
+      .select('qty, subtotal, ukuran, produk:produk_id(tipe_harga, harga_modal_kecil, harga_modal_besar, produk_varian(kode, harga_modal)), transaksi:transaksi_id!inner(status, created_at, cabang_id)')
       .eq('transaksi.status','selesai')
       .gte('transaksi.created_at', startOfDay.toISOString());
     if(filterCabangId){ itemQuery = itemQuery.eq('transaksi.cabang_id', filterCabangId); }
@@ -2754,7 +2802,13 @@ async function loadRingkasan(){
 
     let totalModal = 0;
     (itemRows||[]).forEach(it=>{
-      const modalSatuan = it.ukuran === 'besar' ? (it.produk?.harga_modal_besar||0) : (it.produk?.harga_modal_kecil||0);
+      let modalSatuan = 0;
+      if(it.produk?.tipe_harga === 'varian'){
+        const v = (it.produk.produk_varian||[]).find(vv => vv.kode === it.ukuran);
+        modalSatuan = v?.harga_modal || 0;
+      } else {
+        modalSatuan = it.ukuran === 'besar' ? (it.produk?.harga_modal_besar||0) : (it.produk?.harga_modal_kecil||0);
+      }
       totalModal += modalSatuan * it.qty;
     });
 
@@ -3649,7 +3703,7 @@ async function hapusKaryawan(userId, nama){
 async function loadModalProdukList(){
   const { data, error } = await sb
     .from('produk')
-    .select('id, nama, harga_kecil, harga_besar, harga_modal_kecil, harga_modal_besar')
+    .select('id, nama, tipe_harga, harga_kecil, harga_besar, harga_modal_kecil, harga_modal_besar, produk_varian(id, kode, label, harga_modal, urutan)')
     .eq('aktif', true)
     .order('nama');
 
@@ -3663,7 +3717,28 @@ async function loadModalProdukList(){
     return;
   }
 
-  box.innerHTML = data.map(p=>`
+  box.innerHTML = data.map(p=>{
+    if(p.tipe_harga === 'varian' && p.produk_varian && p.produk_varian.length > 0){
+      const varianSorted = p.produk_varian.slice().sort((a,b)=>(a.urutan||0)-(b.urutan||0));
+      const varianRows = varianSorted.map(v => `
+        <div class="stock-row" style="padding-left:12px;">
+          <span style="font-size:13px;opacity:.85;">↳ ${v.label}</span>
+          <span style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <span style="opacity:.6;">Modal: ${fmt(v.harga_modal)}</span>
+            <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;"
+              onclick="editHargaModalVarian('${v.id}', '${p.nama.replace(/'/g,"&#39;")}', '${v.label.replace(/'/g,"&#39;")}', ${v.harga_modal})">Edit</button>
+          </span>
+        </div>
+      `).join('');
+      return `
+        <div class="stock-row" style="font-weight:600;">
+          <span>${p.nama}</span>
+          <span></span>
+        </div>
+        ${varianRows}
+      `;
+    }
+    return `
     <div class="stock-row" style="flex-wrap:wrap;">
       <span>${p.nama}</span>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">
@@ -3672,7 +3747,32 @@ async function loadModalProdukList(){
           onclick="editHargaModal('${p.id}', '${p.nama.replace(/'/g,"&#39;")}', ${p.harga_modal_kecil}, ${p.harga_modal_besar})">Edit</button>
       </span>
     </div>
-  `).join('');
+  `;
+  }).join('');
+}
+
+async function editHargaModalVarian(varianId, nama, varianLabel, modalSekarang){
+  const input = prompt(`Harga modal "${nama}" varian "${varianLabel}":`, modalSekarang);
+  if(input === null) return;
+  const modalBaru = Number(input);
+  if(isNaN(modalBaru) || modalBaru < 0){
+    alert("Masukkan angka yang valid.");
+    return;
+  }
+
+  const { error } = await sb
+    .from('produk_varian')
+    .update({ harga_modal: modalBaru })
+    .eq('id', varianId);
+
+  if(error){
+    alert("Gagal menyimpan harga modal: " + error.message);
+    return;
+  }
+
+  catatLog('Ubah Harga Modal', `Produk "${nama}" varian "${varianLabel}": modal ${modalSekarang}→${modalBaru}`);
+
+  await loadModalProdukList();
 }
 
 async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSekarang){
@@ -3746,6 +3846,144 @@ async function hapusBahanBaku(id, nama){
   }
   await loadBahanBakuList();
   alert(`Bahan baku "${nama}" berhasil dihapus.`);
+}
+
+async function tambahProdukBaru(){
+  const nama = prompt("Nama menu baru (contoh: Taro Latte):");
+  if(nama === null) return;
+  if(!nama.trim()){ alert("Nama menu wajib diisi."); return; }
+
+  const { data: kategoriList, error: kategoriErr } = await sb
+    .from('kategori')
+    .select('id, nama')
+    .order('nama');
+  if(kategoriErr){
+    alert("Gagal memuat kategori: " + kategoriErr.message);
+    return;
+  }
+  if(!kategoriList || kategoriList.length === 0){
+    alert("Belum ada kategori menu. Tambahkan kategori dulu sebelum menambah menu.");
+    return;
+  }
+
+  const daftarKategori = kategoriList.map((k,i)=>`${i+1}. ${k.nama}`).join('\n');
+  const pilihanStr = prompt(`Pilih kategori (ketik angkanya):\n${daftarKategori}`, "1");
+  if(pilihanStr === null) return;
+  const pilihanIdx = parseInt(pilihanStr, 10) - 1;
+  if(isNaN(pilihanIdx) || pilihanIdx < 0 || pilihanIdx >= kategoriList.length){
+    alert("Pilihan kategori tidak valid.");
+    return;
+  }
+  const kategoriTerpilih = kategoriList[pilihanIdx];
+
+  const modeStr = prompt(`Tipe harga untuk "${nama.trim()}":\n1. Kecil/Besar biasa (standar)\n2. Varian custom (contoh: Normal/Strong, 1 Shot/2 Shot/3 Shot, dll)`, "1");
+  if(modeStr === null) return;
+  const mode = modeStr.trim();
+
+  let newProduk, hargaKecil = 0, hargaBesar = 0, varianList = null;
+
+  if(mode === '2'){
+    // === Mode Varian Custom ===
+    varianList = [];
+    let terus = true;
+    let urutan = 0;
+    while(terus){
+      const labelVarian = prompt(`Nama varian ke-${varianList.length + 1} (contoh: Normal / Strong / 1 Shot). Kosongkan & OK untuk selesai:`);
+      if(labelVarian === null){
+        if(varianList.length === 0) return; // batal total kalau belum ada varian sama sekali
+        break;
+      }
+      if(!labelVarian.trim()){
+        if(varianList.length === 0){ alert("Minimal harus ada 1 varian."); continue; }
+        break;
+      }
+      const hargaVarianStr = prompt(`Harga jual varian "${labelVarian.trim()}" (Rp):`, "0");
+      if(hargaVarianStr === null) continue;
+      const hargaVarian = Number(hargaVarianStr);
+      if(isNaN(hargaVarian) || hargaVarian < 0){ alert("Harga tidak valid, varian ini dilewati."); continue; }
+
+      const kode = labelVarian.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+      varianList.push({ kode: kode || ('varian' + (urutan+1)), label: labelVarian.trim(), harga: hargaVarian, urutan: urutan });
+      urutan++;
+
+      terus = confirm(`Varian "${labelVarian.trim()}" (${fmt(hargaVarian)}) ditambahkan. Tambah varian lain lagi?`);
+    }
+    if(varianList.length === 0) return;
+
+    const { data: np, error: prodErr } = await sb
+      .from('produk')
+      .insert({
+        nama: nama.trim(),
+        kategori_id: kategoriTerpilih.id,
+        harga_kecil: 0,
+        harga_besar: 0,
+        tipe_harga: 'varian',
+        aktif: true
+      })
+      .select()
+      .single();
+
+    if(prodErr){
+      alert("Gagal menambah menu: " + prodErr.message);
+      return;
+    }
+    newProduk = np;
+
+    const { error: varErr } = await sb
+      .from('produk_varian')
+      .insert(varianList.map(v => ({ produk_id: newProduk.id, kode: v.kode, label: v.label, harga: v.harga, urutan: v.urutan })));
+
+    if(varErr){
+      alert("Menu berhasil dibuat tapi gagal menyimpan varian: " + varErr.message);
+    }
+  } else {
+    // === Mode Kecil/Besar biasa (perilaku lama, tidak berubah) ===
+    const hargaKecilStr = prompt(`Harga jual "${nama.trim()}" ukuran Kecil (Rp):`, "0");
+    if(hargaKecilStr === null) return;
+    hargaKecil = Number(hargaKecilStr);
+    if(isNaN(hargaKecil) || hargaKecil < 0){ alert("Harga Kecil tidak valid."); return; }
+
+    const hargaBesarStr = prompt(`Harga jual "${nama.trim()}" ukuran Besar (Rp):`, "0");
+    if(hargaBesarStr === null) return;
+    hargaBesar = Number(hargaBesarStr);
+    if(isNaN(hargaBesar) || hargaBesar < 0){ alert("Harga Besar tidak valid."); return; }
+
+    const { data: np, error } = await sb
+      .from('produk')
+      .insert({
+        nama: nama.trim(),
+        kategori_id: kategoriTerpilih.id,
+        harga_kecil: hargaKecil,
+        harga_besar: hargaBesar,
+        aktif: true
+      })
+      .select()
+      .single();
+
+    if(error){
+      alert("Gagal menambah menu: " + error.message);
+      return;
+    }
+    newProduk = np;
+  }
+
+  // siapkan stok 0 di semua cabang yang sudah ada, biar langsung muncul di katalog Kasir semua cabang
+  if(cabangList.length > 0){
+    await sb.from('stok_cabang').insert(
+      cabangList.map(c => ({ produk_id: newProduk.id, cabang_id: c.id, stok: 0 }))
+    );
+  }
+
+  const ringkasanHarga = mode === '2'
+    ? varianList.map(v => `${v.label} ${fmt(v.harga)}`).join(', ')
+    : `Kecil ${fmt(hargaKecil)} / Besar ${fmt(hargaBesar)}`;
+  catatLog('Tambah Menu', `Menambahkan menu baru "${nama.trim()}" (kategori: ${kategoriTerpilih.nama}, harga ${ringkasanHarga})`);
+
+  await loadProduk();
+  await loadDashboard();
+  await loadResepProdukSelect();
+
+  alert(`Menu "${nama.trim()}" berhasil ditambahkan. Stok awal 0 di semua cabang — jangan lupa isi stok & resep (BOM) bahan bakunya di tab "Resep (BOM)".`);
 }
 
 async function tambahBahanBaku(){
@@ -3824,6 +4062,17 @@ async function loadResepProduk(){
 
   if(bahanBakuList.length === 0){ await loadBahanBakuList(); }
 
+  const { data: produkInfo, error: produkErr } = await sb
+    .from('produk')
+    .select('id, tipe_harga, produk_varian(id, kode, label, urutan)')
+    .eq('id', produkId)
+    .single();
+
+  if(produkErr){
+    area.innerHTML = `<div class="empty-msg">Gagal memuat data menu: ${produkErr.message}</div>`;
+    return;
+  }
+
   const { data, error } = await sb
     .from('resep')
     .select('id, ukuran, jumlah, bahan_baku:bahan_baku_id(id, nama, satuan)')
@@ -3855,25 +4104,34 @@ async function loadResepProduk(){
       <div style="margin-bottom:14px;">
         <div style="font-weight:700;font-size:19px;color:#000;margin-bottom:6px;">Ukuran ${label}</div>
         ${rowsHtml}
-        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}')">+ Tambah Bahan (${label})</button>` : ''}
+        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${label.replace(/'/g,"&#39;")}')">+ Tambah Bahan (${label})</button>` : ''}
       </div>
     `;
   };
 
-  area.innerHTML = renderUkuran('kecil','Kecil') + renderUkuran('besar','Besar');
+  if(produkInfo.tipe_harga === 'varian'){
+    const varianList = (produkInfo.produk_varian || []).slice().sort((a,b)=>a.urutan-b.urutan);
+    if(varianList.length === 0){
+      area.innerHTML = '<div class="empty-msg">Menu ini pakai varian custom, tapi variannya belum diatur. Atur dulu di menu Stok Produk.</div>';
+    } else {
+      area.innerHTML = varianList.map(v => renderUkuran(v.kode, v.label)).join('');
+    }
+  } else {
+    area.innerHTML = renderUkuran('kecil','Kecil') + renderUkuran('besar','Besar');
+  }
 }
 
 let resepTargetProdukId = null;
 let resepTargetUkuran = null;
 
-function tambahResep(produkId, ukuran){
+function tambahResep(produkId, ukuran, label){
   if(bahanBakuList.length === 0){
     alert("Belum ada bahan baku. Tambahkan bahan baku dulu di atas.");
     return;
   }
   resepTargetProdukId = produkId;
   resepTargetUkuran = ukuran;
-  document.getElementById('resepBahanInfo').textContent = `Ukuran: ${ukuran === 'kecil' ? 'Kecil' : 'Besar'}`;
+  document.getElementById('resepBahanInfo').textContent = `Ukuran: ${label || (ukuran === 'kecil' ? 'Kecil' : 'Besar')}`;
   document.getElementById('resepBahanSelect').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${b.nama} (${b.satuan})</option>`).join('');
   document.getElementById('resepBahanJumlah').value = '';
   document.getElementById('resepBahanError').classList.remove('show');
@@ -4412,7 +4670,7 @@ async function loadSOPData(){
 
   const { data, error } = await sb
     .from('resep')
-    .select('id, ukuran, jumlah, produk_id, produk:produk_id(nama), bahan_baku:bahan_baku_id(nama, satuan)')
+    .select('id, ukuran, jumlah, produk_id, produk:produk_id(nama, tipe_harga, produk_varian(kode, label, urutan)), bahan_baku:bahan_baku_id(nama, satuan)')
     .order('ukuran');
 
   if(error){
@@ -4429,13 +4687,35 @@ function renderSOPList(){
   const area = document.getElementById('sopListArea');
   const isOwner = currentProfile && currentProfile.role === 'owner';
 
-  // kelompokkan per produk
-  const perProduk = {}; // produk_id -> { nama, kecil:[], besar:[] }
+  // kelompokkan per produk (dinamis per-ukuran, supaya aman untuk produk varian custom)
+  const perProduk = {}; // produk_id -> { nama, tipeHarga, sections: [{key,label,rows:[]}] }
   sopDataCache.forEach(r=>{
     if(!r.produk) return;
-    if(!perProduk[r.produk_id]) perProduk[r.produk_id] = { nama: r.produk.nama, kecil: [], besar: [] };
+    if(!perProduk[r.produk_id]){
+      const tipeHarga = r.produk.tipe_harga || 'kecil_besar';
+      let sections;
+      if(tipeHarga === 'varian' && r.produk.produk_varian && r.produk.produk_varian.length > 0){
+        sections = r.produk.produk_varian
+          .slice()
+          .sort((a,b)=> (a.urutan||0) - (b.urutan||0))
+          .map(v => ({ key: v.kode, label: v.label, rows: [] }));
+      } else {
+        sections = [
+          { key: 'kecil', label: 'Kecil', rows: [] },
+          { key: 'besar', label: 'Besar', rows: [] }
+        ];
+      }
+      perProduk[r.produk_id] = { nama: r.produk.nama, sections };
+    }
     if(r.bahan_baku){
-      perProduk[r.produk_id][r.ukuran].push(r);
+      const p = perProduk[r.produk_id];
+      let section = p.sections.find(s => s.key === r.ukuran);
+      if(!section){
+        // ukuran tidak dikenal (mis. varian yang sudah dihapus) — tetap tampilkan biar tidak hilang
+        section = { key: r.ukuran, label: r.ukuran, rows: [] };
+        p.sections.push(section);
+      }
+      section.rows.push(r);
     }
   });
 
@@ -4452,7 +4732,7 @@ function renderSOPList(){
     return;
   }
 
-  const renderBahanRows = (rows, produkId, ukuran) => {
+  const renderBahanRows = (rows, produkId, ukuran, label) => {
     const rowsHtml = rows.length === 0
       ? '<div class="empty-msg" style="padding:8px;">Belum ada takaran.</div>'
       : rows.map(r=>`
@@ -4468,20 +4748,21 @@ function renderSOPList(){
           </div>
         `).join('');
     const tambahBtn = isOwner
-      ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}')">+ Tambah Bahan</button>`
+      ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${(label||'').replace(/'/g,"\\'")}')">+ Tambah Bahan</button>`
       : '';
     return rowsHtml + tambahBtn;
   };
 
   area.innerHTML = namaList.map(({pid, nama})=>{
     const p = perProduk[pid];
+    const sectionsHtml = p.sections.map((s, idx) => `
+      <div style="font-weight:700;font-size:19px;color:#000;margin:${idx === 0 ? '0 0 6px' : '14px 0 6px'};">Ukuran ${s.label}</div>
+      ${renderBahanRows(s.rows, pid, s.key, s.label)}
+    `).join('');
     return `
       <div class="sop-card">
         <h3 style="color:#ffd400;font-size:24px;text-shadow:0 1px 3px rgba(0,0,0,.75);margin:0 0 12px;font-weight:800;">${nama}</h3>
-        <div style="font-weight:700;font-size:19px;color:#000;margin-bottom:6px;">Ukuran Kecil</div>
-        ${renderBahanRows(p.kecil, pid, 'kecil')}
-        <div style="font-weight:700;font-size:19px;color:#000;margin:14px 0 6px;">Ukuran Besar</div>
-        ${renderBahanRows(p.besar, pid, 'besar')}
+        ${sectionsHtml}
       </div>
     `;
   }).join('');
