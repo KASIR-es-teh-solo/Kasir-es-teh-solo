@@ -219,8 +219,8 @@
   .item-card.out{opacity:.4;cursor:not-allowed;}
   .item-name{font-size:17px;font-weight:800;margin-bottom:5px;line-height:1.25;min-height:auto;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);}
   .item-stock{font-size:13px;font-weight:600;color:rgba(255,255,255,.85);margin-bottom:5px;text-shadow:0 1px 2px rgba(0,0,0,.6);}
-  .item-price{font-size:12px;font-weight:700;color:#fff;display:flex;justify-content:center;align-items:baseline;gap:4px;margin-bottom:0;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.6);}
-  .item-price b{color:#fff !important;font-size:13px;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .item-price{font-size:12px;font-weight:700;color:#fff;display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:4px;margin-bottom:0;max-width:100%;overflow-wrap:break-word;text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .item-price b{color:#fff !important;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.6);}
   @media (max-width:480px){
     .item-card{padding:6px;}
     .item-name{font-size:13px;margin-bottom:3px;}
@@ -2193,7 +2193,10 @@ function renderItemCardHarga(it, st){
       return `<div class="item-price"><span>${varian[0].label}</span><b style="color:${st.color}">${fmt(varian[0].harga)}</b></div>`;
     }
     const min = Math.min(...varian.map(v=>Number(v.harga)));
-    return `<div class="item-price"><span>${varian.length} varian</span><b style="color:${st.color}">Mulai ${fmt(min)}</b></div>`;
+    return `
+      <div class="item-price"><span>${varian.length} varian</span></div>
+      <div class="item-price"><span>Mulai</span><b style="color:${st.color}">${fmt(min)}</b></div>
+    `;
   }
   return `
     <div class="item-price"><span>Kecil</span><b style="color:${st.color}">${fmt(it.harga_kecil)}</b></div>
