@@ -269,8 +269,32 @@
 
   /* FIX: panel Pesanan tidak ketutup blur topbar saat discroll (landscape/tablet) */
   @media (min-width:881px){
-    .cart{top:var(--topbar-h,0px);z-index:25;min-height:0;height:calc(100vh - var(--topbar-h,0px));overflow-y:auto;}
-    .cart-items{max-height:none;min-height:0;}
+    /* panel Pesanan penuh dari atas sampai bawah layar */
+    .layout{grid-template-columns:1fr;padding-right:340px;}
+    .cart{position:fixed;top:0;right:0;bottom:0;width:340px;z-index:25;min-height:0;height:100vh;height:100dvh;overflow-y:auto;}
+    .app-main:has(#kasirView:not(.hidden)) .topbar{margin-right:340px;width:auto;}
+    .cart-items{max-height:none;min-height:190px;}
+    /* versi ringkas supaya banyak item pesanan kelihatan tanpa digeser */
+    .cart{padding:10px 12px;}
+    .cart-head{margin-bottom:6px;}
+    .cart h2{font-size:15px;}
+    .cart-line{padding:6px 8px;margin-bottom:5px;display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:center;}
+    .cart-line-top{grid-column:1 / -1;font-size:13px;}
+    .cart-line-sub{font-size:10.5px;margin-top:1px;}
+    .cart-line-bottom{margin-top:0;gap:10px;justify-content:flex-end;}
+    .qty-btn{width:26px;height:26px;}
+    .cart-summary{padding-top:6px;margin-top:6px;}
+    .summary-row{font-size:12px;margin-bottom:2px;}
+    .summary-row.total{font-size:16px;margin-top:2px;}
+    .cart-summary .field{margin:4px 0 2px !important;}
+    .cart-summary .field:has(#diskonInput){display:flex;align-items:center;gap:8px;}
+    .cart-summary .field label{display:block;margin:0 0 3px;}
+    .cart-summary .field:has(#diskonInput) label{margin:0;white-space:nowrap;font-size:12px;}
+    .cart-summary #diskonInput{padding:5px 8px;font-size:13px;height:auto;flex:1;min-width:0;}
+    .cart-summary #metodeBayarPicker{flex:1;}
+    .metode-bayar-btn{padding:7px 2px;font-size:12px;}
+    .checkout-btn{margin-top:6px;padding:10px;font-size:14px;}
+    .clear-btn{margin-top:4px;padding:5px;}
   }
 
   /* ===== MODALS ===== */
