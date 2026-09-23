@@ -837,14 +837,14 @@
     <div class="login-error" id="pembelianError"></div>
     <div class="field">
       <label>Bahan Baku</label>
-      <select id="pembelianBahanBaku" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;"></select>
+      <select id="pembelianBahanBaku" onchange="updatePembelianSatuanInfo()" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;"></select>
     </div>
     <div class="field">
-      <label>Jumlah Dibeli</label>
+      <label>Jumlah Dibeli <span id="pembelianSatuanLabel" style="opacity:.7;"></span></label>
       <input type="number" id="pembelianJumlah" placeholder="0">
     </div>
     <div class="field">
-      <label>Harga Satuan (Rp)</label>
+      <label>Harga Satuan (Rp) <span id="pembelianHargaLabel" style="opacity:.7;"></span></label>
       <input type="number" id="pembelianHargaSatuan" placeholder="0">
     </div>
     <div class="field">
@@ -3863,7 +3863,7 @@ async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSeka
 let bahanBakuList = [];
 
 async function loadBahanBakuList(){
-  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan').order('nama');
+  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi').order('nama');
   const box = document.getElementById('settingsBahanBakuList');
   if(error){
     box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
@@ -3877,15 +3877,53 @@ async function loadBahanBakuList(){
   const isOwner = currentProfile && currentProfile.role === 'owner';
   box.innerHTML = bahanBakuList.map(b=>`
     <div class="stock-row">
-      <span>${b.nama} <span style="opacity:.5;font-size:11px;">(${b.satuan})</span></span>
+      <span>${b.nama} <span style="opacity:.5;font-size:11px;">(${b.satuan})</span>
+        ${b.konversi ? `<div style="font-size:11px;opacity:.75;">⚖️ 1 ${b.satuan_beli} = ${fmtKonversi(b.konversi)} ${b.satuan}</div>` : ''}
+      </span>
       <span style="display:flex;gap:6px;">
         ${isOwner ? `
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="aturKonversiBahan('${b.id}')">⚖️</button>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}', '${b.satuan}')">Edit</button>
         <button class="remove-btn" onclick="hapusBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}')">Hapus</button>
         ` : ''}
       </span>
     </div>
   `).join('');
+}
+
+// ---------- KONVERSI SATUAN (beli/timbang vs resep) ----------
+function fmtKonversi(n){
+  return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+}
+
+async function aturKonversiBahan(id){
+  const b = bahanBakuList.find(x=>x.id===id);
+  if(!b) return;
+  const info = b.konversi
+    ? `Sekarang: 1 ${b.satuan_beli} = ${fmtKonversi(b.konversi)} ${b.satuan}\n\n`
+    : 'Belum ada konversi.\n\n';
+
+  const satuanBeli = prompt(`${info}Konversi untuk "${b.nama}" (resep pakai ${b.satuan}).\n\nSatuan saat input stok/beli (contoh: gram biang, gram gula).\nKosongkan lalu OK untuk MENGHAPUS konversi:`, b.satuan_beli || '');
+  if(satuanBeli === null) return;
+
+  if(!satuanBeli.trim()){
+    if(!confirm(`Hapus konversi "${b.nama}"? Input stok kembali langsung dalam ${b.satuan}.`)) return;
+    const { error } = await sb.from('bahan_baku').update({ satuan_beli:null, konversi:null }).eq('id', id);
+    if(error){ alert('Gagal: ' + error.message); return; }
+    await loadBahanBakuList(); await loadBahanBakuStock();
+    return;
+  }
+
+  const jmlBeli = Number(prompt(`Takaran: berapa ${satuanBeli.trim()}?\n(contoh: 120)`, ''));
+  if(!jmlBeli || jmlBeli <= 0){ alert('Angka tidak valid.'); return; }
+  const jmlHasil = Number(prompt(`${jmlBeli} ${satuanBeli.trim()} menjadi berapa ${b.satuan}?\n(contoh: 5000)`, ''));
+  if(!jmlHasil || jmlHasil <= 0){ alert('Angka tidak valid.'); return; }
+
+  const konversi = jmlHasil / jmlBeli;
+  const { error } = await sb.from('bahan_baku').update({ satuan_beli: satuanBeli.trim(), konversi }).eq('id', id);
+  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  alert(`Tersimpan: 1 ${satuanBeli.trim()} = ${fmtKonversi(konversi)} ${b.satuan}`);
+  await loadBahanBakuList(); await loadBahanBakuStock();
 }
 
 async function hapusBahanBaku(id, nama){
@@ -4261,7 +4299,7 @@ async function loadBahanBakuStock(){
 
   const { data, error } = await sb
     .from('bahan_baku_stok')
-    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan)')
+    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan, satuan_beli, konversi)')
     .eq('cabang_id', cabangId);
 
   if(error){
@@ -4275,21 +4313,58 @@ async function loadBahanBakuStock(){
     return;
   }
 
-  box.innerHTML = rows.map(r=>`
-    <div class="stock-row" data-bahanid="${r.bahan_baku.id}" data-nama="${r.bahan_baku.nama.replace(/"/g,'&quot;')}" data-stok="${r.stok}" data-cabang="${cabangId}">
-      <span>${r.bahan_baku.nama} <span style="opacity:.5;font-size:11px;">(${r.bahan_baku.satuan})</span></span>
+  box.innerHTML = rows.map(r=>{
+    const bb = r.bahan_baku;
+    const stokNum = Number(r.stok);
+    const stokTampil = Number.isInteger(stokNum) ? stokNum : stokNum.toLocaleString('id-ID', { maximumFractionDigits: 1 });
+    const setara = bb.konversi
+      ? `<div style="font-size:11px;opacity:.8;">≈ ${fmtKonversi(stokNum / Number(bb.konversi))} ${bb.satuan_beli}</div>` : '';
+    return `
+    <div class="stock-row" data-bahanid="${bb.id}" data-nama="${bb.nama.replace(/"/g,'&quot;')}" data-stok="${r.stok}" data-cabang="${cabangId}" data-satuan="${bb.satuan}" data-satuanbeli="${bb.satuan_beli||''}" data-konversi="${bb.konversi||''}">
+      <span>${bb.nama} <span style="opacity:.5;font-size:11px;">(${bb.satuan})</span>${setara}</span>
       <span style="display:flex;align-items:center;gap:8px;">
-        <span class="${r.stok<=10?'low':''}">${r.stok}</span>
+        <span class="${r.stok<=10?'low':''}">${stokTampil}</span>
         <button class="qty-btn" onclick="kurangiStokBahanBakuFromRow(this)">−</button>
         <button class="qty-btn" onclick="tambahStokBahanBakuFromRow(this)">+</button>
       </span>
     </div>
-  `).join('');
+  `;}).join('');
 }
 
 function tambahStokBahanBakuFromRow(btn){
   const row = btn.closest('.stock-row');
+  const konversi = Number(row.dataset.konversi);
+  if(konversi > 0){
+    tambahStokBahanBakuKonversi(row.dataset.bahanid, row.dataset.nama, Number(row.dataset.stok), row.dataset.cabang, row.dataset.satuan, row.dataset.satuanbeli, konversi);
+    return;
+  }
   tambahStokBahanBaku(row.dataset.bahanid, row.dataset.nama, Number(row.dataset.stok), row.dataset.cabang);
+}
+
+// Tambah stok untuk bahan yang punya konversi: input dalam satuan beli (misal gram biang), disimpan dalam satuan resep (ml)
+async function tambahStokBahanBakuKonversi(bahanBakuId, nama, stokSekarang, cabangId, satuan, satuanBeli, konversi){
+  const setara = fmtKonversi(stokSekarang / konversi);
+  const input = prompt(
+    `Tambah stok "${nama}"\n` +
+    `Stok sekarang: ${fmtKonversi(stokSekarang)} ${satuan} (≈ ${setara} ${satuanBeli})\n` +
+    `Konversi: 1 ${satuanBeli} = ${fmtKonversi(konversi)} ${satuan}\n\n` +
+    `Masukkan jumlah dalam ${satuanBeli.toUpperCase()}:`
+  );
+  if(input === null) return;
+  const jumlahBeli = Number(String(input).replace(',', '.'));
+  if(!jumlahBeli || jumlahBeli <= 0){ alert("Masukkan angka yang valid dan lebih dari 0."); return; }
+
+  const tambahan = Math.round(jumlahBeli * konversi * 100) / 100;
+  if(!confirm(`${fmtKonversi(jumlahBeli)} ${satuanBeli} = ${fmtKonversi(tambahan)} ${satuan}.\n\nStok jadi ${fmtKonversi(stokSekarang + tambahan)} ${satuan}. Lanjut?`)) return;
+
+  const { error } = await sb
+    .from('bahan_baku_stok')
+    .update({ stok: stokSekarang + tambahan })
+    .eq('bahan_baku_id', bahanBakuId)
+    .eq('cabang_id', cabangId);
+
+  if(error){ alert("Gagal update stok: " + error.message); return; }
+  await loadBahanBakuStock();
 }
 
 function kurangiStokBahanBakuFromRow(btn){
@@ -4486,7 +4561,8 @@ let editingPembelianId = null;
 function openPembelianModal(){
   editingPembelianId = null;
   document.getElementById('pembelianModalTitle').textContent = 'Catat Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${b.nama} (${b.satuan})</option>`).join('');
+  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${b.nama} (${b.satuan_beli||b.satuan})</option>`).join('');
+  updatePembelianSatuanInfo();
   document.getElementById('pembelianJumlah').value = '';
   document.getElementById('pembelianHargaSatuan').value = '';
   document.getElementById('pembelianCatatan').value = '';
@@ -4497,12 +4573,24 @@ function openPembelianModal(){
 function openEditPembelianModal(p){
   editingPembelianId = p.id;
   document.getElementById('pembelianModalTitle').textContent = 'Edit Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${b.nama} (${b.satuan})</option>`).join('');
+  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${b.nama} (${b.satuan_beli||b.satuan})</option>`).join('');
+  updatePembelianSatuanInfo();
   document.getElementById('pembelianJumlah').value = p.jumlah;
   document.getElementById('pembelianHargaSatuan').value = p.harga_satuan;
   document.getElementById('pembelianCatatan').value = p.catatan || '';
   document.getElementById('pembelianError').classList.remove('show');
   document.getElementById('pembelianOverlay').classList.add('show');
+}
+
+function updatePembelianSatuanInfo(){
+  const sel = document.getElementById('pembelianBahanBaku');
+  const b = (bahanBakuList||[]).find(x=>x.id===sel.value);
+  const lbl = document.getElementById('pembelianSatuanLabel');
+  const hrg = document.getElementById('pembelianHargaLabel');
+  if(!b || !lbl) return;
+  const sat = b.satuan_beli || b.satuan;
+  lbl.textContent = `(dalam ${sat})` + (b.konversi ? ` → otomatis jadi ${b.satuan}, 1 ${sat} = ${fmtKonversi(b.konversi)} ${b.satuan}` : '');
+  if(hrg) hrg.textContent = `(per ${sat})`;
 }
 
 function closePembelianModal(){
@@ -4581,7 +4669,7 @@ async function loadPembelianData(){
 
   let query = sb
     .from('pembelian')
-    .select('id, jumlah, harga_satuan, total, catatan, created_at, bahan_baku_id, cabang_id, bahan_baku:bahan_baku_id(nama, satuan), cabang:cabang_id(nama)')
+    .select('id, jumlah, harga_satuan, total, catatan, created_at, bahan_baku_id, cabang_id, bahan_baku:bahan_baku_id(nama, satuan, satuan_beli), cabang:cabang_id(nama)')
     .order('created_at', { ascending:false });
 
   const isOwner = currentProfile && currentProfile.role === 'owner';
@@ -4610,7 +4698,7 @@ async function loadPembelianData(){
 
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${p.bahan_baku ? p.bahan_baku.nama : '-'} · ${p.jumlah} ${p.bahan_baku ? p.bahan_baku.satuan : ''}${isOwner && p.cabang ? ' · '+p.cabang.nama : ''}</span>
+      <span>${p.bahan_baku ? p.bahan_baku.nama : '-'} · ${p.jumlah} ${p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : ''}${isOwner && p.cabang ? ' · '+p.cabang.nama : ''}</span>
       <span class="time">${new Date(p.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
         <span style="opacity:.6;">${fmt(p.harga_satuan)}/satuan${p.catatan ? ' · '+p.catatan : ''}</span>
