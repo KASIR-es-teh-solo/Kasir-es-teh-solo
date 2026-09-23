@@ -581,6 +581,7 @@
         <button class="tab" id="stokTab-bahan" onclick="switchStokTab('bahan')">🧪 Stok Bahan Baku</button>
         <button class="tab" id="stokTab-kelola" onclick="switchStokTab('kelola')">🗂️ Kelola Bahan Baku</button>
         <button class="tab" id="stokTab-resep" onclick="switchStokTab('resep')">📋 Resep (BOM)</button>
+        <button class="tab" id="stokTab-rusak" onclick="switchStokTab('rusak')">🗑️ Barang Rusak</button>
         <button class="tab hidden" id="stokTab-modal" onclick="switchStokTab('modal')">💰 Harga Modal</button>
       </div>
 
@@ -619,6 +620,19 @@
             <option value="">-- Pilih produk --</option>
           </select>
           <div id="resepProdukArea"></div>
+        </div>
+      </div>
+
+      <div class="stok-tab-content hidden" id="stokTabContent-rusak">
+        <div class="dash-section" style="margin-bottom:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
+            <h3 style="margin:0;">🗑️ Barang Rusak / Terbuang</h3>
+            <button class="header-btn gold" onclick="openRusakModal()">+ Catat Rusak</button>
+          </div>
+          <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:12px;">Setiap catatan otomatis mengurangi stok bahan baku cabang ini. Nilai kerugian dihitung dari harga pembelian terakhir.</p>
+          <select id="rusakMinggu" onchange="loadBahanRusak()" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:13px;margin-bottom:12px;"></select>
+          <div id="rusakRingkasan"></div>
+          <div id="rusakList"><div class="empty-msg">Memuat...</div></div>
         </div>
       </div>
 
@@ -778,6 +792,40 @@
     <input type="text" id="sopSearchInput" oninput="renderSOPList()" placeholder="🔍 Cari nama menu..." style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:#000;color:#fff;font-weight:700;font-size:14px;margin-bottom:16px;">
     <div id="sopListArea"><div class="empty-msg">Memuat SOP menu...</div></div>
   </div>
+  </div>
+</div>
+
+<!-- catat barang rusak / terbuang -->
+<div class="overlay" id="rusakOverlay">
+  <div class="modal">
+    <h3>🗑️ Catat Barang Rusak</h3>
+    <p>Stok bahan baku akan otomatis berkurang dan tercatat di riwayat.</p>
+    <div class="login-error" id="rusakError"></div>
+    <div class="field">
+      <label>Bahan Baku</label>
+      <select id="rusakBahanBaku" onchange="updateRusakInfo()" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;"></select>
+      <div id="rusakStokInfo" style="font-size:12px;opacity:.7;margin-top:4px;"></div>
+    </div>
+    <div class="field">
+      <label>Jumlah Rusak/Terbuang</label>
+      <input type="number" id="rusakJumlah" placeholder="0" min="0" step="any">
+    </div>
+    <div class="field">
+      <label>Alasan</label>
+      <select id="rusakAlasan" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;">
+        <option>Rusak</option>
+        <option>Tumpah/Terbuang</option>
+        <option>Kadaluarsa</option>
+        <option>Gagal Buat</option>
+        <option>Lainnya</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Keterangan (opsional)</label>
+      <input type="text" id="rusakKeterangan" placeholder="misal: cup sobek dari pabrik">
+    </div>
+    <button class="login-btn" id="rusakSubmitBtn" onclick="submitBahanRusak()">Simpan</button>
+    <button class="modal-close" onclick="closeRusakModal()">Batal</button>
   </div>
 </div>
 
@@ -2042,10 +2090,11 @@ function switchRingkasanTab(tabName){
 
 // folder tab di menu Stok: Stok Produk / Stok Bahan Baku / Kelola Bahan Baku / Resep (BOM)
 function switchStokTab(tabName){
-  ['produk','bahan','kelola','resep','modal'].forEach(t=>{
+  ['produk','bahan','kelola','resep','rusak','modal'].forEach(t=>{
     document.getElementById('stokTabContent-' + t).classList.toggle('hidden', t !== tabName);
     document.getElementById('stokTab-' + t).classList.toggle('active', t === tabName);
   });
+  if(tabName === 'rusak') loadBahanRusak();
 }
 
 function showSettingsView(){
@@ -4270,30 +4319,165 @@ async function tambahStokBahanBaku(bahanBakuId, nama, stokSekarang, cabangId){
   await loadBahanBakuStock();
 }
 
+// Tombol − di Stok Bahan Baku sekarang lewat form Barang Rusak (tercatat + ada alasan)
 async function kurangiStokBahanBaku(bahanBakuId, nama, stokSekarang, cabangId){
-  const input = prompt(`Kurangi stok "${nama}"\nStok sekarang: ${stokSekarang}\n(misal: rusak, hilang, kadaluarsa)\n\nMasukkan jumlah yang dikurangi:`);
-  if(input === null) return;
-  const jumlah = Number(input);
-  if(!jumlah || jumlah <= 0){
-    alert("Masukkan angka yang valid dan lebih dari 0.");
-    return;
-  }
-  if(jumlah > stokSekarang){
-    alert(`Jumlah yang dikurangi (${jumlah}) tidak boleh lebih besar dari stok sekarang (${stokSekarang}).`);
-    return;
-  }
+  await openRusakModal(bahanBakuId);
+}
 
-  const { error } = await sb
+// ================== BARANG RUSAK / TERBUANG ==================
+let rusakStokMap = {};
+
+function escRusak(s){
+  return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function openRusakModal(bahanBakuIdTerpilih){
+  const cabangId = getActiveCabangId();
+  if(!cabangId){ alert('Belum ada cabang aktif.'); return; }
+
+  const { data } = await sb
     .from('bahan_baku_stok')
-    .update({ stok: stokSekarang - jumlah })
-    .eq('bahan_baku_id', bahanBakuId)
+    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan)')
     .eq('cabang_id', cabangId);
 
-  if(error){
-    alert("Gagal update stok: " + error.message);
+  const rows = (data||[]).filter(r=>r.bahan_baku).sort((a,b)=>a.bahan_baku.nama.localeCompare(b.bahan_baku.nama));
+  rusakStokMap = {};
+  rows.forEach(r=>{ rusakStokMap[r.bahan_baku.id] = { stok:Number(r.stok), satuan:r.bahan_baku.satuan, nama:r.bahan_baku.nama }; });
+
+  document.getElementById('rusakBahanBaku').innerHTML = rows.map(r=>
+    `<option value="${r.bahan_baku.id}" ${r.bahan_baku.id===bahanBakuIdTerpilih?'selected':''}>${escRusak(r.bahan_baku.nama)} (${escRusak(r.bahan_baku.satuan)})</option>`
+  ).join('');
+  document.getElementById('rusakJumlah').value = '';
+  document.getElementById('rusakAlasan').value = 'Rusak';
+  document.getElementById('rusakKeterangan').value = '';
+  document.getElementById('rusakError').classList.remove('show');
+  updateRusakInfo();
+  document.getElementById('rusakOverlay').classList.add('show');
+}
+
+function updateRusakInfo(){
+  const id = document.getElementById('rusakBahanBaku').value;
+  const info = rusakStokMap[id];
+  document.getElementById('rusakStokInfo').textContent = info ? `Stok sekarang: ${info.stok} ${info.satuan}` : '';
+}
+
+function closeRusakModal(){
+  document.getElementById('rusakOverlay').classList.remove('show');
+}
+
+async function submitBahanRusak(){
+  const cabangId = getActiveCabangId();
+  const bahanBakuId = document.getElementById('rusakBahanBaku').value;
+  const jumlah = Number(document.getElementById('rusakJumlah').value);
+  const alasan = document.getElementById('rusakAlasan').value;
+  const keterangan = document.getElementById('rusakKeterangan').value.trim();
+  const errBox = document.getElementById('rusakError');
+  const btn = document.getElementById('rusakSubmitBtn');
+  errBox.classList.remove('show');
+
+  const info = rusakStokMap[bahanBakuId];
+  let pesan = '';
+  if(!bahanBakuId) pesan = 'Pilih bahan baku dulu.';
+  else if(!jumlah || jumlah <= 0) pesan = 'Jumlah harus lebih dari 0.';
+  else if(info && jumlah > info.stok) pesan = `Jumlah (${jumlah}) melebihi stok sekarang (${info.stok} ${info.satuan}).`;
+  if(pesan){ errBox.textContent = pesan; errBox.classList.add('show'); return; }
+
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const { error } = await sb.from('bahan_rusak').insert({
+    cabang_id: cabangId,
+    bahan_baku_id: bahanBakuId,
+    jumlah,
+    alasan,
+    keterangan: keterangan || null
+  });
+  btn.disabled = false; btn.textContent = 'Simpan';
+
+  if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
+
+  closeRusakModal();
+  await loadBahanBakuStock();
+  await loadBahanRusak();
+  if(typeof loadProduk === 'function') loadProduk();
+}
+
+async function loadBahanRusak(){
+  const cabangId = getActiveCabangId();
+  const box = document.getElementById('rusakList');
+  const ringkas = document.getElementById('rusakRingkasan');
+  if(!box) return;
+  if(!cabangId){ box.innerHTML = '<div class="empty-msg">Belum ada cabang aktif.</div>'; ringkas.innerHTML=''; return; }
+
+  // Pilihan minggu: Senin–Minggu, minggu ini + 11 minggu sebelumnya
+  const mingguSelect = document.getElementById('rusakMinggu');
+  if(!mingguSelect.options.length){
+    const n = new Date(); n.setHours(0,0,0,0);
+    const senin = new Date(n); senin.setDate(n.getDate() - ((n.getDay()+6)%7));
+    const fmt = d => d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
+    let html = '';
+    for(let i=0;i<12;i++){
+      const a = new Date(senin); a.setDate(senin.getDate() - 7*i);
+      const b = new Date(a); b.setDate(a.getDate() + 6);
+      const label = (i===0 ? 'Minggu ini' : i===1 ? 'Minggu lalu' : `${i} minggu lalu`) + ` (${fmt(a)} – ${fmt(b)} ${b.getFullYear()})`;
+      html += `<option value="${a.getTime()}">${label}</option>`;
+    }
+    mingguSelect.innerHTML = html;
+  }
+  const dari = new Date(Number(mingguSelect.value));
+  const sampai = new Date(dari); sampai.setDate(dari.getDate() + 7);
+
+  box.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const { data, error } = await sb
+    .from('bahan_rusak')
+    .select('id, jumlah, alasan, keterangan, nilai_kerugian, created_at, bahan_baku:bahan_baku_id(nama, satuan), pencatat:dicatat_oleh(nama)')
+    .eq('cabang_id', cabangId)
+    .gte('created_at', dari.toISOString())
+    .lt('created_at', sampai.toISOString())
+    .order('created_at', { ascending:false });
+
+  if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escRusak(error.message)}</div>`; ringkas.innerHTML=''; return; }
+
+  const rows = data || [];
+  if(rows.length === 0){
+    ringkas.innerHTML = '';
+    box.innerHTML = '<div class="empty-msg">Tidak ada barang rusak di minggu ini, jadi tidak ada laporan. 👍</div>';
     return;
   }
+  const totalRugi = rows.reduce((s,r)=>s+Number(r.nilai_kerugian||0),0);
+  const perAlasan = {};
+  rows.forEach(r=>{ perAlasan[r.alasan] = (perAlasan[r.alasan]||0) + 1; });
+
+  ringkas.innerHTML = `
+    <div style="background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:12px;color:var(--ink);">
+      <div style="font-size:12px;opacity:.7;">Total kerugian minggu ini</div>
+      <div style="font-size:22px;font-weight:800;color:#c62828;">Rp ${totalRugi.toLocaleString('id-ID')}</div>
+      <div style="font-size:12px;margin-top:4px;">${rows.length} catatan${Object.keys(perAlasan).length ? ' · ' + Object.entries(perAlasan).map(([a,c])=>`${escRusak(a)}: ${c}`).join(' · ') : ''}</div>
+      ${rows.some(r=>!Number(r.nilai_kerugian)) ? '<div style="font-size:11px;opacity:.6;margin-top:4px;">*Bahan yang belum pernah dicatat di Pembelian dihitung Rp 0.</div>' : ''}
+    </div>`;
+
+
+  const isOwner = currentProfile && currentProfile.role === 'owner';
+  box.innerHTML = rows.map(r=>`
+    <div class="stock-row" style="align-items:flex-start;">
+      <span style="flex:1;">
+        <b>${escRusak(r.bahan_baku?.nama || '-')}</b> — ${Number(r.jumlah)} ${escRusak(r.bahan_baku?.satuan || '')}
+        <div style="font-size:12px;opacity:.8;">${escRusak(r.alasan)}${r.keterangan ? ' · ' + escRusak(r.keterangan) : ''}</div>
+        <div style="font-size:11px;opacity:.6;">${new Date(r.created_at).toLocaleString('id-ID')} · oleh ${escRusak(r.pencatat?.nama || '-')}</div>
+      </span>
+      <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <span style="color:#c62828;font-weight:700;">Rp ${Number(r.nilai_kerugian||0).toLocaleString('id-ID')}</span>
+        ${isOwner ? `<button class="qty-btn" style="width:auto;padding:0 8px;font-size:11px;" onclick="hapusBahanRusak('${r.id}')">Hapus</button>` : ''}
+      </span>
+    </div>
+  `).join('');
+}
+
+async function hapusBahanRusak(id){
+  if(!confirm('Hapus catatan ini? Stok bahan baku akan dikembalikan (dipakai kalau salah input).')) return;
+  const { error } = await sb.from('bahan_rusak').delete().eq('id', id);
+  if(error){ alert('Gagal menghapus: ' + error.message); return; }
+  await loadBahanRusak();
   await loadBahanBakuStock();
+  if(typeof loadProduk === 'function') loadProduk();
 }
 
 // ================== PEMBELIAN BAHAN BAKU ==================
