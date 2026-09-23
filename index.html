@@ -1281,6 +1281,10 @@ async function loadProfileAndEnter(){
   isManualLoginAttempt = false;
 
   currentProfile = profile;
+
+  // kalau Owner sudah logout paksa akun ini saat HP-nya mati / offline -> langsung keluar begitu dibuka lagi
+  if(!freshLogin && await cekLogoutPaksa()) return;
+
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
 
@@ -1368,7 +1372,7 @@ async function loadProfileAndEnter(){
     if(freshLogin){ catatLoginKerja(); }
     cekPesanMasuk();
     if(pesanMasukPollInterval) clearInterval(pesanMasukPollInterval);
-    pesanMasukPollInterval = setInterval(cekPesanMasuk, 20000);
+    pesanMasukPollInterval = setInterval(()=>{ cekLogoutPaksa(); cekPesanMasuk(); }, 20000);
   }
 
   // pulihkan halaman terakhir yang dibuka sebelum refresh (kalau masih valid buat role ini)
@@ -1828,13 +1832,55 @@ async function loadLogAktivitas(){
     return;
   }
 
-  box.innerHTML = data.map(r=>`
+  const isOwnerLog = currentProfile && currentProfile.role === 'owner';
+  const tombolBersihkan = isOwnerLog ? `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+      <button class="remove-btn" style="font-size:12px;padding:6px 12px;" onclick="hapusLogLama(30)">🧹 Hapus log lebih dari 30 hari</button>
+    </div>` : '';
+
+  box.innerHTML = tombolBersihkan + data.map(r=>`
     <div class="tx-row" style="flex-wrap:wrap;">
       <span><b>${r.aksi}</b> · ${r.cabang ? r.cabang.nama : '-'} · oleh ${r.pelaku ? r.pelaku.nama : '-'}</span>
       <span class="time">${new Date(r.created_at).toLocaleString('id-ID')}</span>
       ${r.keterangan ? `<span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">${r.keterangan}</span>` : ''}
+      ${isOwnerLog ? `<span style="width:100%;display:flex;justify-content:flex-end;margin-top:4px;"><button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="hapusLogAktivitas('${r.id}')">🗑️ Hapus</button></span>` : ''}
     </div>
   `).join('');
+}
+
+// Owner: hapus 1 catatan log (tidak memengaruhi jam kerja, stok, transaksi, atau laporan)
+async function hapusLogAktivitas(id){
+  if(!confirm("Hapus catatan log ini? Catatan yang dihapus tidak bisa dikembalikan.")) return;
+  const { error } = await sb.from('log_aktivitas').delete().eq('id', id);
+  if(error){
+    alert("Gagal menghapus log: " + error.message);
+    return;
+  }
+  loadLogAktivitas();
+}
+
+// Owner: bersihkan log lama sekaligus, log baru tetap disimpan
+async function hapusLogLama(hari){
+  const batas = new Date(Date.now() - hari*24*60*60*1000);
+  const { count, error: cErr } = await sb.from('log_aktivitas')
+    .select('id', { count:'exact', head:true })
+    .lt('created_at', batas.toISOString());
+  if(cErr){
+    alert("Gagal mengecek log: " + cErr.message);
+    return;
+  }
+  if(!count){
+    alert(`Tidak ada log yang lebih lama dari ${hari} hari.`);
+    return;
+  }
+  if(!confirm(`Hapus ${count} catatan log yang dibuat sebelum ${batas.toLocaleDateString('id-ID')}?\n\nLog ${hari} hari terakhir tetap disimpan. Tidak bisa dikembalikan.`)) return;
+  const { error } = await sb.from('log_aktivitas').delete().lt('created_at', batas.toISOString());
+  if(error){
+    alert("Gagal menghapus log: " + error.message);
+    return;
+  }
+  alert(`✅ ${count} catatan log lama sudah dihapus.`);
+  loadLogAktivitas();
 }
 
 async function hapusRiwayatKas(id){
@@ -1884,7 +1930,8 @@ async function loadAktifSekarang(){
       ${isOwner ? `
       <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}', '${p.cabang_id || ''}')">💬 Kirim Pesan</button>
-        <button class="remove-btn" onclick="paksaOfflineKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}')">Tandai Offline</button>
+        <button class="remove-btn" onclick="logoutPaksaKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}')">🚪 Logout Paksa</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="paksaOfflineKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}')">Tandai Offline</button>
       </span>
       ` : ''}
     </div>
@@ -2060,8 +2107,11 @@ async function loadCabangList(){
   cabangList = (!error && data) ? data : [];
 }
 
+let sedangLogout = false;
+
 async function doLogout(){
   if(!confirm("Yakin mau logout? Pastikan sudah tidak ada transaksi/pesanan yang belum selesai.")) return;
+  sedangLogout = true;
   hentikanPresenceHeartbeat();
   hentikanPollingAktif();
   if(pesanMasukPollInterval){ clearInterval(pesanMasukPollInterval); pesanMasukPollInterval = null; }
@@ -2070,6 +2120,80 @@ async function doLogout(){
     await sb.from('user_presence').delete().eq('user_id', currentUser.id);
   }
   await sb.auth.signOut();
+  resetKeHalamanLogin();
+  sedangLogout = false;
+}
+
+// ================== LOGOUT PAKSA OLEH OWNER ==================
+// Sisi karyawan: cek apakah Owner sudah memaksa logout SETELAH karyawan ini login.
+async function cekLogoutPaksa(){
+  if(!currentUser || !currentProfile || currentProfile.role === 'owner' || sedangLogout) return false;
+  try{
+    const { data, error } = await sb.from('users').select('paksa_logout_at').eq('id', currentUser.id).single();
+    if(error || !data || !data.paksa_logout_at) return false;
+    const waktuLogin = new Date(currentUser.last_sign_in_at || 0);
+    if(new Date(data.paksa_logout_at) > waktuLogin){
+      await keluarKarenaLogoutPaksa();
+      return true;
+    }
+  }catch(e){ /* offline: dicek lagi nanti */ }
+  return false;
+}
+
+async function keluarKarenaLogoutPaksa(){
+  if(sedangLogout) return;
+  sedangLogout = true;
+  hentikanPresenceHeartbeat();
+  hentikanPollingAktif();
+  if(pesanMasukPollInterval){ clearInterval(pesanMasukPollInterval); pesanMasukPollInterval = null; }
+  // jam kerja sudah ditutup Owner di server -> cukup lupakan id absensi di HP ini (jangan ditimpa jam HP)
+  if(currentUser){ localStorage.removeItem('absensiId_' + currentUser.id); }
+  try{ await sb.auth.signOut({ scope: 'local' }); }catch(e){}
+  const antrian = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]').length;
+  resetKeHalamanLogin();
+  sedangLogout = false;
+  alert("🚪 Akun Anda sudah di-logout oleh Owner.\n\nSilakan login lagi kalau masih bertugas." +
+        (antrian > 0 ? `\n\nAda ${antrian} transaksi offline yang belum terkirim, akan dikirim otomatis setelah login lagi.` : ''));
+}
+
+// Sisi Owner: tombol Logout Paksa
+async function logoutPaksaKaryawan(userId, nama){
+  if(!confirm(`Logout paksa "${nama}"?\n\n• HP karyawan akan langsung keluar dari aplikasi\n• Jam kerja ditutup sekarang\n• Izin keluar yang masih aktif ikut diselesaikan`)) return;
+  const { data, error } = await sb.rpc('paksa_logout_karyawan', { p_user: userId });
+  if(error){
+    alert("Gagal logout paksa: " + error.message);
+    return;
+  }
+  alert("✅ " + data);
+  loadAktifSekarang();
+  loadJamKerja();
+  loadIzinKeluarList();
+}
+
+// Sisi Owner: tutup 1 sesi jam kerja yang lupa ditutup, jam keluar diisi manual
+async function tutupSesiAbsensi(absensiId, nama, masukIso){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const defaultTxt = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const input = prompt(
+    `Tutup sesi jam kerja "${nama}"\nMasuk: ${new Date(masukIso).toLocaleString('id-ID')}\n\n` +
+    `Isi jam keluar (format TAHUN-BULAN-TANGGAL JAM:MENIT), contoh 2026-09-20 21:00:`, defaultTxt);
+  if(input === null) return;
+  const waktu = new Date(input.trim().replace(' ', 'T'));
+  if(isNaN(waktu.getTime())){
+    alert("Format jam keluar salah. Contoh yang benar: 2026-09-20 21:00");
+    return;
+  }
+  const { data, error } = await sb.rpc('tutup_sesi_absensi', { p_absensi: absensiId, p_waktu_keluar: waktu.toISOString() });
+  if(error){
+    alert("Gagal menutup sesi: " + error.message);
+    return;
+  }
+  alert("✅ " + data);
+  loadJamKerja();
+}
+
+function resetKeHalamanLogin(){
   currentUser = null;
   currentProfile = null;
   cart = [];
@@ -2082,6 +2206,18 @@ async function doLogout(){
   selectedLoginRole = 'owner';
   document.getElementById('loginRoleLabel').textContent = 'Owner';
 }
+
+// HP karyawan dibuka lagi dari layar mati / pindah aplikasi -> langsung cek logout paksa
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && navigator.onLine){ cekLogoutPaksa(); }
+});
+
+// sesi login dicabut server (misal setelah logout paksa & token habis) -> balik ke halaman login
+sb.auth.onAuthStateChange((event)=>{
+  if(event === 'SIGNED_OUT' && currentUser && !sedangLogout && currentProfile && currentProfile.role !== 'owner'){
+    keluarKarenaLogoutPaksa();
+  }
+});
 
 // auto-login kalau sesi masih ada
 async function checkSession(){
@@ -3278,7 +3414,8 @@ async function loadKaryawan(){
         <span>${u.nama} <span style="opacity:.5;font-size:11px;">· ${u.cabang ? u.cabang.nama : '-'}</span></span>
         <span style="display:flex;align-items:center;gap:8px;">
           <span>${u.role}</span>
-          ${isOwnerNow && u.role!=='owner' ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(/'/g,"&#39;")}', '${u.cabang_id || ''}')">💬 Pesan</button>` : ''}
+          ${isOwnerNow && u.role!=='owner' ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(/'/g,"&#39;")}', '${u.cabang_id || ''}')">💬 Pesan</button>
+          <button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">🚪 Logout Paksa</button>` : ''}
         </span>
       </div>
     `).join('');
@@ -3368,6 +3505,11 @@ async function loadJamKerja(){
           <span style="opacity:.7;">${keluar ? 'Keluar: '+keluar.toLocaleString('id-ID') : '🟢 Masih standby / belum logout'}</span>
           <b>${durasiTxt}</b>
         </span>
+        ${(!keluar && isOwner) ? `
+        <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+          <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="tutupSesiAbsensi('${a.id}', '${a.user ? a.user.nama.replace(/'/g,"&#39;") : ''}', '${a.waktu_masuk}')">⏹ Tutup Sesi</button>
+          ${a.user && a.user.role !== 'owner' ? `<button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${a.user_id}', '${a.user.nama.replace(/'/g,"&#39;")}')">🚪 Logout Paksa</button>` : ''}
+        </span>` : ''}
       </div>
     `;
   }).join('');
