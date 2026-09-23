@@ -389,6 +389,7 @@
     <div class="side-btn hidden" id="kasirCabangStatus" style="cursor:default;opacity:1;background:rgba(46,125,50,.12);"><span class="side-icon">🟢</span><span class="side-label" id="kasirCabangNamaLabel" style="font-size:11px;line-height:1.2;">Aktif</span></div>
     <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚪</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
+    <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -857,6 +858,39 @@
 </div>
 
 <!-- izin keluar sementara -->
+<!-- belanja kecil dari laci (kasir) -->
+<div class="overlay" id="belanjaKecilOverlay">
+  <div class="modal">
+    <h3>🧊 Belanja dari Laci</h3>
+    <p>Catat uang tunai yang diambil dari laci untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas.</p>
+    <div class="login-error" id="belanjaKecilError"></div>
+    <div class="field">
+      <label>Belanja apa?</label>
+      <div id="belanjaKecilKategori" style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button type="button" class="metode-bayar-btn active" data-kat="Es Batu" onclick="pilihKategoriBelanja(this)">🧊 Es Batu</button>
+        <button type="button" class="metode-bayar-btn" data-kat="Air Galon" onclick="pilihKategoriBelanja(this)">💧 Galon</button>
+        <button type="button" class="metode-bayar-btn" data-kat="Gas" onclick="pilihKategoriBelanja(this)">🔥 Gas</button>
+        <button type="button" class="metode-bayar-btn" data-kat="Kebersihan" onclick="pilihKategoriBelanja(this)">🧽 Kebersihan</button>
+        <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Jumlah Uang (Rp)</label>
+      <input type="number" id="belanjaKecilJumlah" placeholder="misal: 20000" min="0">
+    </div>
+    <div class="field">
+      <label>Keterangan (opsional)</label>
+      <input type="text" id="belanjaKecilKet" placeholder="misal: 2 plastik es batu">
+    </div>
+    <button class="login-btn" id="belanjaKecilSubmitBtn" onclick="submitBelanjaKecil()">Simpan</button>
+    <div style="margin-top:14px;">
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Belanja hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
+      <div id="belanjaKecilList" style="max-height:180px;overflow:auto;"></div>
+    </div>
+    <button class="modal-close" onclick="tutupBelanjaKecil()">Tutup</button>
+  </div>
+</div>
+
 <!-- catat / edit biaya operasional -->
 <div class="overlay" id="biayaOverlay">
   <div class="modal">
@@ -1212,6 +1246,7 @@ async function loadProfileAndEnter(){
   document.getElementById('kasirCabangStatus').classList.add('hidden');
   document.getElementById('izinKeluarBtn').classList.add('hidden');
   document.getElementById('kasBtn').classList.add('hidden');
+  document.getElementById('belanjaKecilBtn').classList.add('hidden');
   ['navRingkasanBtn','navAktifBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
   });
@@ -1274,6 +1309,7 @@ async function loadProfileAndEnter(){
   }
   if(profile.role === 'kasir' || profile.role === 'owner'){
     document.getElementById('kasBtn').classList.remove('hidden');
+    document.getElementById('belanjaKecilBtn').classList.remove('hidden');
   }
 
   await loadProduk();
@@ -3863,7 +3899,7 @@ async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSeka
 let bahanBakuList = [];
 
 async function loadBahanBakuList(){
-  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi').order('nama');
+  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi, dihitung_stok').order('nama');
   const box = document.getElementById('settingsBahanBakuList');
   if(error){
     box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
@@ -3879,10 +3915,12 @@ async function loadBahanBakuList(){
     <div class="stock-row">
       <span>${b.nama} <span style="opacity:.5;font-size:11px;">(${b.satuan})</span>
         ${b.konversi ? `<div style="font-size:11px;opacity:.75;">⚖️ 1 ${b.satuan_beli} = ${fmtKonversi(b.konversi)} ${b.satuan}</div>` : ''}
+        ${b.dihitung_stok === false ? `<div style="font-size:11px;opacity:.75;">🚫 Tidak dihitung stok</div>` : ''}
       </span>
       <span style="display:flex;gap:6px;">
         ${isOwner ? `
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="aturKonversiBahan('${b.id}')">⚖️</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" title="Hitung / tidak dihitung stok" onclick="toggleDihitungStok('${b.id}')">${b.dihitung_stok === false ? '🚫' : '📊'}</button>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}', '${b.satuan}')">Edit</button>
         <button class="remove-btn" onclick="hapusBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}')">Hapus</button>
         ` : ''}
@@ -3924,6 +3962,20 @@ async function aturKonversiBahan(id){
   if(error){ alert('Gagal menyimpan: ' + error.message); return; }
   alert(`Tersimpan: 1 ${satuanBeli.trim()} = ${fmtKonversi(konversi)} ${b.satuan}`);
   await loadBahanBakuList(); await loadBahanBakuStock();
+}
+
+async function toggleDihitungStok(id){
+  const b = bahanBakuList.find(x=>x.id===id);
+  if(!b) return;
+  const jadiDihitung = b.dihitung_stok === false;
+  const pesan = jadiDihitung
+    ? `Hitung lagi stok "${b.nama}"?\n\nStoknya akan dikurangi tiap penjualan dan ikut menentukan stok produk. Jangan lupa isi stoknya.`
+    : `Jadikan "${b.nama}" TIDAK dihitung stok?\n\n• Tetap ada di resep BOM & SOP\n• Tidak dikurangi saat penjualan\n• Tidak ikut menentukan stok produk`;
+  if(!confirm(pesan)) return;
+  const { error } = await sb.from('bahan_baku').update({ dihitung_stok: jadiDihitung }).eq('id', id);
+  if(error){ alert('Gagal: ' + error.message); return; }
+  await loadBahanBakuList(); await loadBahanBakuStock();
+  if(typeof loadProduk === 'function') loadProduk();
 }
 
 async function hapusBahanBaku(id, nama){
@@ -4299,7 +4351,7 @@ async function loadBahanBakuStock(){
 
   const { data, error } = await sb
     .from('bahan_baku_stok')
-    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan, satuan_beli, konversi)')
+    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan, satuan_beli, konversi, dihitung_stok)')
     .eq('cabang_id', cabangId);
 
   if(error){
@@ -4307,7 +4359,8 @@ async function loadBahanBakuStock(){
     return;
   }
 
-  const rows = (data||[]).filter(r=>r.bahan_baku).sort((a,b)=>a.stok-b.stok);
+  const rows = (data||[]).filter(r=>r.bahan_baku).sort((a,b)=>
+    ((a.bahan_baku.dihitung_stok===false)-(b.bahan_baku.dihitung_stok===false)) || (a.stok-b.stok));
   if(rows.length===0){
     box.innerHTML = '<div class="empty-msg">Belum ada data bahan baku untuk cabang ini.</div>';
     return;
@@ -4315,6 +4368,14 @@ async function loadBahanBakuStock(){
 
   box.innerHTML = rows.map(r=>{
     const bb = r.bahan_baku;
+    if(bb.dihitung_stok === false){
+      return `
+    <div class="stock-row" style="opacity:.75;">
+      <span>${bb.nama} <span style="opacity:.5;font-size:11px;">(${bb.satuan})</span>
+        <div style="font-size:11px;">🚫 Tidak dihitung stok (tetap ada di resep & SOP)</div></span>
+      <span style="font-size:20px;font-weight:700;">∞</span>
+    </div>`;
+    }
     const stokNum = Number(r.stok);
     const stokTampil = Number.isInteger(stokNum) ? stokNum : stokNum.toLocaleString('id-ID', { maximumFractionDigits: 1 });
     const setara = bb.konversi
@@ -4412,10 +4473,10 @@ async function openRusakModal(bahanBakuIdTerpilih){
 
   const { data } = await sb
     .from('bahan_baku_stok')
-    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan)')
+    .select('stok, bahan_baku:bahan_baku_id(id, nama, satuan, dihitung_stok)')
     .eq('cabang_id', cabangId);
 
-  const rows = (data||[]).filter(r=>r.bahan_baku).sort((a,b)=>a.bahan_baku.nama.localeCompare(b.bahan_baku.nama));
+  const rows = (data||[]).filter(r=>r.bahan_baku && r.bahan_baku.dihitung_stok !== false).sort((a,b)=>a.bahan_baku.nama.localeCompare(b.bahan_baku.nama));
   rusakStokMap = {};
   rows.forEach(r=>{ rusakStokMap[r.bahan_baku.id] = { stok:Number(r.stok), satuan:r.bahan_baku.satuan, nama:r.bahan_baku.nama }; });
 
@@ -4788,6 +4849,75 @@ async function submitGantiPassword(){
 
   closeGantiPasswordModal();
   alert("Password berhasil diganti. Gunakan password baru untuk login berikutnya.");
+}
+
+// ================== BELANJA KECIL DARI LACI (KASIR) ==================
+function pilihKategoriBelanja(btn){
+  document.querySelectorAll('#belanjaKecilKategori .metode-bayar-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function bukaBelanjaKecil(){
+  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
+  document.getElementById('belanjaKecilJumlah').value = '';
+  document.getElementById('belanjaKecilKet').value = '';
+  document.getElementById('belanjaKecilError').classList.remove('show');
+  pilihKategoriBelanja(document.querySelector('#belanjaKecilKategori .metode-bayar-btn'));
+  document.getElementById('belanjaKecilOverlay').classList.add('show');
+  await loadBelanjaKecilHariIni();
+}
+
+function tutupBelanjaKecil(){
+  document.getElementById('belanjaKecilOverlay').classList.remove('show');
+}
+
+async function submitBelanjaKecil(){
+  const errBox = document.getElementById('belanjaKecilError');
+  const btn = document.getElementById('belanjaKecilSubmitBtn');
+  errBox.classList.remove('show');
+  const aktif = document.querySelector('#belanjaKecilKategori .metode-bayar-btn.active');
+  const kategori = aktif ? aktif.dataset.kat : 'Lainnya';
+  const jumlah = Number(document.getElementById('belanjaKecilJumlah').value);
+  const ket = document.getElementById('belanjaKecilKet').value.trim();
+
+  if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
+  if(!confirm(`Ambil ${fmt(jumlah)} dari laci untuk ${kategori}?`)) return;
+
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const { error } = await sb.from('biaya_operasional').insert({
+    cabang_id: activeCabangId,
+    kategori,
+    deskripsi: (ket ? ket + ' · ' : '') + 'dicatat di kasir',
+    jumlah,
+    sumber_dana: 'tunai',
+    dicatat_oleh: currentUser.id
+  });
+  btn.disabled = false; btn.textContent = 'Simpan';
+
+  if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
+  document.getElementById('belanjaKecilJumlah').value = '';
+  document.getElementById('belanjaKecilKet').value = '';
+  await loadBelanjaKecilHariIni();
+}
+
+async function loadBelanjaKecilHariIni(){
+  const box = document.getElementById('belanjaKecilList');
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const { data, error } = await sb
+    .from('biaya_operasional')
+    .select('kategori, deskripsi, jumlah, created_at')
+    .eq('cabang_id', activeCabangId)
+    .eq('sumber_dana', 'tunai')
+    .gte('created_at', startOfDay.toISOString())
+    .order('created_at', { ascending:false });
+  if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`; return; }
+  const rows = data || [];
+  document.getElementById('belanjaKecilTotal').textContent = fmt(rows.reduce((s,r)=>s+Number(r.jumlah),0));
+  box.innerHTML = rows.length ? rows.map(r=>`
+    <div class="tx-row" style="font-size:12px;">
+      <span>${r.kategori}${r.deskripsi ? ' <span style="opacity:.6;">· '+String(r.deskripsi).replace(/</g,'&lt;')+'</span>' : ''}</span>
+      <span><b>${fmt(r.jumlah)}</b> <span style="opacity:.6;">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></span>
+    </div>`).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada belanja hari ini.</div>';
 }
 
 // ================== BIAYA OPERASIONAL ==================
