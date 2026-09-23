@@ -229,15 +229,16 @@
     .item-price b{font-size:11.5px;}
   }
   /* FIX: teks nama menu keluar dari bingkai kartu (tablet Redmi Pad SE dll) */
-  .grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;}
-  .item-card{min-width:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+  .item-card{min-width:0;overflow:hidden;box-sizing:border-box;padding:8px 4px;display:flex;flex-direction:column;justify-content:center;}
   .item-card > *{max-width:100%;min-width:0;}
-  .item-name{font-size:clamp(13px,2.1vw,17px);line-height:1.15;overflow-wrap:anywhere;word-break:break-word;hyphens:auto;}
+  .item-name{font-size:clamp(18px,2.8vw,24px);font-weight:900;letter-spacing:-.2px;color:#FFC400;text-shadow:0 1px 2px #000,0 0 4px rgba(0,0,0,.85);line-height:1.12;overflow-wrap:anywhere;word-break:break-word;hyphens:auto;}
   .item-stock{font-size:clamp(10.5px,1.6vw,13px);}
   .item-price{font-size:clamp(10px,1.4vw,12px);gap:3px;overflow-wrap:anywhere;}
   .item-price b{font-size:clamp(11px,1.5vw,13px);}
   @media (max-width:480px){
-    .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;}
+    .item-name{font-size:17px;}
   }
   #menuSearchInput::placeholder{color:rgba(232,185,35,.6);}
   .loading-msg{padding:40px;text-align:center;color:rgba(12,31,20,.5);font-size:13px;}
@@ -265,6 +266,12 @@
   .clear-btn{width:100%;margin-top:8px;padding:9px;border:1px solid var(--line-soft);border-radius:var(--radius);background:transparent;color:rgba(12,31,20,.7);font-size:12px;cursor:pointer;}
   .metode-bayar-btn{flex:1;padding:9px 4px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:12px;font-weight:600;cursor:pointer;}
   .metode-bayar-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:800;}
+
+  /* FIX: panel Pesanan tidak ketutup blur topbar saat discroll (landscape/tablet) */
+  @media (min-width:881px){
+    .cart{top:var(--topbar-h,0px);z-index:25;min-height:0;height:calc(100vh - var(--topbar-h,0px));overflow-y:auto;}
+    .cart-items{max-height:none;min-height:0;}
+  }
 
   /* ===== MODALS ===== */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
@@ -5251,5 +5258,13 @@ function toggleSidebar(collapsedState){
 })();
 </script>
 
+<script>
+/* ukur tinggi topbar supaya panel Pesanan sticky tepat di bawahnya */
+(function(){
+  function setTopbarH(){var t=document.querySelector('.topbar');if(t)document.documentElement.style.setProperty('--topbar-h',t.offsetHeight+'px');}
+  window.addEventListener('load',setTopbarH);window.addEventListener('resize',setTopbarH);
+  document.addEventListener('DOMContentLoaded',function(){setTopbarH();var t=document.querySelector('.topbar');if(t&&window.ResizeObserver)new ResizeObserver(setTopbarH).observe(t);});
+})();
+</script>
 </body>
 </html>
