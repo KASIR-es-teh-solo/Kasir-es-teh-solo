@@ -307,6 +307,9 @@
   .size-option:hover{border-color:var(--gold);}
   .size-option span{font-size:16px;font-weight:700;color:#000;}
   .size-option b{color:#000;font-size:20px;font-weight:800;}
+  .size-option.habis{opacity:.45;cursor:not-allowed;background:#eee;border-style:dashed;}
+  .size-option.habis:hover{border-color:var(--line-soft);}
+  .size-option .size-sisa{display:block;font-size:11px;font-weight:600;color:#c0392b;margin-top:2px;}
   .modal-close{width:100%;padding:10px;background:none;border:none;color:rgba(12,31,20,.5);font-size:12px;cursor:pointer;margin-top:4px;}
 
   .receipt{background:var(--cream);color:var(--ink);border-radius:10px;padding:22px;width:100%;max-width:300px;font-family:'Courier New', monospace;}
@@ -1197,6 +1200,8 @@ function selectLoginRole(role, btnEl){
 let produkByKategori = {};
 let cart = [];
 let pendingItem = null;
+// sisa porsi per menu per ukuran dari stok bahan: { "produkId|ukuran": maks }. Kosong = stok otomatis OFF / tidak dibatasi
+let ketersediaanUkuran = {};
 let salesChartInstance = null;
 let currentTxListData = [];
 let printerDevice = null;
@@ -1716,14 +1721,36 @@ async function loadStokMenipis(){
   }
 
   const rowsStok = (data||[]).filter(r=>r.produk && r.cabang).sort((a,b)=>a.stok-b.stok);
-  box.innerHTML = rowsStok.length===0
+
+  // peringatan bahan baku MINUS (biasanya akibat transaksi offline yang tetap diterima saat sync)
+  let htmlMinus = '';
+  try{
+    const { data: minus } = await sb
+      .from('bahan_baku_stok')
+      .select('stok, bahan_baku:bahan_baku_id(nama, satuan, dihitung_stok), cabang:cabang_id(nama)')
+      .lt('stok', 0);
+    const rowsMinus = (minus||[]).filter(r=>r.bahan_baku && r.bahan_baku.dihitung_stok !== false && r.cabang);
+    if(rowsMinus.length > 0){
+      htmlMinus = `
+        <div style="background:#fdecea;border:1px solid #c0392b;border-radius:10px;padding:10px;margin-bottom:10px;">
+          <div style="color:#c0392b;font-weight:800;margin-bottom:6px;">⚠️ Stok bahan MINUS — ada penjualan melebihi bahan tercatat (cek transaksi offline di Log Aktivitas, lalu restock/koreksi stok)</div>
+          ${rowsMinus.map(r=>`
+            <div class="stock-row">
+              <span>${r.bahan_baku.nama} <span style="opacity:.5;font-size:11px;">· ${r.cabang.nama}</span></span>
+              <span class="low">${Number(r.stok)} ${r.bahan_baku.satuan||''}</span>
+            </div>`).join('')}
+        </div>`;
+    }
+  }catch(e){ /* abaikan, daftar stok menipis tetap tampil */ }
+
+  box.innerHTML = htmlMinus + (rowsStok.length===0
     ? '<div class="empty-msg">Tidak ada stok menipis di semua cabang. 🎉</div>'
     : rowsStok.map(r=>`
         <div class="stock-row">
           <span>${r.produk.nama} <span style="opacity:.5;font-size:11px;">· ${r.cabang.nama}</span></span>
           <span class="low">${r.stok}</span>
         </div>
-      `).join('');
+      `).join(''));
 }
 
 async function loadRiwayatKas(){
@@ -2242,13 +2269,22 @@ async function loadProduk(){
   });
   Object.values(produkByKategori).forEach(list => list.sort((a,b)=>a.nama.localeCompare(b.nama)));
 
+  // ambil sisa porsi per ukuran (hanya terisi kalau stok otomatis AKTIF)
+  ketersediaanUkuran = {};
+  try{
+    const { data: kt, error: ktErr } = await sb.rpc('ketersediaan_ukuran', { p_cabang: cabangId });
+    if(!ktErr){ (kt||[]).forEach(r=>{ ketersediaanUkuran[r.produk_id+'|'+r.ukuran] = r.maks; }); }
+  }catch(e){ /* kalau gagal, ukuran tidak dikunci di tampilan; database tetap jadi penjaga */ }
+
   localStorage.setItem('produkCache_'+cabangId, JSON.stringify(produkByKategori));
+  localStorage.setItem('ketersediaanCache_'+cabangId, JSON.stringify(ketersediaanUkuran));
   renderTabs();
   renderCatalog();
 }
 
 function loadProdukFromCache(cabangId){
   const cached = localStorage.getItem('produkCache_'+cabangId);
+  try{ ketersediaanUkuran = JSON.parse(localStorage.getItem('ketersediaanCache_'+cabangId) || '{}'); }catch(e){ ketersediaanUkuran = {}; }
   if(cached){
     produkByKategori = JSON.parse(cached);
     renderTabs();
@@ -2384,6 +2420,30 @@ function filterMenuSearch(){
 }
 
 // ================== CART ==================
+// sisa porsi ukuran ini setelah dikurangi yang sudah ada di keranjang. Infinity = tidak dibatasi (stok otomatis OFF / ukuran tanpa resep)
+function sisaUkuran(produkId, ukuranKey){
+  const maks = ketersediaanUkuran[produkId+'|'+ukuranKey];
+  if(maks === undefined || maks === null) return Infinity;
+  const diKeranjang = cart.filter(c=>c.produk_id===produkId && c.ukuranKey===ukuranKey).reduce((s,c)=>s+c.qty,0);
+  return maks - diKeranjang;
+}
+
+function renderSizeOption(label, harga, ukuranKey){
+  const sisa = sisaUkuran(pendingItem.id, ukuranKey);
+  const labelAman = label.replace(/'/g,"&#39;");
+  if(sisa <= 0){
+    return `
+      <div class="size-option habis" onclick="alert('Ukuran ${labelAman} tidak bisa dijual: bahan baku habis / sudah terpakai semua di keranjang.')">
+        <span>${label}<span class="size-sisa">Bahan habis</span></span><b>${fmt(harga)}</b>
+      </div>`;
+  }
+  const infoSisa = (sisa !== Infinity && sisa <= 5) ? `<span class="size-sisa">Sisa ${sisa}</span>` : '';
+  return `
+    <div class="size-option" onclick="addToCart('${labelAman}', ${harga}, '${ukuranKey}')">
+      <span>${label}${infoSisa}</span><b>${fmt(harga)}</b>
+    </div>`;
+}
+
 function openSizeModal(item){
   pendingItem = item;
   document.getElementById('sizeItemName').textContent = item.nama;
@@ -2393,21 +2453,12 @@ function openSizeModal(item){
     if(varian.length === 0){
       document.getElementById('sizeOptions').innerHTML = `<div class="empty-msg">Varian menu ini belum diatur. Hubungi Owner.</div>`;
     } else {
-      document.getElementById('sizeOptions').innerHTML = varian.map(v=>`
-        <div class="size-option" onclick="addToCart('${v.label.replace(/'/g,"&#39;")}', ${v.harga}, '${v.kode}')">
-          <span>${v.label}</span><b>${fmt(v.harga)}</b>
-        </div>
-      `).join('');
+      document.getElementById('sizeOptions').innerHTML = varian.map(v=>renderSizeOption(v.label, v.harga, v.kode)).join('');
     }
   } else {
-    document.getElementById('sizeOptions').innerHTML = `
-      <div class="size-option" onclick="addToCart('Kecil', ${item.harga_kecil})">
-        <span>Kecil</span><b>${fmt(item.harga_kecil)}</b>
-      </div>
-      <div class="size-option" onclick="addToCart('Besar', ${item.harga_besar})">
-        <span>Besar</span><b>${fmt(item.harga_besar)}</b>
-      </div>
-    `;
+    document.getElementById('sizeOptions').innerHTML =
+      renderSizeOption('Kecil', item.harga_kecil, 'kecil') +
+      renderSizeOption('Besar', item.harga_besar, 'besar');
   }
   document.getElementById('sizeOverlay').classList.add('show');
 }
@@ -2418,6 +2469,10 @@ function closeSizeModal(){
 
 function addToCart(size, price, ukuranKey){
   const key = ukuranKey || size.toLowerCase();
+  if(sisaUkuran(pendingItem.id, key) <= 0){
+    alert(`"${pendingItem.nama}" ukuran ${size} tidak bisa ditambah: bahan baku tidak cukup.`);
+    return;
+  }
   const existing = cart.find(c => c.produk_id===pendingItem.id && c.size===size);
   if(existing){ existing.qty += 1; }
   else{ cart.push({produk_id:pendingItem.id, nama:pendingItem.nama, size, price, qty:1, ukuranKey:key}); }
@@ -2427,6 +2482,10 @@ function addToCart(size, price, ukuranKey){
 }
 
 function changeQty(idx, delta){
+  if(delta > 0 && sisaUkuran(cart[idx].produk_id, cart[idx].ukuranKey) <= 0){
+    alert(`"${cart[idx].nama}" ukuran ${cart[idx].size} tidak bisa ditambah lagi: bahan baku tidak cukup.`);
+    return;
+  }
   cart[idx].qty += delta;
   if(cart[idx].qty <= 0){ cart.splice(idx,1); }
   renderCart();
@@ -2529,17 +2588,9 @@ async function konfirmasiBayar(){
     queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar);
     tersimpanOffline = true;
   } else {
+    let stokKurangMsg = null;
     try{
-      const { data: tx, error: txErr } = await sb
-        .from('transaksi')
-        .insert({ kasir_id: currentUser.id, cabang_id: getActiveCabangId(), total: totalPrice, subtotal: subtotal, diskon: diskon, metode_bayar: metodeBayar })
-        .select()
-        .single();
-
-      if(txErr) throw txErr;
-
       const items = cartSnapshot.map(c => ({
-        transaksi_id: tx.id,
         produk_id: c.produk_id,
         ukuran: c.ukuranKey || c.size.toLowerCase(),
         harga_satuan: c.price,
@@ -2547,14 +2598,35 @@ async function konfirmasiBayar(){
         subtotal: c.price * c.qty
       }));
 
-      const { error: itemErr } = await sb.from('transaksi_item').insert(items);
-      if(itemErr) throw itemErr;
-
-      await loadProduk(); // refresh stok terbaru dari server
+      // transaksi + item disimpan sekaligus di database (atomik). Database menolak kalau bahan baku tidak cukup.
+      const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
+        p_cabang: getActiveCabangId(), p_total: totalPrice, p_subtotal: subtotal, p_diskon: diskon,
+        p_metode: metodeBayar, p_items: items, p_created_at: null, p_offline: false, p_kasir: currentUser.id
+      });
+      if(rpcErr){
+        if(String(rpcErr.message||'').includes('STOK_KURANG')){
+          stokKurangMsg = rpcErr.message.replace('STOK_KURANG:', '').trim();
+        } else {
+          throw rpcErr;
+        }
+      } else {
+        await loadProduk(); // refresh stok terbaru dari server
+      }
     }catch(err){
       // gagal karena koneksi bermasalah -> simpan offline supaya tidak hilang
       queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar);
       tersimpanOffline = true;
+    }
+
+    if(stokKurangMsg){
+      // transaksi DITOLAK: keranjang tidak dikosongkan, kasir bisa ganti ukuran / kurangi jumlah
+      btn.disabled = false;
+      btn.textContent = "BAYAR";
+      tutupKonfirmasiBayar();
+      alert("❌ Transaksi tidak bisa disimpan, bahan baku tidak cukup:\n\n" + stokKurangMsg.split('; ').join('\n') +
+            "\n\nSilakan ganti ukuran atau kurangi jumlah pesanan.");
+      await loadProduk();
+      return;
     }
   }
 
@@ -2607,7 +2679,10 @@ function queueOfflineTransaksi(items, total, subtotal, diskon, metodeBayar){
       const p = list.find(x=>x.id === c.produk_id);
       if(p){ p.stok -= c.qty; }
     });
+    const kKey = c.produk_id + '|' + (c.ukuranKey || c.size.toLowerCase());
+    if(ketersediaanUkuran[kKey] !== undefined && ketersediaanUkuran[kKey] !== null){ ketersediaanUkuran[kKey] -= c.qty; }
   });
+  try{ localStorage.setItem('ketersediaanCache_'+getActiveCabangId(), JSON.stringify(ketersediaanUkuran)); }catch(e){}
   renderCatalog();
   updateConnStatus();
   return tempId;
@@ -2620,16 +2695,14 @@ async function trySyncPending(){
   const remaining = [];
   for(const trx of queue){
     try{
-      const { data: tx, error: txErr } = await sb
-        .from('transaksi')
-        .insert({ kasir_id: trx.kasir_id, cabang_id: trx.cabang_id, total: trx.total, subtotal: trx.subtotal, diskon: trx.diskon || 0, metode_bayar: trx.metode_bayar || 'tunai', created_at: trx.created_at })
-        .select()
-        .single();
-      if(txErr) throw txErr;
-
-      const items = trx.items.map(it => ({ ...it, transaksi_id: tx.id }));
-      const { error: itemErr } = await sb.from('transaksi_item').insert(items);
-      if(itemErr) throw itemErr;
+      // transaksi offline: pembeli sudah dilayani, jadi TETAP diterima walau bahan kurang.
+      // Kalau bahan jadi minus, database mencatatnya di Log Aktivitas & muncul peringatan di Dashboard.
+      const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
+        p_cabang: trx.cabang_id, p_total: trx.total, p_subtotal: trx.subtotal, p_diskon: trx.diskon || 0,
+        p_metode: trx.metode_bayar || 'tunai', p_items: trx.items, p_created_at: trx.created_at,
+        p_offline: true, p_kasir: trx.kasir_id
+      });
+      if(rpcErr) throw rpcErr;
     }catch(err){
       remaining.push(trx); // gagal, coba lagi nanti
     }
