@@ -228,6 +228,17 @@
     .item-price{font-size:10.5px;gap:3px;}
     .item-price b{font-size:11.5px;}
   }
+  /* FIX: teks nama menu keluar dari bingkai kartu (tablet Redmi Pad SE dll) */
+  .grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;}
+  .item-card{min-width:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;}
+  .item-card > *{max-width:100%;min-width:0;}
+  .item-name{font-size:clamp(13px,2.1vw,17px);line-height:1.15;overflow-wrap:anywhere;word-break:break-word;hyphens:auto;}
+  .item-stock{font-size:clamp(10.5px,1.6vw,13px);}
+  .item-price{font-size:clamp(10px,1.4vw,12px);gap:3px;overflow-wrap:anywhere;}
+  .item-price b{font-size:clamp(11px,1.5vw,13px);}
+  @media (max-width:480px){
+    .grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;}
+  }
   #menuSearchInput::placeholder{color:rgba(232,185,35,.6);}
   .loading-msg{padding:40px;text-align:center;color:rgba(12,31,20,.5);font-size:13px;}
 
