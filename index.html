@@ -97,6 +97,9 @@
     position:sticky;top:0;z-index:20;width:100%;max-width:100%;overflow-x:hidden;
   }
   .topbar-brand{width:100%;text-align:center;}
+  .topbar-saldo{background:#000;border:2px solid var(--gold);border-radius:16px;padding:7px 14px;text-align:center;line-height:1.2;cursor:pointer;flex-shrink:0;}
+  .topbar-saldo .ts-label{font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;}
+  .topbar-saldo .ts-nilai{font-size:19px;font-weight:800;color:#fff;white-space:nowrap;}
   .topbar-brand h1{font-size:22px;margin:0;color:#fff;letter-spacing:.2px;text-shadow:0 1px 3px rgba(0,0,0,.6);}
   .topbar-brand span{display:block;font-size:12px;color:#fff;font-weight:600;margin-top:2px;text-shadow:0 1px 2px rgba(0,0,0,.6);}
   #ownerCabangSelector{
@@ -104,7 +107,7 @@
     border:1px solid var(--line-soft);background:#fff;color:var(--forest-dark);font-weight:700;
     max-width:100%;
   }
-  .topbar-status{display:flex;align-items:center;gap:8px;}
+  .topbar-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .status-chip{
     background:rgba(12,31,20,.06);color:var(--ink);border:1px solid var(--line-soft);
     padding:6px 12px;border-radius:16px;font-size:12px;font-weight:700;
@@ -456,7 +459,7 @@
   </aside>
 
   <div class="app-main" id="appMain">
-    <div class="topbar">
+    <div class="topbar" id="topbarUtama">
       <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Minimize/tampilkan menu">⋮</button>
       <div class="topbar-brand">
         <h1>Es Teh S.O.L.O</h1>
@@ -478,7 +481,10 @@
         </div>
         <span class="status-chip" id="connStatus">🟢 Online</span>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
-        <button class="status-chip" onclick="location.reload()" title="Muat ulang aplikasi">🔄 Refresh</button>
+        <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
+          <div class="ts-label">🏦 Saldo Kas</div>
+          <div class="ts-nilai" id="topbarSaldoNilai">…</div>
+        </div>
       </div>
     </div>
 
@@ -553,6 +559,12 @@
           <span class="icon">💵</span>
           <div class="label">Kas Tunai Hari Ini</div>
           <div class="value" id="dashKasHariIni">Rp 0</div>
+        </div>
+        <div class="dash-card hidden" id="dashSaldoCard">
+          <span class="icon">🏦</span>
+          <div class="label">Saldo Kas Outlet (uang di laci)</div>
+          <div class="value" id="dashSaldoKas">Rp 0</div>
+          <div id="dashSaldoInfo" style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;line-height:1.3;"></div>
         </div>
       </div>
 
@@ -1353,10 +1365,12 @@ async function loadProfileAndEnter(){
     sel.innerHTML = userAllowedCabang.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${c.nama}</option>`).join('');
     sel.classList.remove('hidden');
     document.getElementById('userGreeting').textContent = profile.nama + " · " + profile.role;
+    setTimeout(refreshSaldoHeader, 500);
   } else {
     sel.classList.add('hidden');
     const namaCabangTunggal = userAllowedCabang[0] ? userAllowedCabang[0].nama : '(belum ada cabang)';
     document.getElementById('userGreeting').textContent = profile.nama + " · " + profile.role + " · " + namaCabangTunggal;
+    setTimeout(refreshSaldoHeader, 500);
   }
 
   if(profile.role === 'admin'){
@@ -1711,6 +1725,7 @@ async function submitHitungKas(){
   }
 
   closeKasModal();
+  refreshSaldoHeader();
 
   if(selisih === 0){
     showSuccessToast('✅', 'Kas pas!', 'Kas seharusnya ' + fmt(kasSistem) + ', sesuai hitungan.');
@@ -2112,6 +2127,7 @@ function changeOwnerCabang(selectEl){
   if(!document.getElementById('ownerView').classList.contains('hidden')){
     loadDashboard();
   }
+  refreshSaldoHeader();
 }
 
 async function loadCabangList(){
@@ -2784,6 +2800,7 @@ async function konfirmasiBayar(){
   lastTransaksiOffline = tersimpanOffline;
 
   lastReceiptText = buildReceiptText(cartSnapshot, totalPrice, diskon, metodeBayar);
+  setTimeout(refreshSaldoHeader, 1500);
 
   document.getElementById('diskonInput').value = 0;
   selectedMetodeBayar = 'tunai';
@@ -3099,6 +3116,71 @@ async function loadDashboard(){
   await loadBahanBakuStock();
 }
 
+// ===== SALDO KAS OUTLET =====
+// saldo = uang fisik Hitung Kas terakhir + penjualan sesudahnya - biaya tunai sesudahnya
+async function hitungSaldoKas(daftarCabang){
+  let total = 0; const info = [];
+  for(const c of daftarCabang){
+    const { data: lastKas } = await sb.from('kas_shift')
+      .select('kas_fisik, waktu_tutup').eq('cabang_id', c.id)
+      .order('waktu_tutup', { ascending:false }).limit(1).maybeSingle();
+    if(!lastKas){ info.push(`${c.nama}: belum pernah Hitung Kas`); continue; }
+    const sejak = lastKas.waktu_tutup;
+    const { data: tx } = await sb.from('transaksi').select('total')
+      .eq('cabang_id', c.id).eq('status','selesai').gt('created_at', sejak);
+    const { data: by } = await sb.from('biaya_operasional').select('jumlah')
+      .eq('cabang_id', c.id).eq('sumber_dana','tunai').gt('created_at', sejak);
+    const masuk = (tx||[]).reduce((a,t)=>a+Number(t.total),0);
+    const keluar = (by||[]).reduce((a,b)=>a+Number(b.jumlah),0);
+    total += Number(lastKas.kas_fisik) + masuk - keluar;
+    const tgl = new Date(sejak).toLocaleString('id-ID',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    info.push(`${daftarCabang.length>1 ? c.nama+': ' : ''}Hitung Kas ${tgl} ${fmt(Number(lastKas.kas_fisik))}` +
+      (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} biaya` : ''));
+  }
+  return { total, info };
+}
+
+async function loadSaldoKasOutlet(filterCabangId){
+  const elNilai = document.getElementById('dashSaldoKas');
+  const elInfo = document.getElementById('dashSaldoInfo');
+  elNilai.textContent = '...'; elInfo.textContent = '';
+  try{
+    const target = filterCabangId ? cabangList.filter(c=>c.id===filterCabangId) : cabangList;
+    const { total, info } = await hitungSaldoKas(target);
+    elNilai.textContent = fmt(total);
+    elInfo.textContent = info.join(' | ');
+  }catch(e){
+    elNilai.textContent = '-'; elInfo.textContent = 'Gagal memuat saldo';
+  }
+}
+
+// Saldo di pojok kanan atas: cuma untuk Owner & Admin
+let saldoHeaderTimer = null;
+async function refreshSaldoHeader(){
+  const box = document.getElementById('topbarSaldo');
+  const role = currentProfile && currentProfile.role;
+  const boleh = role === 'owner' || role === 'admin';
+  box.classList.toggle('hidden', !boleh);
+  if(!boleh){ if(saldoHeaderTimer){ clearInterval(saldoHeaderTimer); saldoHeaderTimer = null; } return; }
+  if(!saldoHeaderTimer){ saldoHeaderTimer = setInterval(refreshSaldoHeader, 60000); }
+  if(!navigator.onLine) return;
+  try{
+    let target;
+    if(activeCabangId){
+      const { data } = await sb.from('cabang').select('id, nama').eq('id', activeCabangId);
+      target = data || [];
+    } else {
+      const { data } = await sb.from('cabang').select('id, nama').eq('aktif', true);
+      target = data || [];
+    }
+    const { total, info } = await hitungSaldoKas(target);
+    document.getElementById('topbarSaldoNilai').textContent = fmt(total);
+    box.title = info.join(' | ') + ' (ketuk untuk refresh)';
+  }catch(e){
+    document.getElementById('topbarSaldoNilai').textContent = '-';
+  }
+}
+
 async function loadRingkasan(){
   const isOwner = currentProfile && currentProfile.role === 'owner';
   document.getElementById('ringkasanFilterRow').classList.toggle('hidden', !isOwner);
@@ -3136,6 +3218,10 @@ async function loadRingkasan(){
     const kasTunai = (txToday||[]).filter(t=>(t.metode_bayar||'tunai')==='tunai').reduce((s,t)=>s+Number(t.total),0);
     document.getElementById('dashKasHariIni').textContent = fmt(kasTunai);
   }
+
+  // ===== SALDO KAS OUTLET: hasil Hitung Kas terakhir + penjualan tunai sesudahnya - biaya tunai sesudahnya =====
+  document.getElementById('dashSaldoCard').classList.toggle('hidden', !isOwner);
+  if(isOwner){ loadSaldoKasOutlet(filterCabangId); }
 
   const performaSection = document.getElementById('performaCabangSection');
 
