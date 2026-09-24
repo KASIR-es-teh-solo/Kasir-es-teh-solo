@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.1">
+<meta name="app-version" content="2026-09-25.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1461,7 +1461,7 @@ async function loadProfileAndEnter(){
 
   const sel = document.getElementById('ownerCabangSelector');
   if(userAllowedCabang.length > 1){
-    sel.innerHTML = userAllowedCabang.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${c.nama}</option>`).join('');
+    sel.innerHTML = userAllowedCabang.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${escTG(c.nama)}</option>`).join('');
     sel.classList.remove('hidden');
     document.getElementById('userGreeting').textContent = profile.nama + " · " + profile.role;
     setTimeout(refreshSaldoHeader, 500);
@@ -1688,6 +1688,10 @@ async function bukaKasModal(){
   `;
   document.getElementById('kasOverlay').classList.add('show');
 
+  // transaksi offline yang belum terkirim: uangnya sudah di laci tapi belum tercatat di server
+  // -> kalau dihitung sekarang hasilnya "kas lebih" palsu. Wajib sinkron dulu.
+  if(tampilkanPeringatanAntrianKas()) return;
+
   const { data: lastKas } = await sb
     .from('kas_shift')
     .select('kas_fisik, waktu_tutup')
@@ -1724,6 +1728,51 @@ async function bukaKasModal(){
   `;
 }
 
+function antrianOfflineCabangAktif(){
+  let antrian = [];
+  try{ antrian = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]'); }catch(e){ antrian = []; }
+  return antrian.filter(t=>t.cabang_id===activeCabangId);
+}
+
+// true = masih ada antrian offline, form Hitung Kas diganti peringatan
+function tampilkanPeringatanAntrianKas(){
+  const antrian = antrianOfflineCabangAktif();
+  if(antrian.length === 0) return false;
+  const total = antrian.reduce((s,t)=>s+Number(t.total||0),0);
+  document.getElementById('kasModalBody').innerHTML = `
+    <div style="background:#fff4e0;border:1px solid #e0a030;border-radius:8px;padding:10px;font-size:13px;margin-bottom:14px;">
+      ⚠️ Masih ada <b>${antrian.length} transaksi offline (${fmt(total)})</b> yang belum terkirim ke server.<br><br>
+      Uangnya sudah ada di laci, tapi belum masuk hitungan. Kalau Hitung Kas sekarang, hasilnya jadi <b>kas lebih palsu</b>.
+      Sambungkan internet lalu sinkron dulu.
+    </div>
+    <div class="login-error" id="kasError"></div>
+    <button class="login-btn" id="kasSinkronBtn" onclick="sinkronLaluBukaKas()">🔄 Sinkron Sekarang</button>
+  `;
+  return true;
+}
+
+async function sinkronLaluBukaKas(){
+  const btn = document.getElementById('kasSinkronBtn');
+  const errBox = document.getElementById('kasError');
+  if(!navigator.onLine){
+    errBox.textContent = 'Masih offline. Sambungkan internet dulu, lalu coba lagi.';
+    errBox.classList.add('show');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Mengirim...';
+  await trySyncPending();
+  const sisa = antrianOfflineCabangAktif().length;
+  if(sisa > 0){
+    btn.disabled = false;
+    btn.textContent = '🔄 Sinkron Sekarang';
+    errBox.textContent = `${sisa} transaksi belum berhasil terkirim. Periksa sinyal lalu coba lagi.`;
+    errBox.classList.add('show');
+    return;
+  }
+  await bukaKasModal();
+}
+
 function closeKasModal(){
   document.getElementById('kasOverlay').classList.remove('show');
 }
@@ -1748,6 +1797,9 @@ async function submitHitungKas(){
     errBox.classList.add('show');
     return;
   }
+
+  // jaga-jaga: ada transaksi offline baru masuk antrian selama form terbuka
+  if(tampilkanPeringatanAntrianKas()) return;
 
   const btn = document.getElementById('kasSubmitBtn');
   btn.disabled = true;
@@ -1945,7 +1997,7 @@ async function loadStokMenipis(){
     .lte('stok', 10);
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
 
@@ -1965,8 +2017,8 @@ async function loadStokMenipis(){
           <div style="color:#c0392b;font-weight:800;margin-bottom:6px;">⚠️ Stok bahan MINUS — ada penjualan melebihi bahan tercatat (cek transaksi offline di Log Aktivitas, lalu restock/koreksi stok)</div>
           ${rowsMinus.map(r=>`
             <div class="stock-row">
-              <span>${r.bahan_baku.nama} <span style="opacity:.5;font-size:11px;">· ${r.cabang.nama}</span></span>
-              <span class="low">${Number(r.stok)} ${r.bahan_baku.satuan||''}</span>
+              <span>${escTG(r.bahan_baku.nama)} <span style="opacity:.5;font-size:11px;">· ${escTG(r.cabang.nama)}</span></span>
+              <span class="low">${Number(r.stok)} ${escTG(r.bahan_baku.satuan||'')}</span>
             </div>`).join('')}
         </div>`;
     }
@@ -1976,7 +2028,7 @@ async function loadStokMenipis(){
     ? '<div class="empty-msg">Tidak ada stok menipis di semua cabang. 🎉</div>'
     : rowsStok.map(r=>`
         <div class="stock-row">
-          <span>${r.produk.nama} <span style="opacity:.5;font-size:11px;">· ${r.cabang.nama}</span></span>
+          <span>${escTG(r.produk.nama)} <span style="opacity:.5;font-size:11px;">· ${escTG(r.cabang.nama)}</span></span>
           <span class="low">${r.stok}</span>
         </div>
       `).join(''));
@@ -1994,7 +2046,7 @@ async function loadRiwayatKas(){
     .limit(50);
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -2010,13 +2062,13 @@ async function loadRiwayatKas(){
       : `<span style="color:#c0392b;font-weight:700;">${Number(r.selisih) > 0 ? 'Lebih' : 'Kurang'} ${fmt(Math.abs(r.selisih))}</span>`;
     return `
       <div class="tx-row" style="flex-wrap:wrap;">
-        <span>${r.cabang ? r.cabang.nama : '-'} · oleh ${r.ditutup ? r.ditutup.nama : '-'}</span>
+        <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
         <span class="time">${new Date(r.waktu_tutup).toLocaleString('id-ID')}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
           Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${selisihTxt}</span>
-        ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${r.catatan}</span>` : ''}
+        ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
         ${isOwnerKas ? `<span style="width:100%;margin-top:6px;"><button class="remove-btn" onclick="hapusRiwayatKas('${r.id}')" style="font-size:12px;padding:5px 10px;">🗑️ Hapus</button></span>` : ''}
       </div>
     `;
@@ -2049,7 +2101,7 @@ async function loadLogAktivitas(){
     .limit(50);
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -2065,9 +2117,9 @@ async function loadLogAktivitas(){
 
   box.innerHTML = tombolBersihkan + data.map(r=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span><b>${r.aksi}</b> · ${r.cabang ? r.cabang.nama : '-'} · oleh ${r.pelaku ? r.pelaku.nama : '-'}</span>
+      <span><b>${escTG(r.aksi)}</b> · ${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.pelaku ? r.pelaku.nama : '-')}</span>
       <span class="time">${new Date(r.created_at).toLocaleString('id-ID')}</span>
-      ${r.keterangan ? `<span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">${r.keterangan}</span>` : ''}
+      ${r.keterangan ? `<span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">${escTG(r.keterangan)}</span>` : ''}
       ${isOwnerLog ? `<span style="width:100%;display:flex;justify-content:flex-end;margin-top:4px;"><button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="hapusLogAktivitas('${r.id}')">🗑️ Hapus</button></span>` : ''}
     </div>
   `).join('');
@@ -2237,7 +2289,7 @@ async function loadAktifSekarang(){
     .order('last_seen_at', { ascending:false });
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -2248,7 +2300,7 @@ async function loadAktifSekarang(){
   const isOwner = currentProfile && currentProfile.role === 'owner';
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>🟢 ${p.user ? p.user.nama : '-'} · ${p.cabang ? p.cabang.nama : '-'}</span>
+      <span>🟢 ${escTG(p.user ? p.user.nama : '-')} · ${escTG(p.cabang ? p.cabang.nama : '-')}</span>
       <span class="time">${p.user && p.user.role === 'admin' ? 'Admin' : 'Kasir'}</span>
       ${isOwner ? `
       <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
@@ -2282,7 +2334,7 @@ function bukaPesanModal(userId, nama, cabangId){
   document.getElementById('pesanKirimError').classList.remove('show');
 
   const sel = document.getElementById('pesanKirimCabangSelect');
-  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('');
+  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}">${escTG(c.nama)}</option>`).join('');
   if(cabangId && cabangList.some(c=>c.id===cabangId)){
     sel.value = cabangId;
   }
@@ -2351,7 +2403,7 @@ async function loadRiwayatPesanKirim(){
     .limit(10);
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -2361,7 +2413,7 @@ async function loadRiwayatPesanKirim(){
 
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span style="width:100%;font-size:13px;">${p.isi}</span>
+      <span style="width:100%;font-size:13px;">${escTG(p.isi)}</span>
       <span class="time">${new Date(p.created_at).toLocaleString('id-ID')}</span>
       <span>${p.dibaca
         ? `<span style="color:#2e7d32;font-weight:700;font-size:11px;">✅ Sudah dibaca${p.dibaca_at ? ' · '+new Date(p.dibaca_at).toLocaleString('id-ID') : ''}</span>`
@@ -2398,8 +2450,8 @@ async function cekPesanMasuk(){
   window.pesanMasukIds = data.map(p=>p.id);
   document.getElementById('pesanMasukList').innerHTML = data.map(p=>`
     <div style="background:var(--page-bg);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:11px;color:rgba(12,31,20,.6);margin-bottom:4px;">Dari ${p.dari ? p.dari.nama : 'Owner'} · ${new Date(p.created_at).toLocaleString('id-ID')}</div>
-      <div style="font-size:14px;font-weight:600;">${p.isi}</div>
+      <div style="font-size:11px;color:rgba(12,31,20,.6);margin-bottom:4px;">Dari ${escTG(p.dari ? p.dari.nama : 'Owner')} · ${new Date(p.created_at).toLocaleString('id-ID')}</div>
+      <div style="font-size:14px;font-weight:600;">${escTG(p.isi)}</div>
     </div>
   `).join('');
   document.getElementById('pesanMasukOverlay').classList.add('show');
@@ -2803,7 +2855,7 @@ function renderTabs(){
   const cats = sortedCategories();
   tabs.innerHTML = cats.map((c,i)=>{
     const st = catStyle(c);
-    return `<button class="tab ${i===0?'active':''}" onclick="scrollToCat('${c}', this)">${st.icon} ${c}</button>`;
+    return `<button class="tab ${i===0?'active':''}" onclick="scrollToCat('${c.replace(ATTR_JS_RE, attrJsEsc)}', this)">${st.icon} ${escTG(c)}</button>`;
   }).join('');
 }
 
@@ -2814,15 +2866,15 @@ function renderCatalog(){
     const items = produkByKategori[cat];
     const st = catStyle(cat);
     return `
-    <section class="cat-block" id="cat-${cat.replace(/\s+/g,'-')}">
+    <section class="cat-block" id="cat-${escTG(cat.replace(/\s+/g,'-'))}">
       <div class="cat-banner" style="background:${st.color};">
         <span class="cat-banner-icon">${st.icon}</span>
-        <span class="cat-banner-title">${cat}</span>
+        <span class="cat-banner-title">${escTG(cat)}</span>
       </div>
       <div class="grid">
         ${items.map(it=>`
-          <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${JSON.stringify(it).replace(/'/g,"&#39;")})`}'>
-            <div class="item-name">${it.nama}</div>
+          <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${escTG(JSON.stringify(it))})`}'>
+            <div class="item-name">${escTG(it.nama)}</div>
             <div class="item-stock">${it.stok<=0 ? 'Stok habis' : 'Stok: '+it.stok}</div>
             ${renderItemCardHarga(it, st)}
           </div>
@@ -2839,7 +2891,7 @@ function renderItemCardHarga(it, st){
       return `<div class="item-price"><span>Varian</span><b style="color:${st.color}">Belum diatur</b></div>`;
     }
     if(varian.length === 1){
-      return `<div class="item-price"><span>${varian[0].label}</span><b style="color:${st.color}">${fmt(varian[0].harga)}</b></div>`;
+      return `<div class="item-price"><span>${escTG(varian[0].label)}</span><b style="color:${st.color}">${fmt(varian[0].harga)}</b></div>`;
     }
     const min = Math.min(...varian.map(v=>Number(v.harga)));
     return `
@@ -2880,7 +2932,7 @@ function filterMenuSearch(){
 
   const area = document.getElementById('catalogArea');
   if(matched.length === 0){
-    area.innerHTML = `<div class="loading-msg">Tidak ada menu yang cocok dengan "${q}".</div>`;
+    area.innerHTML = `<div class="loading-msg">Tidak ada menu yang cocok dengan "${escTG(q)}".</div>`;
     return;
   }
 
@@ -2894,8 +2946,8 @@ function filterMenuSearch(){
         ${matched.map(it=>{
           const st = catStyle(it.kategori);
           return `
-          <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${JSON.stringify(it).replace(/'/g,"&#39;")})`}'>
-            <div class="item-name">${it.nama}</div>
+          <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${escTG(JSON.stringify(it))})`}'>
+            <div class="item-name">${escTG(it.nama)}</div>
             <div class="item-stock">${it.stok<=0 ? 'Stok habis' : 'Stok: '+it.stok}</div>
             ${renderItemCardHarga(it, st)}
           </div>
@@ -2920,13 +2972,13 @@ function renderSizeOption(label, harga, ukuranKey){
   if(sisa <= 0){
     return `
       <div class="size-option habis" onclick="alert('Ukuran ${labelAman} tidak bisa dijual: bahan baku habis / sudah terpakai semua di keranjang.')">
-        <span>${label}<span class="size-sisa">Bahan habis</span></span><b>${fmt(harga)}</b>
+        <span>${escTG(label)}<span class="size-sisa">Bahan habis</span></span><b>${fmt(harga)}</b>
       </div>`;
   }
   const infoSisa = (sisa !== Infinity && sisa <= 5) ? `<span class="size-sisa">Sisa ${sisa}</span>` : '';
   return `
-    <div class="size-option" onclick="addToCart('${labelAman}', ${harga}, '${ukuranKey}')">
-      <span>${label}${infoSisa}</span><b>${fmt(harga)}</b>
+    <div class="size-option" onclick="addToCart('${labelAman}', ${harga}, '${String(ukuranKey).replace(ATTR_JS_RE, attrJsEsc)}')">
+      <span>${escTG(label)}${infoSisa}</span><b>${fmt(harga)}</b>
     </div>`;
 }
 
@@ -2986,8 +3038,8 @@ function renderCart(){
   } else {
     box.innerHTML = cart.map((c,i)=>`
       <div class="cart-line">
-        <div class="cart-line-top"><span>${c.nama}</span><span>${fmt(c.price*c.qty)}</span></div>
-        <div class="cart-line-sub">${c.size} · ${fmt(c.price)}/pcs</div>
+        <div class="cart-line-top"><span>${escTG(c.nama)}</span><span>${fmt(c.price*c.qty)}</span></div>
+        <div class="cart-line-sub">${escTG(c.size)} · ${fmt(c.price)}/pcs</div>
         <div class="cart-line-bottom">
           <div class="qty-control">
             <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
@@ -3031,7 +3083,7 @@ function bukaKonfirmasiBayar(){
 
   const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer' };
   const lines = cart.map(c=>`
-    <div class="receipt-line"><span>${c.nama} (${c.size}) x${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>
+    <div class="receipt-line"><span>${escTG(c.nama)} (${escTG(c.size)}) x${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>
   `).join('');
   const diskonLine = diskon > 0
     ? `<div class="receipt-line"><span>Diskon</span><span>- ${fmt(diskon)}</span></div>`
@@ -3482,6 +3534,21 @@ async function manualPrintReceipt(){
 }
 
 // ================== OWNER DASHBOARD ==================
+// id produk yang stoknya dihitung otomatis dari bahan baku (sama dengan fungsi database produk_ber_resep):
+// stok otomatis aktif + punya resep dengan jumlah > 0 dari bahan yang dihitung stok. Gagal baca -> anggap tidak ada.
+async function ambilProdukStokOtomatis(){
+  try{
+    const { data: setelan, error: e1 } = await sb.from('pengaturan_sistem').select('nilai').eq('kunci', 'stok_otomatis').maybeSingle();
+    if(e1 || !setelan || setelan.nilai !== 'true') return new Set();
+    const { data: rows, error: e2 } = await sb.from('resep')
+      .select('produk_id, bahan_baku:bahan_baku_id!inner(dihitung_stok)')
+      .gt('jumlah', 0)
+      .eq('bahan_baku.dihitung_stok', true);
+    if(e2 || !rows) return new Set();
+    return new Set(rows.map(r => r.produk_id));
+  }catch(e){ return new Set(); }
+}
+
 async function loadDashboard(){
   document.getElementById('dashTxList').innerHTML = '<div class="empty-msg">Memuat...</div>';
   document.getElementById('dashStockList').innerHTML = '<div class="empty-msg">Memuat...</div>';
@@ -3516,15 +3583,21 @@ async function loadDashboard(){
       .map(r => ({ id: r.produk.id, nama: r.produk.nama, stok: r.stok }))
       .sort((a,b)=> a.stok - b.stok);
 
+    // stok otomatis aktif: stok produk ber-resep dihitung ulang dari bahan baku oleh database,
+    // jadi tambahan manual lewat "+" akan tertimpa diam-diam -> tombolnya diganti arahan ke Stok Bahan Baku
+    const produkOtomatis = await ambilProdukStokOtomatis();
+
     if(stockData.length===0){
       stockList.innerHTML = '<div class="empty-msg">Belum ada produk.</div>';
     } else {
       stockList.innerHTML = stockData.map(p=>`
-        <div class="stock-row" data-id="${p.id}" data-nama="${p.nama.replace(/"/g,'&quot;')}" data-stok="${p.stok}" data-cabang="${cabangId}">
-          <span>${p.nama}</span>
+        <div class="stock-row" data-id="${p.id}" data-nama="${escTG(p.nama)}" data-stok="${p.stok}" data-cabang="${cabangId}">
+          <span>${escTG(p.nama)}${produkOtomatis.has(p.id) ? '<div style="font-size:11px;opacity:.6;">Otomatis dari stok bahan baku</div>' : ''}</span>
           <span style="display:flex;align-items:center;gap:10px;">
             <span class="${p.stok<=10?'low':''}">${p.stok}</span>
-            <button class="qty-btn" onclick="tambahStokFromRow(this)">+</button>
+            ${produkOtomatis.has(p.id)
+              ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" title="Stok menu ini dihitung dari bahan baku. Tambah stok bahannya." onclick="switchStokTab('bahan')">🧪 Stok bahan</button>`
+              : `<button class="qty-btn" onclick="tambahStokFromRow(this)">+</button>`}
           </span>
         </div>
       `).join('');
@@ -3629,7 +3702,7 @@ async function loadRingkasan(){
     const sel = document.getElementById('ringkasanCabangFilter');
     if(sel.options.length <= cabangList.length){
       sel.innerHTML = '<option value="semua">🌐 Semua Cabang (Gambaran Besar)</option>' +
-        cabangList.map(c=>`<option value="${c.id}">🏬 ${c.nama}</option>`).join('');
+        cabangList.map(c=>`<option value="${c.id}">🏬 ${escTG(c.nama)}</option>`).join('');
     }
     filterCabangId = sel.value === 'semua' ? null : sel.value;
   } else {
@@ -3705,7 +3778,7 @@ async function loadRingkasan(){
         ? '<div class="empty-msg">Belum ada transaksi hari ini.</div>'
         : rows.map(r=>`
             <div class="tx-row">
-              <span>${r.nama}</span>
+              <span>${escTG(r.nama)}</span>
               <span>${fmt(r.total)} · ${r.count} transaksi</span>
             </div>
           `).join('');
@@ -3828,7 +3901,7 @@ async function loadTerlarisDanKategori(){
   } else {
     terlarisBox.innerHTML = terlarisArr.map(([nama, v], i)=>`
       <div class="stock-row">
-        <span>${i+1}. ${nama}</span>
+        <span>${i+1}. ${escTG(nama)}</span>
         <span>${v.qty} terjual · ${fmt(v.omzet)}</span>
       </div>
     `).join('');
@@ -3841,7 +3914,7 @@ async function loadTerlarisDanKategori(){
   } else {
     kategoriBox.innerHTML = kategoriArr.map(([nama, v])=>`
       <div class="stock-row">
-        <span>${nama}</span>
+        <span>${escTG(nama)}</span>
         <span>${v.qty} terjual · ${fmt(v.omzet)}</span>
       </div>
     `).join('');
@@ -3925,8 +3998,8 @@ async function loadKaryawan(){
   const settingsBox = document.getElementById('settingsKaryawanList');
 
   if(error){
-    if(dashBox) dashBox.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
-    if(settingsBox) settingsBox.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    if(dashBox) dashBox.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
+    if(settingsBox) settingsBox.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -3941,9 +4014,9 @@ async function loadKaryawan(){
   if(dashBox){
     dashBox.innerHTML = data.map(u=>`
       <div class="stock-row" style="flex-wrap:wrap;">
-        <span>${u.nama} <span style="opacity:.5;font-size:11px;">· ${u.cabang ? u.cabang.nama : '-'}</span></span>
+        <span>${escTG(u.nama)} <span style="opacity:.5;font-size:11px;">· ${escTG(u.cabang ? u.cabang.nama : '-')}</span></span>
         <span style="display:flex;align-items:center;gap:8px;">
-          <span>${u.role}</span>
+          <span>${escTG(u.role)}</span>
           ${isOwnerNow && u.role!=='owner' ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${u.cabang_id || ''}')">💬 Pesan</button>
           <button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🚪 Logout Paksa</button>` : ''}
         </span>
@@ -3955,9 +4028,9 @@ async function loadKaryawan(){
   if(settingsBox){
     settingsBox.innerHTML = data.map(u=>`
       <div class="stock-row" style="flex-wrap:wrap;">
-        <span>${u.nama} <span style="opacity:.5;font-size:11px;">· ${u.cabang ? u.cabang.nama : '-'}</span></span>
+        <span>${escTG(u.nama)} <span style="opacity:.5;font-size:11px;">· ${escTG(u.cabang ? u.cabang.nama : '-')}</span></span>
         <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span>${u.role}</span>
+          <span>${escTG(u.role)}</span>
           ${u.role!=='owner'
             ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${u.cabang_id || ''}')">💬 Pesan</button>
                <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Edit Nama</button>
@@ -3977,7 +4050,7 @@ async function isiFilterKaryawanJamKerja(){
   if(!sel || sel.dataset.terisi) return;
 
   const { data } = await sb.from('users').select('id, nama').neq('role', 'owner').order('nama');
-  const opsiKaryawan = (data || []).map(u=>`<option value="${u.id}">${u.nama}</option>`).join('');
+  const opsiKaryawan = (data || []).map(u=>`<option value="${u.id}">${escTG(u.nama)}</option>`).join('');
   sel.innerHTML = `<option value="">🌐 Semua Karyawan</option>${opsiKaryawan}`;
   sel.dataset.terisi = '1';
 }
@@ -4009,7 +4082,7 @@ async function loadJamKerja(){
 
   const { data, error } = await query;
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -4029,7 +4102,7 @@ async function loadJamKerja(){
     }
     return `
       <div class="tx-row" style="flex-wrap:wrap;">
-        <span>${a.user ? a.user.nama : '❓ Akun sudah dihapus'}${a.cabang ? ' · '+a.cabang.nama : ''}</span>
+        <span>${escTG(a.user ? a.user.nama : '❓ Akun sudah dihapus')}${a.cabang ? ' · '+escTG(a.cabang.nama) : ''}</span>
         <span class="time">Masuk: ${masuk.toLocaleString('id-ID')}</span>
         <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
           <span style="opacity:.7;">${keluar ? 'Keluar: '+keluar.toLocaleString('id-ID') : '🟢 Masih standby / belum logout'}</span>
@@ -4068,7 +4141,7 @@ async function loadIzinKeluarList(){
 
   const { data, error } = await query;
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -4078,10 +4151,10 @@ async function loadIzinKeluarList(){
 
   box.innerHTML = data.map(r=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${r.status==='aktif' ? '🔴' : '✅'} ${r.user ? r.user.nama : '-'}${r.cabang ? ' · '+r.cabang.nama : ''}</span>
+      <span>${r.status==='aktif' ? '🔴' : '✅'} ${escTG(r.user ? r.user.nama : '-')}${r.cabang ? ' · '+escTG(r.cabang.nama) : ''}</span>
       <span class="time">${new Date(r.waktu_mulai).toLocaleString('id-ID')}</span>
       <span style="width:100%;font-size:12px;opacity:.8;margin-top:4px;">
-        Alasan: ${r.alasan || '-'}${r.waktu_selesai
+        Alasan: ${escTG(r.alasan || '-')}${r.waktu_selesai
           ? ' · Kembali: '+new Date(r.waktu_selesai).toLocaleString('id-ID')
           : (r.status==='aktif' ? ' · <b style="color:#c0392b;">Belum kembali</b>' : '')}
       </span>
@@ -4096,7 +4169,7 @@ function openAddKaryawanModal(){
   document.getElementById('karyawanRole').value = 'kasir';
   document.getElementById('karyawanCabangChecklist').innerHTML = cabangList.map(c=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;cursor:pointer;">
-      <input type="checkbox" value="${c.id}" class="karyawan-cabang-check"> ${c.nama}
+      <input type="checkbox" value="${c.id}" class="karyawan-cabang-check"> ${escTG(c.nama)}
     </label>
   `).join('');
   document.getElementById('karyawanError').classList.remove('show');
@@ -4189,7 +4262,7 @@ function renderTxList(list){
       <span class="time">${new Date(t.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;font-size:11px;opacity:.6;margin-top:2px;">${labelMetode[t.metode_bayar] || '💵 Tunai'}</span>
       ${dibatalkan
-        ? `<span style="width:100%;font-size:11px;color:var(--danger);margin-top:4px;">Dibatalkan${t.alasan_batal ? ' — '+t.alasan_batal : ''}</span>`
+        ? `<span style="width:100%;font-size:11px;color:var(--danger);margin-top:4px;">Dibatalkan${t.alasan_batal ? ' — '+escTG(t.alasan_batal) : ''}</span>`
         : (currentProfile && currentProfile.role==='owner'
             ? `<button class="remove-btn" style="width:100%;text-align:left;margin-top:4px;" onclick="voidTransaksi('${t.id}')">Batalkan transaksi ini</button>`
             : '')
@@ -4333,7 +4406,7 @@ function exportTxPDF(){
       <td>${new Date(t.created_at).toLocaleString('id-ID')}</td>
       <td>${fmt(t.total)}</td>
       <td>${t.status==='dibatalkan' ? 'Dibatalkan' : 'Selesai'}</td>
-      <td>${t.alasan_batal || ''}</td>
+      <td>${escTG(t.alasan_batal || '')}</td>
     </tr>`;
   });
   html += `<tr><td colspan="1" style="font-weight:bold;">Total Penjualan (bukan dibatalkan)</td><td style="font-weight:bold;" colspan="3">${fmt(totalSelesai)}</td></tr>`;
@@ -4347,7 +4420,7 @@ async function loadCabangManageList(){
   const { data, error } = await sb.from('cabang').select('id, nama, alamat, latitude, longitude').eq('aktif', true).order('nama');
   const box = document.getElementById('settingsCabangList');
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -4356,9 +4429,9 @@ async function loadCabangManageList(){
   }
   box.innerHTML = data.map(c=>`
     <div class="stock-row" style="flex-wrap:wrap;">
-      <span>${c.nama}</span>
+      <span>${escTG(c.nama)}</span>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="opacity:.6;font-size:12px;">${c.alamat || '-'}</span>
+        <span style="opacity:.6;font-size:12px;">${escTG(c.alamat || '-')}</span>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaCabang('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Edit</button>
       </span>
     </div>
@@ -4382,7 +4455,7 @@ async function editNamaCabang(cabangId, namaSekarang){
 
   await loadCabangList();
   const sel = document.getElementById('ownerCabangSelector');
-  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${c.nama}</option>`).join('');
+  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${escTG(c.nama)}</option>`).join('');
   await loadCabangManageList();
 }
 
@@ -4421,7 +4494,7 @@ async function tambahCabangBaru(){
   await loadCabangList();
   userAllowedCabang = cabangList;
   const sel = document.getElementById('ownerCabangSelector');
-  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${c.nama}</option>`).join('');
+  sel.innerHTML = cabangList.map(c=>`<option value="${c.id}" ${c.id===activeCabangId?'selected':''}>${escTG(c.nama)}</option>`).join('');
   sel.classList.remove('hidden');
   await loadCabangManageList();
   alert(`Cabang "${nama.trim()}" berhasil ditambahkan.`);
@@ -4438,7 +4511,7 @@ async function openPindahCabangModal(userId, nama){
 
   document.getElementById('pindahCabangChecklist').innerHTML = cabangList.map(c=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;cursor:pointer;">
-      <input type="checkbox" value="${c.id}" class="pindah-cabang-check" ${existingIds.includes(c.id)?'checked':''}> ${c.nama}
+      <input type="checkbox" value="${c.id}" class="pindah-cabang-check" ${existingIds.includes(c.id)?'checked':''}> ${escTG(c.nama)}
     </label>
   `).join('');
   document.getElementById('pindahCabangOverlay').classList.add('show');
@@ -4591,7 +4664,7 @@ async function loadModalProdukList(){
 
   const box = document.getElementById('settingsModalProdukList');
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -4604,7 +4677,7 @@ async function loadModalProdukList(){
       const varianSorted = p.produk_varian.slice().sort((a,b)=>(a.urutan||0)-(b.urutan||0));
       const varianRows = varianSorted.map(v => `
         <div class="stock-row" style="padding-left:12px;">
-          <span style="font-size:13px;opacity:.85;">↳ ${v.label}</span>
+          <span style="font-size:13px;opacity:.85;">↳ ${escTG(v.label)}</span>
           <span style="display:flex;align-items:center;gap:8px;font-size:12px;">
             <span style="opacity:.6;">Modal: ${fmt(v.harga_modal)}</span>
             <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;"
@@ -4614,7 +4687,7 @@ async function loadModalProdukList(){
       `).join('');
       return `
         <div class="stock-row" style="font-weight:600;">
-          <span>${p.nama}</span>
+          <span>${escTG(p.nama)}</span>
           <span></span>
         </div>
         ${varianRows}
@@ -4622,7 +4695,7 @@ async function loadModalProdukList(){
     }
     return `
     <div class="stock-row" style="flex-wrap:wrap;">
-      <span>${p.nama}</span>
+      <span>${escTG(p.nama)}</span>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">
         <span style="opacity:.6;">Modal: ${fmt(p.harga_modal_kecil)} / ${fmt(p.harga_modal_besar)}</span>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;"
@@ -4696,7 +4769,7 @@ async function loadBahanBakuList(){
   const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi, dihitung_stok').order('nama');
   const box = document.getElementById('settingsBahanBakuList');
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   bahanBakuList = data || [];
@@ -4707,15 +4780,15 @@ async function loadBahanBakuList(){
   const isOwner = currentProfile && currentProfile.role === 'owner';
   box.innerHTML = bahanBakuList.map(b=>`
     <div class="stock-row">
-      <span>${b.nama} <span style="opacity:.5;font-size:11px;">(${b.satuan})</span>
-        ${b.konversi ? `<div style="font-size:11px;opacity:.75;">⚖️ 1 ${b.satuan_beli} = ${fmtKonversi(b.konversi)} ${b.satuan}</div>` : ''}
+      <span>${escTG(b.nama)} <span style="opacity:.5;font-size:11px;">(${escTG(b.satuan)})</span>
+        ${b.konversi ? `<div style="font-size:11px;opacity:.75;">⚖️ 1 ${escTG(b.satuan_beli)} = ${fmtKonversi(b.konversi)} ${escTG(b.satuan)}</div>` : ''}
         ${b.dihitung_stok === false ? `<div style="font-size:11px;opacity:.75;">🚫 Tidak dihitung stok</div>` : ''}
       </span>
       <span style="display:flex;gap:6px;">
         ${isOwner ? `
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="aturKonversiBahan('${b.id}')">⚖️</button>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" title="Hitung / tidak dihitung stok" onclick="toggleDihitungStok('${b.id}')">${b.dihitung_stok === false ? '🚫' : '📊'}</button>
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${b.satuan}')">Edit</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${String(b.satuan||'').replace(ATTR_JS_RE, attrJsEsc)}')">Edit</button>
         <button class="remove-btn" onclick="hapusBahanBaku('${b.id}', '${b.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Hapus</button>
         ` : ''}
       </span>
@@ -4984,7 +5057,7 @@ async function loadResepProdukSelect(){
   }
 
   sel.innerHTML = '<option value="">-- Pilih produk --</option>' +
-    allProduk.map(p=>`<option value="${p.id}">${p.nama}</option>`).join('');
+    allProduk.map(p=>`<option value="${p.id}">${escTG(p.nama)}</option>`).join('');
   if(currentVal){ sel.value = currentVal; }
 }
 
@@ -5005,7 +5078,7 @@ async function loadResepProduk(){
     .single();
 
   if(produkErr){
-    area.innerHTML = `<div class="empty-msg">Gagal memuat data menu: ${produkErr.message}</div>`;
+    area.innerHTML = `<div class="empty-msg">Gagal memuat data menu: ${escTG(produkErr.message)}</div>`;
     return;
   }
 
@@ -5015,7 +5088,7 @@ async function loadResepProduk(){
     .eq('produk_id', produkId);
 
   if(error){
-    area.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    area.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
 
@@ -5026,9 +5099,9 @@ async function loadResepProduk(){
       ? '<div class="empty-msg">Belum ada takaran.</div>'
       : rows.map(r=>`
           <div class="stock-row">
-            <span>${r.bahan_baku.nama}</span>
+            <span>${escTG(r.bahan_baku.nama)}</span>
             <span style="display:flex;align-items:center;gap:8px;">
-              <span>${r.jumlah} ${r.bahan_baku.satuan}</span>
+              <span>${r.jumlah} ${escTG(r.bahan_baku.satuan)}</span>
               ${isOwner ? `
               <button class="qty-btn" style="width:auto;padding:4px 8px;font-size:11px;" onclick="editResepJumlah('${r.id}', ${r.jumlah})">Edit</button>
               <button class="remove-btn" onclick="hapusResep('${r.id}')">Hapus</button>
@@ -5038,9 +5111,9 @@ async function loadResepProduk(){
         `).join('');
     return `
       <div style="margin-bottom:14px;">
-        <div style="font-weight:700;font-size:19px;color:#000;margin-bottom:6px;">Ukuran ${label}</div>
+        <div style="font-weight:700;font-size:19px;color:#000;margin-bottom:6px;">Ukuran ${escTG(label)}</div>
         ${rowsHtml}
-        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${label.replace(ATTR_JS_RE, attrJsEsc)}')">+ Tambah Bahan (${label})</button>` : ''}
+        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${String(ukuran).replace(ATTR_JS_RE, attrJsEsc)}', '${label.replace(ATTR_JS_RE, attrJsEsc)}')">+ Tambah Bahan (${escTG(label)})</button>` : ''}
       </div>
     `;
   };
@@ -5068,7 +5141,7 @@ function tambahResep(produkId, ukuran, label){
   resepTargetProdukId = produkId;
   resepTargetUkuran = ukuran;
   document.getElementById('resepBahanInfo').textContent = `Ukuran: ${label || (ukuran === 'kecil' ? 'Kecil' : 'Besar')}`;
-  document.getElementById('resepBahanSelect').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${b.nama} (${b.satuan})</option>`).join('');
+  document.getElementById('resepBahanSelect').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${escTG(b.nama)} (${escTG(b.satuan)})</option>`).join('');
   document.getElementById('resepBahanJumlah').value = '';
   document.getElementById('resepBahanError').classList.remove('show');
   document.getElementById('resepBahanOverlay').classList.add('show');
@@ -5149,7 +5222,7 @@ async function loadBahanBakuStock(){
     .eq('cabang_id', cabangId);
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
 
@@ -5165,7 +5238,7 @@ async function loadBahanBakuStock(){
     if(bb.dihitung_stok === false){
       return `
     <div class="stock-row" style="opacity:.75;">
-      <span>${bb.nama} <span style="opacity:.5;font-size:11px;">(${bb.satuan})</span>
+      <span>${escTG(bb.nama)} <span style="opacity:.5;font-size:11px;">(${escTG(bb.satuan)})</span>
         <div style="font-size:11px;">🚫 Tidak dihitung stok (tetap ada di resep & SOP)</div></span>
       <span style="font-size:20px;font-weight:700;">∞</span>
     </div>`;
@@ -5173,10 +5246,10 @@ async function loadBahanBakuStock(){
     const stokNum = Number(r.stok);
     const stokTampil = Number.isInteger(stokNum) ? stokNum : stokNum.toLocaleString('id-ID', { maximumFractionDigits: 1 });
     const setara = bb.konversi
-      ? `<div style="font-size:11px;opacity:.8;">≈ ${fmtKonversi(stokNum / Number(bb.konversi))} ${bb.satuan_beli}</div>` : '';
+      ? `<div style="font-size:11px;opacity:.8;">≈ ${fmtKonversi(stokNum / Number(bb.konversi))} ${escTG(bb.satuan_beli)}</div>` : '';
     return `
-    <div class="stock-row" data-bahanid="${bb.id}" data-nama="${bb.nama.replace(/"/g,'&quot;')}" data-stok="${r.stok}" data-cabang="${cabangId}" data-satuan="${bb.satuan}" data-satuanbeli="${bb.satuan_beli||''}" data-konversi="${bb.konversi||''}">
-      <span>${bb.nama} <span style="opacity:.5;font-size:11px;">(${bb.satuan})</span>${setara}</span>
+    <div class="stock-row" data-bahanid="${bb.id}" data-nama="${escTG(bb.nama)}" data-stok="${r.stok}" data-cabang="${cabangId}" data-satuan="${escTG(bb.satuan)}" data-satuanbeli="${escTG(bb.satuan_beli||'')}" data-konversi="${bb.konversi||''}">
+      <span>${escTG(bb.nama)} <span style="opacity:.5;font-size:11px;">(${escTG(bb.satuan)})</span>${setara}</span>
       <span style="display:flex;align-items:center;gap:8px;">
         <span class="${r.stok<=10?'low':''}">${stokTampil}</span>
         <button class="qty-btn" onclick="kurangiStokBahanBakuFromRow(this)">−</button>
@@ -5426,7 +5499,7 @@ let editingPembelianId = null;
 function openPembelianModal(){
   editingPembelianId = null;
   document.getElementById('pembelianModalTitle').textContent = 'Catat Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${b.nama} (${b.satuan_beli||b.satuan})</option>`).join('');
+  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
   updatePembelianSatuanInfo();
   document.getElementById('pembelianJumlah').value = '';
   document.getElementById('pembelianHargaSatuan').value = '';
@@ -5438,7 +5511,7 @@ function openPembelianModal(){
 function openEditPembelianModal(p){
   editingPembelianId = p.id;
   document.getElementById('pembelianModalTitle').textContent = 'Edit Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${b.nama} (${b.satuan_beli||b.satuan})</option>`).join('');
+  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
   updatePembelianSatuanInfo();
   document.getElementById('pembelianJumlah').value = p.jumlah;
   document.getElementById('pembelianHargaSatuan').value = p.harga_satuan;
@@ -5548,7 +5621,7 @@ async function loadPembelianData(){
   const box = document.getElementById('dashPembelianList');
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     document.getElementById('dashTotalPengeluaran').textContent = fmt(0);
     return;
   }
@@ -5563,14 +5636,14 @@ async function loadPembelianData(){
 
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${p.bahan_baku ? p.bahan_baku.nama : '-'} · ${p.jumlah} ${p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : ''}${isOwner && p.cabang ? ' · '+p.cabang.nama : ''}</span>
+      <span>${escTG(p.bahan_baku ? p.bahan_baku.nama : '-')} · ${p.jumlah} ${escTG(p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : '')}${isOwner && p.cabang ? ' · '+escTG(p.cabang.nama) : ''}</span>
       <span class="time">${new Date(p.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
-        <span style="opacity:.6;">${fmt(p.harga_satuan)}/satuan${p.catatan ? ' · '+p.catatan : ''}</span>
+        <span style="opacity:.6;">${fmt(p.harga_satuan)}/satuan${p.catatan ? ' · '+escTG(p.catatan) : ''}</span>
         <b style="color:var(--gold-deep);">${fmt(p.total)}</b>
       </span>
       <span style="width:100%;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditPembelianModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditPembelianModal(${escTG(JSON.stringify(p))})'>Edit</button>
         ${currentProfile && currentProfile.role==='owner'
           ? `<button class="remove-btn" onclick="hapusPembelian('${p.id}')">Hapus</button>`
           : ''}
@@ -5742,7 +5815,7 @@ async function loadPenjualanHariIni(){
     .order('created_at', { ascending:false });
 
   if(error){
-    isi.innerHTML = infoOffline + `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    isi.innerHTML = infoOffline + `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
 
@@ -5789,13 +5862,13 @@ async function loadPenjualanHariIni(){
     <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Per metode bayar</div>
     ${Object.keys(perMetode).length === 0 ? '<div class="empty-msg">Belum ada penjualan.</div>' :
       Object.entries(perMetode).map(([m,v])=>`
-        <div class="stock-row"><span>${labelMetode[m] || m} <span style="opacity:.55;font-size:11px;">· ${v.n} trx</span></span><span>${fmt(v.total)}</span></div>
+        <div class="stock-row"><span>${escTG(labelMetode[m] || m)} <span style="opacity:.55;font-size:11px;">· ${v.n} trx</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
 
     <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Menu terjual</div>
     ${menuUrut.length === 0 ? '<div class="empty-msg">Belum ada menu terjual hari ini.</div>' :
       menuUrut.map(([nama,v])=>`
-        <div class="stock-row"><span>${nama} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
+        <div class="stock-row"><span>${escTG(nama)} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
   `;
 }
@@ -5810,12 +5883,12 @@ async function loadBelanjaKecilHariIni(){
     .eq('sumber_dana', 'tunai')
     .gte('created_at', startOfDay.toISOString())
     .order('created_at', { ascending:false });
-  if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`; return; }
+  if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
   const rows = data || [];
   document.getElementById('belanjaKecilTotal').textContent = fmt(rows.reduce((s,r)=>s+Number(r.jumlah),0));
   box.innerHTML = rows.length ? rows.map(r=>`
     <div class="tx-row" style="font-size:12px;">
-      <span>${r.kategori}${r.deskripsi ? ' <span style="opacity:.6;">· '+String(r.deskripsi).replace(/</g,'&lt;')+'</span>' : ''}</span>
+      <span>${escTG(r.kategori)}${r.deskripsi ? ' <span style="opacity:.6;">· '+escTG(r.deskripsi)+'</span>' : ''}</span>
       <span><b>${fmt(r.jumlah)}</b> <span style="opacity:.6;">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></span>
     </div>`).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada belanja hari ini.</div>';
 }
@@ -5929,7 +6002,7 @@ async function loadBiayaData(){
   const box = document.getElementById('dashBiayaList');
 
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     document.getElementById('dashTotalBiaya').textContent = fmt(0);
     return;
   }
@@ -5944,14 +6017,14 @@ async function loadBiayaData(){
 
   box.innerHTML = data.map(b=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${b.kategori}${isOwner && b.cabang ? ' · '+b.cabang.nama : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
+      <span>${escTG(b.kategori)}${isOwner && b.cabang ? ' · '+escTG(b.cabang.nama) : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
       <span class="time">${new Date(b.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
-        <span style="opacity:.6;">${b.deskripsi || '-'}</span>
+        <span style="opacity:.6;">${escTG(b.deskripsi || '-')}</span>
         <b style="color:var(--gold-deep);">${fmt(b.jumlah)}</b>
       </span>
       <span style="width:100%;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditBiayaModal(${JSON.stringify(b).replace(/'/g,"&#39;")})'>Edit</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditBiayaModal(${escTG(JSON.stringify(b))})'>Edit</button>
         ${currentProfile && currentProfile.role==='owner'
           ? `<button class="remove-btn" onclick="hapusBiaya('${b.id}')">Hapus</button>`
           : ''}
@@ -5979,7 +6052,7 @@ async function loadSOPData(){
     .order('ukuran');
 
   if(error){
-    area.innerHTML = `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    area.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
 
@@ -6042,9 +6115,9 @@ function renderSOPList(){
       ? '<div class="empty-msg" style="padding:8px;">Belum ada takaran.</div>'
       : rows.map(r=>`
           <div class="stock-row">
-            <span>${r.bahan_baku.nama}</span>
+            <span>${escTG(r.bahan_baku.nama)}</span>
             <span style="display:flex;align-items:center;gap:8px;">
-              <span>${r.jumlah} ${r.bahan_baku.satuan}</span>
+              <span>${r.jumlah} ${escTG(r.bahan_baku.satuan)}</span>
               ${isOwner ? `
                 <button class="qty-btn" style="width:auto;padding:4px 8px;font-size:11px;" onclick="editResepJumlah('${r.id}', ${r.jumlah})">Edit</button>
                 <button class="remove-btn" onclick="hapusResep('${r.id}')">Hapus</button>
@@ -6053,7 +6126,7 @@ function renderSOPList(){
           </div>
         `).join('');
     const tambahBtn = isOwner
-      ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${(label||'').replace(/'/g,"\\'")}')">+ Tambah Bahan</button>`
+      ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${String(ukuran).replace(ATTR_JS_RE, attrJsEsc)}', '${(label||'').replace(ATTR_JS_RE, attrJsEsc)}')">+ Tambah Bahan</button>`
       : '';
     return rowsHtml + tambahBtn;
   };
@@ -6061,12 +6134,12 @@ function renderSOPList(){
   area.innerHTML = namaList.map(({pid, nama})=>{
     const p = perProduk[pid];
     const sectionsHtml = p.sections.map((s, idx) => `
-      <div style="font-weight:700;font-size:19px;color:#000;margin:${idx === 0 ? '0 0 6px' : '14px 0 6px'};">Ukuran ${s.label}</div>
+      <div style="font-weight:700;font-size:19px;color:#000;margin:${idx === 0 ? '0 0 6px' : '14px 0 6px'};">Ukuran ${escTG(s.label)}</div>
       ${renderBahanRows(s.rows, pid, s.key, s.label)}
     `).join('');
     return `
       <div class="sop-card">
-        <h3 style="color:#ffd400;font-size:24px;text-shadow:0 1px 3px rgba(0,0,0,.75);margin:0 0 12px;font-weight:800;">${nama}</h3>
+        <h3 style="color:#ffd400;font-size:24px;text-shadow:0 1px 3px rgba(0,0,0,.75);margin:0 0 12px;font-weight:800;">${escTG(nama)}</h3>
         ${sectionsHtml}
       </div>
     `;

@@ -10,7 +10,7 @@
 //
 // File ini harus di-upload di folder yang sama dengan index.html.
 // =====================================================================
-const CACHE = 'kasir-esteh-v1';
+const CACHE = 'kasir-esteh-v2';
 const LIBRARY = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1',
   'https://cdn.jsdelivr.net/npm/chart.js@4.5.1',
@@ -27,10 +27,12 @@ self.addEventListener('install', (event) => {
       const res = await fetch(self.registration.scope, { cache: 'no-cache', credentials: 'same-origin' });
       if (res.ok) await cache.put(self.registration.scope, res);
     } catch (e) {}
+    // mode 'cors' supaya status respons bisa dicek: yang disimpan HANYA respons sukses (200).
+    // Respons 'opaque' (no-cors) tidak bisa dicek, jadi error CDN bisa ikut tersimpan & dipakai terus.
     for (const url of LIBRARY) {
       try {
-        const res = await fetch(url, { mode: 'no-cors' });
-        if (res.ok || res.type === 'opaque') await cache.put(url, res);
+        const res = await fetch(url, { mode: 'cors', credentials: 'omit' });
+        if (res.ok) await cache.put(url, res);
       } catch (e) {}
     }
     await self.skipWaiting();
@@ -86,7 +88,13 @@ async function ambilLibrary(req) {
   const cache = await caches.open(CACHE);
   const salinan = await cache.match(req.url);
   if (salinan) return salinan;
-  const res = await fetch(req);
-  if (res && (res.ok || res.type === 'opaque')) cache.put(req.url, res.clone());
-  return res;
+  try {
+    // ambil versi 'cors' untuk disimpan (statusnya bisa dicek); hanya respons sukses yang disimpan
+    const res = await fetch(req.url, { mode: 'cors', credentials: 'omit' });
+    if (res.ok) {
+      cache.put(req.url, res.clone());
+      return res;
+    }
+  } catch (e) {}
+  return fetch(req); // gagal / error: teruskan permintaan asli apa adanya, TIDAK disimpan
 }
