@@ -435,6 +435,7 @@
     <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚪</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
+    <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -936,6 +937,17 @@
   </div>
 </div>
 
+<!-- informasi penjualan hari ini (kasir & owner, cabang aktif) -->
+<div class="overlay" id="penjualanHariIniOverlay">
+  <div class="modal">
+    <h3>📈 Penjualan Hari Ini</h3>
+    <p id="phiSubjudul" style="font-size:12px;opacity:.75;">-</p>
+    <div id="phiIsi"><div class="empty-msg">Memuat...</div></div>
+    <button class="login-btn" style="margin-top:12px;" onclick="loadPenjualanHariIni()">🔄 Perbarui</button>
+    <button class="modal-close" onclick="tutupPenjualanHariIni()">Tutup</button>
+  </div>
+</div>
+
 <!-- catat / edit biaya operasional -->
 <div class="overlay" id="biayaOverlay">
   <div class="modal">
@@ -1298,6 +1310,7 @@ async function loadProfileAndEnter(){
   document.getElementById('izinKeluarBtn').classList.add('hidden');
   document.getElementById('kasBtn').classList.add('hidden');
   document.getElementById('belanjaKecilBtn').classList.add('hidden');
+  document.getElementById('penjualanHariIniBtn').classList.add('hidden');
   ['navRingkasanBtn','navAktifBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
   });
@@ -1361,6 +1374,7 @@ async function loadProfileAndEnter(){
   if(profile.role === 'kasir' || profile.role === 'owner'){
     document.getElementById('kasBtn').classList.remove('hidden');
     document.getElementById('belanjaKecilBtn').classList.remove('hidden');
+    document.getElementById('penjualanHariIniBtn').classList.remove('hidden');
   }
 
   await loadProduk();
@@ -5155,6 +5169,102 @@ async function submitBelanjaKecil(){
   document.getElementById('belanjaKecilJumlah').value = '';
   document.getElementById('belanjaKecilKet').value = '';
   await loadBelanjaKecilHariIni();
+}
+
+// ================== PENJUALAN HARI INI (dashboard kasir) ==================
+async function bukaPenjualanHariIni(){
+  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
+  document.getElementById('penjualanHariIniOverlay').classList.add('show');
+  await loadPenjualanHariIni();
+}
+
+function tutupPenjualanHariIni(){
+  document.getElementById('penjualanHariIniOverlay').classList.remove('show');
+}
+
+async function loadPenjualanHariIni(){
+  const isi = document.getElementById('phiIsi');
+  const cabang = (userAllowedCabang || []).find(c=>c.id===activeCabangId);
+  const sekarang = new Date();
+  document.getElementById('phiSubjudul').textContent =
+    `${cabang ? cabang.nama : 'Cabang aktif'} · ${sekarang.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' })} · s/d jam ${sekarang.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}`;
+
+  const antrian = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]').filter(t=>t.cabang_id===activeCabangId);
+  const infoOffline = antrian.length > 0
+    ? `<div style="background:#fff4e0;border:1px solid #e0a030;border-radius:8px;padding:8px;font-size:12px;margin-bottom:10px;">⚠️ ${antrian.length} transaksi offline (${fmt(antrian.reduce((s,t)=>s+Number(t.total),0))}) belum terkirim, belum masuk hitungan di bawah.</div>`
+    : '';
+
+  if(!navigator.onLine){
+    isi.innerHTML = infoOffline + '<div class="empty-msg">Sedang offline. Sambungkan internet untuk melihat penjualan hari ini.</div>';
+    return;
+  }
+  isi.innerHTML = '<div class="empty-msg">Memuat...</div>';
+
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const { data, error } = await sb
+    .from('transaksi')
+    .select('id, total, diskon, metode_bayar, status, created_at, transaksi_item(qty, subtotal, ukuran, produk:produk_id(nama))')
+    .eq('cabang_id', activeCabangId)
+    .gte('created_at', startOfDay.toISOString())
+    .order('created_at', { ascending:false });
+
+  if(error){
+    isi.innerHTML = infoOffline + `<div class="empty-msg">Gagal memuat: ${error.message}</div>`;
+    return;
+  }
+
+  const semua = data || [];
+  const sukses = semua.filter(t=>t.status !== 'dibatalkan');
+  const batal = semua.filter(t=>t.status === 'dibatalkan');
+  const omzet = sukses.reduce((s,t)=>s+Number(t.total||0),0);
+  const totalDiskon = sukses.reduce((s,t)=>s+Number(t.diskon||0),0);
+  const cup = sukses.reduce((s,t)=>s+(t.transaksi_item||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
+
+  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer' };
+  const perMetode = {};
+  sukses.forEach(t=>{
+    const m = t.metode_bayar || 'tunai';
+    if(!perMetode[m]) perMetode[m] = { n:0, total:0 };
+    perMetode[m].n += 1;
+    perMetode[m].total += Number(t.total||0);
+  });
+
+  const perMenu = {};
+  sukses.forEach(t=>(t.transaksi_item||[]).forEach(i=>{
+    const nama = i.produk ? i.produk.nama : '(menu terhapus)';
+    if(!perMenu[nama]) perMenu[nama] = { qty:0, total:0 };
+    perMenu[nama].qty += Number(i.qty||0);
+    perMenu[nama].total += Number(i.subtotal||0);
+  }));
+  const menuUrut = Object.entries(perMenu).sort((a,b)=>b[1].qty-a[1].qty || b[1].total-a[1].total);
+
+  const kotak = (label, nilai) => `
+    <div style="background:var(--page-bg);border-radius:10px;padding:10px;text-align:center;">
+      <div style="font-size:11px;opacity:.7;">${label}</div>
+      <div style="font-size:18px;font-weight:800;">${nilai}</div>
+    </div>`;
+
+  isi.innerHTML = infoOffline + `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="grid-column:1/-1;">${kotak('Total Penjualan', fmt(omzet))}</div>
+      ${kotak('Transaksi', sukses.length)}
+      ${kotak('Cup Terjual', cup)}
+    </div>
+    ${totalDiskon > 0 ? `<div class="stock-row"><span>Total diskon diberikan</span><span>${fmt(totalDiskon)}</span></div>` : ''}
+    ${batal.length > 0 ? `<div class="stock-row"><span>Transaksi dibatalkan</span><span class="low">${batal.length} (${fmt(batal.reduce((s,t)=>s+Number(t.total||0),0))})</span></div>` : ''}
+
+    <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Per metode bayar</div>
+    ${Object.keys(perMetode).length === 0 ? '<div class="empty-msg">Belum ada penjualan.</div>' :
+      Object.entries(perMetode).map(([m,v])=>`
+        <div class="stock-row"><span>${labelMetode[m] || m} <span style="opacity:.55;font-size:11px;">· ${v.n} trx</span></span><span>${fmt(v.total)}</span></div>
+      `).join('')}
+
+    <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Menu terjual</div>
+    ${menuUrut.length === 0 ? '<div class="empty-msg">Belum ada menu terjual hari ini.</div>' :
+      menuUrut.map(([nama,v])=>`
+        <div class="stock-row"><span>${nama} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
+      `).join('')}
+  `;
 }
 
 async function loadBelanjaKecilHariIni(){
