@@ -2991,11 +2991,11 @@ async function konfirmasiBayar(){
       }));
 
       // transaksi + item disimpan sekaligus di database (atomik). Database menolak kalau bahan baku tidak cukup.
-      const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
+      const { error: rpcErr } = await rpcBatasWaktu('simpan_transaksi', {
         p_cabang: getActiveCabangId(), p_total: totalPrice, p_subtotal: subtotal, p_diskon: diskon,
         p_metode: metodeBayar, p_items: items, p_created_at: null, p_offline: false, p_kasir: currentUser.id,
         p_client_id: clientTxId
-      });
+      }, 15000);
       if(rpcErr){
         if(String(rpcErr.message||'').includes('STOK_KURANG')){
           stokKurangMsg = rpcErr.message.replace('STOK_KURANG:', '').trim();
@@ -3040,6 +3040,23 @@ async function konfirmasiBayar(){
   btn.textContent = "BAYAR";
 
   await selesaikanTransaksi(); // cetak (kalau aktif) + tutup + kosongkan keranjang + notif sukses
+}
+
+// Panggil fungsi database dengan BATAS WAKTU. Sinyal HP bisa "nyangkut" (tidak putus total tapi tidak ada jawaban);
+// tanpa batas waktu aplikasi bisa menunggu bermenit-menit. Kalau lewat batas, dianggap gagal SEMENTARA (tanpa kode error)
+// -> transaksi masuk/tetap di antrian dan dikirim ulang. Aman: ID unik mencegah transaksi tersimpan dobel.
+function rpcBatasWaktu(fn, args, ms){
+  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  let q = sb.rpc(fn, args);
+  if(ctrl && q && typeof q.abortSignal === 'function') q = q.abortSignal(ctrl.signal);
+  let timer;
+  const batas = new Promise(res => {
+    timer = setTimeout(() => {
+      if(ctrl) ctrl.abort();
+      res({ data: null, error: { message: 'Waktu habis: server tidak menjawab (sinyal lemah)', code: '' } });
+    }, ms);
+  });
+  return Promise.race([Promise.resolve(q), batas]).finally(() => clearTimeout(timer));
 }
 
 // ID unik transaksi (dipakai database untuk menolak transaksi dobel)
@@ -3140,11 +3157,11 @@ async function kirimAntrianPending(queue){
     try{
       // transaksi offline: pembeli sudah dilayani, jadi TETAP diterima walau bahan kurang.
       // Kalau bahan jadi minus, database mencatatnya di Log Aktivitas & muncul peringatan di Dashboard.
-      const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
+      const { error: rpcErr } = await rpcBatasWaktu('simpan_transaksi', {
         p_cabang: trx.cabang_id, p_total: trx.total, p_subtotal: trx.subtotal, p_diskon: trx.diskon || 0,
         p_metode: trx.metode_bayar || 'tunai', p_items: trx.items, p_created_at: trx.created_at,
         p_offline: true, p_kasir: trx.kasir_id, p_client_id: k
-      });
+      }, 20000);
       if(rpcErr) throw rpcErr;
       // langsung coret dari antrian begitu terkirim (kalau aplikasi ditutup di tengah sinkron, tidak terkirim dobel).
       // Baca ulang antrian terbaru supaya transaksi offline yang masuk SELAMA sinkron tidak tertimpa/hilang.
@@ -3162,12 +3179,12 @@ async function kirimAntrianPending(queue){
       // ditolak permanen berkali-kali -> berhenti mencoba, laporkan ke daftar "Transaksi Gagal" untuk diputuskan Owner.
       // Transaksi TIDAK dibuang: baru dicoret dari HP ini kalau laporannya sudah pasti tersimpan di server.
       try{
-        const { data: hasil, error: lapErr } = await sb.rpc('laporkan_transaksi_gagal', {
+        const { data: hasil, error: lapErr } = await rpcBatasWaktu('laporkan_transaksi_gagal', {
           p_client_id: k,
           p_payload: trx,
           p_alasan: String((err && err.message) || 'Ditolak server'),
           p_kode: String((err && err.code) || '')
-        });
+        }, 20000);
         if(lapErr) throw lapErr;
         hapusDariAntrian(k);
         if(hasil !== 'sudah_tersimpan') dilaporkanGagal++;
