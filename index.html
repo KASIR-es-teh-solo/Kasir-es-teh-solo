@@ -336,6 +336,12 @@
   .tx-row .time{color:rgba(12,31,20,.5);font-size:11px;}
   .stock-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.3);font-size:18px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
   .stock-row .low{color:#ffb3a7;font-weight:700;}
+  /* Penjualan Hari Ini: modal latar putih -> semua teks hitam pekat */
+  #penjualanHariIniOverlay .modal, #penjualanHariIniOverlay .modal *{color:#000;text-shadow:none;opacity:1 !important;}
+  #penjualanHariIniOverlay .stock-row{border-bottom:1px solid rgba(0,0,0,.15);}
+  #penjualanHariIniOverlay .stock-row .low{color:#c0392b;}
+  #penjualanHariIniOverlay .login-btn{color:#fff;}
+  #penjualanHariIniOverlay .modal-close{color:#000;}
   .empty-msg{color:rgba(255,255,255,.85);font-size:13px;padding:14px;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 
   /* ===== PRINT REPORT ===== */
