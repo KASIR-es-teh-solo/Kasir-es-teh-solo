@@ -545,6 +545,10 @@
 
       <div class="ringkasan-tab-content" id="ringkasanTabContent-ringkasan">
       <div id="belumHitungKasBanner" class="hidden" style="background:rgba(255,245,244,.95);border:1px solid var(--danger);color:var(--danger);padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px;font-weight:700;"></div>
+      <div class="dash-section hidden" id="dashTransaksiGagalSection" style="margin-bottom:16px;border:2px solid var(--danger);">
+        <h3>⚠️ Transaksi Gagal (perlu dicek)</h3>
+        <div id="dashTransaksiGagalList"><div class="empty-msg">Memuat...</div></div>
+      </div>
       <div id="ringkasanFilterRow" class="hidden dash-section" style="margin-bottom:14px;">
         <label style="font-size:12px;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.6);display:block;margin-bottom:4px;">Lihat data untuk:</label>
         <select id="ringkasanCabangFilter" onchange="loadRingkasan()" style="padding:9px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:13px;font-weight:700;">
@@ -1266,6 +1270,10 @@ function getActiveCabangId(){
 
 function fmt(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 
+// escape teks buat argumen '...' di dalam onclick="..." (nama pakai tanda petik, mis. Nur'aini, tidak bikin tombol mati)
+const ATTR_JS_RE = /[\\'"&<>]/g;
+function attrJsEsc(c){ return ({'\\':'\\\\', "'":"\\'", '"':'&quot;', '&':'&amp;', '<':'&lt;', '>':'&gt;'})[c]; }
+
 // ================== AUTH ==================
 async function doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
@@ -1677,8 +1685,15 @@ async function submitHitungKas(){
   btn.disabled = true;
   btn.textContent = "Menghitung...";
 
+  // hitung penjualan/biaya mulai jam 00:00 hari ini, ATAU sejak Hitung Kas terakhir kalau itu juga hari ini.
+  // Kas awal = uang laci hasil hitung terakhir, jadi penjualan sebelum itu sudah termasuk di dalamnya
+  // (tanpa ini, Hitung Kas ke-2 di hari yang sama menghitung penjualan pagi dua kali -> kas "kurang" palsu).
   const startOfDay = new Date();
   startOfDay.setHours(0,0,0,0);
+  if(kasAwalOtomatisDari && kasAwalOtomatisDari.waktu_tutup){
+    const terakhir = new Date(kasAwalOtomatisDari.waktu_tutup);
+    if(terakhir > startOfDay) startOfDay.setTime(terakhir.getTime());
+  }
 
   const { data: txData, error: txError } = await sb
     .from('transaksi')
@@ -1686,7 +1701,7 @@ async function submitHitungKas(){
     .eq('cabang_id', activeCabangId)
     .eq('status', 'selesai')
     .eq('metode_bayar', 'tunai')
-    .gte('created_at', startOfDay.toISOString());
+    .gt('created_at', startOfDay.toISOString());
 
   if(txError){
     btn.disabled = false;
@@ -1701,7 +1716,7 @@ async function submitHitungKas(){
     .select('jumlah')
     .eq('cabang_id', activeCabangId)
     .eq('sumber_dana', 'tunai')
-    .gte('created_at', startOfDay.toISOString());
+    .gt('created_at', startOfDay.toISOString());
 
   if(biayaError){
     btn.disabled = false;
@@ -1990,6 +2005,104 @@ async function loadLogAktivitas(){
   `).join('');
 }
 
+// ================== TRANSAKSI GAGAL ==================
+// Transaksi offline yang DITOLAK server secara permanen (mis. izin/data tidak valid). Uangnya sudah diterima kasir,
+// jadi TIDAK dihapus: Owner memutuskan Simpan (masukkan ke transaksi) atau Batalkan (wajib catatan). Admin hanya bisa melihat.
+function escTG(s){
+  return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadTransaksiGagal(){
+  const section = document.getElementById('dashTransaksiGagalSection');
+  const box = document.getElementById('dashTransaksiGagalList');
+  if(!section || !box) return;
+  const role = currentProfile && currentProfile.role;
+  if(role !== 'owner' && role !== 'admin'){ section.classList.add('hidden'); return; }
+  const isOwnerTG = role === 'owner';
+
+  const { data, error } = await sb
+    .from('transaksi_gagal')
+    .select('id, client_tx_id, cabang_id, kasir_id, total, waktu_transaksi, payload, alasan, kode_error, dilaporkan_at, status, diputuskan_at, catatan_keputusan')
+    .order('dilaporkan_at', { ascending:false })
+    .limit(30);
+
+  if(error){
+    // tabel belum ada / gagal dimuat -> jangan ganggu dashboard
+    section.classList.add('hidden');
+    return;
+  }
+  const semua = data || [];
+  const menunggu = semua.filter(r=>r.status === 'menunggu');
+  const selesai = semua.filter(r=>r.status !== 'menunggu').slice(0, 10);
+  if(menunggu.length === 0 && selesai.length === 0){ section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  // tanpa yang menunggu keputusan -> bingkai merah tidak perlu
+  section.style.border = menunggu.length > 0 ? '2px solid var(--danger)' : '';
+
+  // nama kasir & produk (tabel ini sengaja tidak terikat ke tabel lain, jadi dicari terpisah)
+  const kasirIds = [...new Set(semua.map(r=>r.kasir_id).filter(Boolean))];
+  const produkIds = [...new Set(semua.flatMap(r=>((r.payload && r.payload.items) || []).map(i=>i.produk_id)).filter(Boolean))];
+  const namaKasir = {}, namaProduk = {};
+  if(kasirIds.length){
+    const { data: us } = await sb.from('users').select('id, nama').in('id', kasirIds);
+    (us||[]).forEach(u=>{ namaKasir[u.id] = u.nama; });
+  }
+  if(produkIds.length){
+    const { data: ps } = await sb.from('produk').select('id, nama').in('id', produkIds);
+    (ps||[]).forEach(p=>{ namaProduk[p.id] = p.nama; });
+  }
+  const cabangIds = [...new Set(semua.map(r=>r.cabang_id).filter(Boolean))];
+  const namaCabangMap = {};
+  if(cabangIds.length){
+    const { data: cs } = await sb.from('cabang').select('id, nama').in('id', cabangIds);
+    (cs||[]).forEach(c=>{ namaCabangMap[c.id] = c.nama; });
+  }
+  const namaCabang = id => namaCabangMap[id] || '-';
+  const waktu = t => t ? new Date(t).toLocaleString('id-ID', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '-';
+  const rincian = r => ((r.payload && r.payload.items) || []).map(i=>
+    `${escTG(namaProduk[i.produk_id] || 'Produk tidak dikenal')} (${escTG(i.ukuran)}) × ${Number(i.qty)||0}`).join(', ');
+
+  const kartu = (r, bisaAksi) => `
+    <div class="tx-row" style="flex-wrap:wrap;">
+      <span><b>${fmt(r.total)}</b> · ${escTG(namaCabang(r.cabang_id))} · kasir ${escTG(namaKasir[r.kasir_id] || '-')}</span>
+      <span class="time">${waktu(r.waktu_transaksi)}</span>
+      <span style="width:100%;font-size:12px;opacity:.9;margin-top:4px;">${rincian(r) || '-'}</span>
+      <span style="width:100%;font-size:12px;color:var(--danger);margin-top:2px;">Ditolak server: ${escTG(r.alasan)}${r.kode_error ? ' ('+escTG(r.kode_error)+')' : ''}</span>
+      ${r.status !== 'menunggu' ? `<span style="width:100%;font-size:12px;margin-top:2px;">${r.status === 'disimpan' ? '✅ Disimpan manual' : '🚫 Dibatalkan'} · ${waktu(r.diputuskan_at)}${r.catatan_keputusan ? ' · '+escTG(r.catatan_keputusan) : ''}</span>` : ''}
+      ${bisaAksi ? `<span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="putuskanTransaksiGagal('${r.id}', 'simpan')">💾 Simpan ke Transaksi</button>
+        <button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="putuskanTransaksiGagal('${r.id}', 'batal')">🚫 Batalkan</button>
+      </span>` : ''}
+    </div>`;
+
+  let html = '';
+  if(menunggu.length){
+    html += `<div style="font-size:12px;margin-bottom:8px;">${menunggu.length} transaksi offline ditolak server. Uangnya sudah diterima kasir — ${isOwnerTG ? 'pilih Simpan atau Batalkan.' : 'menunggu keputusan Owner.'}</div>`;
+    html += menunggu.map(r=>kartu(r, isOwnerTG)).join('');
+  }
+  if(selesai.length){
+    html += `<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:12px;">Riwayat yang sudah diputuskan (${selesai.length})</summary>${selesai.map(r=>kartu(r, false)).join('')}</details>`;
+  }
+  box.innerHTML = html;
+}
+
+async function putuskanTransaksiGagal(id, aksi){
+  let catatan = null;
+  if(aksi === 'simpan'){
+    if(!confirm('Simpan transaksi ini ke data penjualan?\n\n• Masuk omzet & saldo kas sesuai jam transaksi aslinya\n• Stok & bahan baku ikut terpotong')) return;
+    catatan = prompt('Catatan (boleh dikosongkan):', '');
+    if(catatan === null) return;
+  } else {
+    catatan = prompt('Alasan transaksi ini TIDAK disimpan (wajib diisi):');
+    if(catatan === null) return;
+    if(!catatan.trim()){ alert('Alasan wajib diisi.'); return; }
+  }
+  const { error } = await sb.rpc('selesaikan_transaksi_gagal', { p_id: id, p_aksi: aksi, p_catatan: (catatan || '').trim() || null });
+  if(error){ alert('Gagal: ' + error.message); await loadTransaksiGagal(); return; }
+  showSuccessToast('✅', aksi === 'simpan' ? 'Transaksi disimpan' : 'Transaksi dibatalkan', '');
+  await loadDashboard();
+}
+
 // Owner: hapus 1 catatan log (tidak memengaruhi jam kerja, stok, transaksi, atau laporan)
 async function hapusLogAktivitas(id){
   if(!confirm("Hapus catatan log ini? Catatan yang dihapus tidak bisa dikembalikan.")) return;
@@ -2071,9 +2184,9 @@ async function loadAktifSekarang(){
       <span class="time">${p.user && p.user.role === 'admin' ? 'Admin' : 'Kasir'}</span>
       ${isOwner ? `
       <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}', '${p.cabang_id || ''}')">💬 Kirim Pesan</button>
-        <button class="remove-btn" onclick="logoutPaksaKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}')">🚪 Logout Paksa</button>
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="paksaOfflineKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(/'/g,"&#39;") : ''}')">Tandai Offline</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${p.user_id}', '${p.user ? p.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}', '${p.cabang_id || ''}')">💬 Kirim Pesan</button>
+        <button class="remove-btn" onclick="logoutPaksaKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}')">🚪 Logout Paksa</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="paksaOfflineKaryawan('${p.user_id}', '${p.user ? p.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}')">Tandai Offline</button>
       </span>
       ` : ''}
     </div>
@@ -2709,7 +2822,7 @@ function sisaUkuran(produkId, ukuranKey){
 
 function renderSizeOption(label, harga, ukuranKey){
   const sisa = sisaUkuran(pendingItem.id, ukuranKey);
-  const labelAman = label.replace(/'/g,"&#39;");
+  const labelAman = label.replace(ATTR_JS_RE, attrJsEsc);
   if(sisa <= 0){
     return `
       <div class="size-option habis" onclick="alert('Ukuran ${labelAman} tidak bisa dijual: bahan baku habis / sudah terpakai semua di keranjang.')">
@@ -2859,9 +2972,12 @@ async function konfirmasiBayar(){
   const cartSnapshot = cart.map(c=>({...c}));
   const metodeBayar = selectedMetodeBayar;
   let tersimpanOffline = false;
+  // ID unik transaksi ini, dibuat SEKALI saat BAYAR ditekan. Dipakai juga kalau transaksi masuk antrian offline,
+  // jadi walau terkirim 2x (internet putus tepat setelah server menyimpan), database cuma menyimpan 1x.
+  const clientTxId = buatClientTxId();
 
   if(!navigator.onLine){
-    queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar);
+    queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar, clientTxId);
     tersimpanOffline = true;
   } else {
     let stokKurangMsg = null;
@@ -2877,7 +2993,8 @@ async function konfirmasiBayar(){
       // transaksi + item disimpan sekaligus di database (atomik). Database menolak kalau bahan baku tidak cukup.
       const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
         p_cabang: getActiveCabangId(), p_total: totalPrice, p_subtotal: subtotal, p_diskon: diskon,
-        p_metode: metodeBayar, p_items: items, p_created_at: null, p_offline: false, p_kasir: currentUser.id
+        p_metode: metodeBayar, p_items: items, p_created_at: null, p_offline: false, p_kasir: currentUser.id,
+        p_client_id: clientTxId
       });
       if(rpcErr){
         if(String(rpcErr.message||'').includes('STOK_KURANG')){
@@ -2889,8 +3006,8 @@ async function konfirmasiBayar(){
         await loadProduk(); // refresh stok terbaru dari server
       }
     }catch(err){
-      // gagal karena koneksi bermasalah -> simpan offline supaya tidak hilang
-      queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar);
+      // gagal karena koneksi bermasalah -> simpan offline supaya tidak hilang (ID sama -> tidak mungkin dobel)
+      queueOfflineTransaksi(cartSnapshot, totalPrice, subtotal, diskon, metodeBayar, clientTxId);
       tersimpanOffline = true;
     }
 
@@ -2919,17 +3036,22 @@ async function konfirmasiBayar(){
 
   document.getElementById('diskonInput').value = 0;
   selectedMetodeBayar = 'tunai';
-  selectedMetodeBayar = 'tunai';
   btn.disabled = false;
   btn.textContent = "BAYAR";
 
   await selesaikanTransaksi(); // cetak (kalau aktif) + tutup + kosongkan keranjang + notif sukses
 }
 
-function queueOfflineTransaksi(items, total, subtotal, diskon, metodeBayar){
+// ID unik transaksi (dipakai database untuk menolak transaksi dobel)
+function buatClientTxId(){
+  try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+  return 'tx_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+function queueOfflineTransaksi(items, total, subtotal, diskon, metodeBayar, clientTxId){
   if(!currentUser){ return null; }
   const queue = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
-  const tempId = 'off_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  const tempId = clientTxId || buatClientTxId();
   queue.push({
     tempId: tempId,
     kasir_id: currentUser.id,
@@ -2964,28 +3086,103 @@ function queueOfflineTransaksi(items, total, subtotal, diskon, metodeBayar){
   return tempId;
 }
 
+// kunci supaya sinkron tidak jalan dobel (timer 30 detik + event online + tombol bisa barengan)
+// -> tanpa ini transaksi yang sama bisa terkirim 2x ke database
+let sedangSyncPending = false;
+
 async function trySyncPending(){
+  if(sedangSyncPending) return;
   const queue = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
   if(queue.length === 0 || !navigator.onLine){ updateConnStatus(); return; }
+  // belum login (mis. habis logout) -> jangan kirim: server pasti menolak karena tidak ada akun,
+  // dan itu BUKAN alasan transaksi dianggap gagal permanen. Tunggu sampai login lagi.
+  if(!currentUser){ updateConnStatus(); return; }
 
-  const remaining = [];
+  sedangSyncPending = true;
+  try{
+    await kirimAntrianPending(queue);
+  } finally {
+    sedangSyncPending = false;
+  }
+}
+
+// id unik tiap transaksi di antrian (data antrian versi lama belum punya tempId)
+// -> sekaligus dipakai sebagai ID anti-dobel di database (p_client_id)
+function kunciAntrian(t){ return t.tempId || (t.kasir_id + '|' + t.created_at + '|' + t.total); }
+
+function hapusDariAntrian(k){
+  const terbaru = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
+  localStorage.setItem('pendingTransaksi', JSON.stringify(terbaru.filter(t => kunciAntrian(t) !== k)));
+}
+
+function tandaiPercobaanAntrian(k, jumlahGagalPermanen){
+  const terbaru = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
+  terbaru.forEach(t => { if(kunciAntrian(t) === k){ t.gagalPermanen = jumlahGagalPermanen; } });
+  localStorage.setItem('pendingTransaksi', JSON.stringify(terbaru));
+}
+
+// Ditolak server secara PERMANEN (dicoba ulang pun hasilnya sama): data tidak valid / tidak punya izin / ditolak aturan database.
+// Selain itu (internet putus, server sibuk, sesi login kedaluwarsa, dll) = gagal SEMENTARA -> tetap dicoba ulang.
+function errorPermanen(err){
+  const kode = String((err && err.code) || '');
+  if(!kode) return false;                       // tidak ada kode = biasanya masalah jaringan
+  if(/^(22|23)/.test(kode)) return true;        // data tidak valid / melanggar aturan data
+  return ['42501', 'P0001', 'P0002'].includes(kode); // tidak punya izin / ditolak fungsi database
+}
+
+// harus ditolak permanen sekian kali berturut-turut dulu baru dianggap gagal (jaga-jaga error sesaat)
+const BATAS_GAGAL_PERMANEN = 3;
+
+async function kirimAntrianPending(queue){
+  let dilaporkanGagal = 0;
   for(const trx of queue){
+    const k = kunciAntrian(trx);
     try{
       // transaksi offline: pembeli sudah dilayani, jadi TETAP diterima walau bahan kurang.
       // Kalau bahan jadi minus, database mencatatnya di Log Aktivitas & muncul peringatan di Dashboard.
       const { error: rpcErr } = await sb.rpc('simpan_transaksi', {
         p_cabang: trx.cabang_id, p_total: trx.total, p_subtotal: trx.subtotal, p_diskon: trx.diskon || 0,
         p_metode: trx.metode_bayar || 'tunai', p_items: trx.items, p_created_at: trx.created_at,
-        p_offline: true, p_kasir: trx.kasir_id
+        p_offline: true, p_kasir: trx.kasir_id, p_client_id: k
       });
       if(rpcErr) throw rpcErr;
+      // langsung coret dari antrian begitu terkirim (kalau aplikasi ditutup di tengah sinkron, tidak terkirim dobel).
+      // Baca ulang antrian terbaru supaya transaksi offline yang masuk SELAMA sinkron tidak tertimpa/hilang.
+      // (Kalau ternyata sudah pernah tersimpan, database membalas "sudah_tersimpan" tanpa menyimpan lagi.)
+      hapusDariAntrian(k);
     }catch(err){
-      remaining.push(trx); // gagal, coba lagi nanti
+      if(!errorPermanen(err)){
+        // gagal sementara: tetap di antrian & dicoba lagi nanti. Hitungan gagal permanen di-reset.
+        if(trx.gagalPermanen) tandaiPercobaanAntrian(k, 0);
+        continue;
+      }
+      const n = (Number(trx.gagalPermanen) || 0) + 1;
+      if(n < BATAS_GAGAL_PERMANEN){ tandaiPercobaanAntrian(k, n); continue; }
+
+      // ditolak permanen berkali-kali -> berhenti mencoba, laporkan ke daftar "Transaksi Gagal" untuk diputuskan Owner.
+      // Transaksi TIDAK dibuang: baru dicoret dari HP ini kalau laporannya sudah pasti tersimpan di server.
+      try{
+        const { data: hasil, error: lapErr } = await sb.rpc('laporkan_transaksi_gagal', {
+          p_client_id: k,
+          p_payload: trx,
+          p_alasan: String((err && err.message) || 'Ditolak server'),
+          p_kode: String((err && err.code) || '')
+        });
+        if(lapErr) throw lapErr;
+        hapusDariAntrian(k);
+        if(hasil !== 'sudah_tersimpan') dilaporkanGagal++;
+      }catch(e2){
+        tandaiPercobaanAntrian(k, n); // laporan gagal terkirim -> tetap di antrian, dicoba lagi nanti
+      }
     }
   }
 
-  localStorage.setItem('pendingTransaksi', JSON.stringify(remaining));
+  const remaining = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
   updateConnStatus();
+  if(dilaporkanGagal > 0){
+    showSuccessToast('⚠️', `${dilaporkanGagal} transaksi offline ditolak server`,
+      'Sudah dicatat di daftar Transaksi Gagal untuk dicek Owner. Datanya tidak hilang.');
+  }
   if(remaining.length === 0){
     await loadProduk(); // stok server sudah update, ambil ulang data asli
   }
@@ -3405,6 +3602,8 @@ async function loadRingkasan(){
     loadLogAktivitas();
   }
 
+  loadTransaksiGagal();
+
   await checkBelumHitungKas(isOwner, filterCabangId, startOfDay);
 }
 
@@ -3623,8 +3822,8 @@ async function loadKaryawan(){
         <span>${u.nama} <span style="opacity:.5;font-size:11px;">· ${u.cabang ? u.cabang.nama : '-'}</span></span>
         <span style="display:flex;align-items:center;gap:8px;">
           <span>${u.role}</span>
-          ${isOwnerNow && u.role!=='owner' ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(/'/g,"&#39;")}', '${u.cabang_id || ''}')">💬 Pesan</button>
-          <button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">🚪 Logout Paksa</button>` : ''}
+          ${isOwnerNow && u.role!=='owner' ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${u.cabang_id || ''}')">💬 Pesan</button>
+          <button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🚪 Logout Paksa</button>` : ''}
         </span>
       </div>
     `).join('');
@@ -3638,11 +3837,11 @@ async function loadKaryawan(){
         <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <span>${u.role}</span>
           ${u.role!=='owner'
-            ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(/'/g,"&#39;")}', '${u.cabang_id || ''}')">💬 Pesan</button>
-               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaKaryawan('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">Edit Nama</button>
-               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="openPindahCabangModal('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">Kelola Cabang</button>
-               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="resetPasswordKaryawan('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">🔑 Reset Password</button>
-               <button class="remove-btn" onclick="hapusKaryawan('${u.id}', '${u.nama.replace(/'/g,"&#39;")}')">Hapus</button>`
+            ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="bukaPesanModal('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${u.cabang_id || ''}')">💬 Pesan</button>
+               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Edit Nama</button>
+               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="openPindahCabangModal('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Kelola Cabang</button>
+               <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="resetPasswordKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🔑 Reset Password</button>
+               <button class="remove-btn" onclick="hapusKaryawan('${u.id}', '${u.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Hapus</button>`
             : ''}
         </span>
       </div>
@@ -3716,8 +3915,8 @@ async function loadJamKerja(){
         </span>
         ${(!keluar && isOwner) ? `
         <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
-          <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="tutupSesiAbsensi('${a.id}', '${a.user ? a.user.nama.replace(/'/g,"&#39;") : ''}', '${a.waktu_masuk}')">⏹ Tutup Sesi</button>
-          ${a.user && a.user.role !== 'owner' ? `<button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${a.user_id}', '${a.user.nama.replace(/'/g,"&#39;")}')">🚪 Logout Paksa</button>` : ''}
+          <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="tutupSesiAbsensi('${a.id}', '${a.user ? a.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}', '${a.waktu_masuk}')">⏹ Tutup Sesi</button>
+          ${a.user && a.user.role !== 'owner' ? `<button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="logoutPaksaKaryawan('${a.user_id}', '${a.user.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🚪 Logout Paksa</button>` : ''}
         </span>` : ''}
       </div>
     `;
@@ -3919,6 +4118,10 @@ function tambahStokFromRow(btn){
 }
 
 async function tambahStok(id, nama, stokSekarang, cabangId){
+  // ambil angka stok TERBARU dari server: angka di layar bisa sudah basi (kepotong penjualan sejak halaman dibuka)
+  const { data: stokRow, error: stokErr } = await sb.from('stok_cabang').select('stok').eq('produk_id', id).eq('cabang_id', cabangId).maybeSingle();
+  if(stokErr){ alert('Gagal mengambil stok terbaru: ' + stokErr.message); return; }
+  if(stokRow) stokSekarang = Number(stokRow.stok);
   const input = prompt(`Tambah stok "${nama}"\nStok sekarang: ${stokSekarang}\n\nMasukkan jumlah tambahan:`);
   if(input === null) return;
   const jumlah = Number(input);
@@ -3927,11 +4130,14 @@ async function tambahStok(id, nama, stokSekarang, cabangId){
     return;
   }
 
-  const { error } = await sb
-    .from('stok_cabang')
-    .update({ stok: stokSekarang + jumlah })
-    .eq('produk_id', id)
-    .eq('cabang_id', cabangId);
+  if(!Number.isInteger(jumlah)){
+    alert('Stok produk harus bilangan bulat.');
+    return;
+  }
+
+  // penjumlahan dilakukan DI DATABASE (fungsi tambah_stok) -> tidak bisa bentrok dengan penjualan yang terjadi bersamaan,
+  // dan tercatat siapa yang menambah + jam berapa
+  const { error } = await sb.rpc('tambah_stok', { p_jenis: 'produk', p_item: id, p_cabang: cabangId, p_jumlah: jumlah });
 
   if(error){
     alert('Gagal update stok: ' + error.message);
@@ -4031,7 +4237,7 @@ async function loadCabangManageList(){
       <span>${c.nama}</span>
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span style="opacity:.6;font-size:12px;">${c.alamat || '-'}</span>
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaCabang('${c.id}', '${c.nama.replace(/'/g,"&#39;")}')">Edit</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editNamaCabang('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Edit</button>
       </span>
     </div>
   `).join('');
@@ -4280,7 +4486,7 @@ async function loadModalProdukList(){
           <span style="display:flex;align-items:center;gap:8px;font-size:12px;">
             <span style="opacity:.6;">Modal: ${fmt(v.harga_modal)}</span>
             <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;"
-              onclick="editHargaModalVarian('${v.id}', '${p.nama.replace(/'/g,"&#39;")}', '${v.label.replace(/'/g,"&#39;")}', ${v.harga_modal})">Edit</button>
+              onclick="editHargaModalVarian('${v.id}', '${p.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${v.label.replace(ATTR_JS_RE, attrJsEsc)}', ${v.harga_modal})">Edit</button>
           </span>
         </div>
       `).join('');
@@ -4298,7 +4504,7 @@ async function loadModalProdukList(){
       <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">
         <span style="opacity:.6;">Modal: ${fmt(p.harga_modal_kecil)} / ${fmt(p.harga_modal_besar)}</span>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;"
-          onclick="editHargaModal('${p.id}', '${p.nama.replace(/'/g,"&#39;")}', ${p.harga_modal_kecil}, ${p.harga_modal_besar})">Edit</button>
+          onclick="editHargaModal('${p.id}', '${p.nama.replace(ATTR_JS_RE, attrJsEsc)}', ${p.harga_modal_kecil}, ${p.harga_modal_besar})">Edit</button>
       </span>
     </div>
   `;
@@ -4387,8 +4593,8 @@ async function loadBahanBakuList(){
         ${isOwner ? `
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="aturKonversiBahan('${b.id}')">⚖️</button>
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" title="Hitung / tidak dihitung stok" onclick="toggleDihitungStok('${b.id}')">${b.dihitung_stok === false ? '🚫' : '📊'}</button>
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}', '${b.satuan}')">Edit</button>
-        <button class="remove-btn" onclick="hapusBahanBaku('${b.id}', '${b.nama.replace(/'/g,"&#39;")}')">Hapus</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="editBahanBaku('${b.id}', '${b.nama.replace(ATTR_JS_RE, attrJsEsc)}', '${b.satuan}')">Edit</button>
+        <button class="remove-btn" onclick="hapusBahanBaku('${b.id}', '${b.nama.replace(ATTR_JS_RE, attrJsEsc)}')">Hapus</button>
         ` : ''}
       </span>
     </div>
@@ -4712,7 +4918,7 @@ async function loadResepProduk(){
       <div style="margin-bottom:14px;">
         <div style="font-weight:700;font-size:19px;color:#000;margin-bottom:6px;">Ukuran ${label}</div>
         ${rowsHtml}
-        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${label.replace(/'/g,"&#39;")}')">+ Tambah Bahan (${label})</button>` : ''}
+        ${isOwner ? `<button class="header-btn" style="margin-top:8px;" onclick="tambahResep('${produkId}', '${ukuran}', '${label.replace(ATTR_JS_RE, attrJsEsc)}')">+ Tambah Bahan (${label})</button>` : ''}
       </div>
     `;
   };
@@ -4870,6 +5076,9 @@ function tambahStokBahanBakuFromRow(btn){
 
 // Tambah stok untuk bahan yang punya konversi: input dalam satuan beli (misal gram biang), disimpan dalam satuan resep (ml)
 async function tambahStokBahanBakuKonversi(bahanBakuId, nama, stokSekarang, cabangId, satuan, satuanBeli, konversi){
+  const stokTerbaru = await ambilStokBahanTerbaru(bahanBakuId, cabangId);
+  if(stokTerbaru === null) return;
+  stokSekarang = stokTerbaru;
   const setara = fmtKonversi(stokSekarang / konversi);
   const input = prompt(
     `Tambah stok "${nama}"\n` +
@@ -4884,11 +5093,11 @@ async function tambahStokBahanBakuKonversi(bahanBakuId, nama, stokSekarang, caba
   const tambahan = Math.round(jumlahBeli * konversi * 100) / 100;
   if(!confirm(`${fmtKonversi(jumlahBeli)} ${satuanBeli} = ${fmtKonversi(tambahan)} ${satuan}.\n\nStok jadi ${fmtKonversi(stokSekarang + tambahan)} ${satuan}. Lanjut?`)) return;
 
-  const { error } = await sb
-    .from('bahan_baku_stok')
-    .update({ stok: stokSekarang + tambahan })
-    .eq('bahan_baku_id', bahanBakuId)
-    .eq('cabang_id', cabangId);
+  // penjumlahan di database (fungsi tambah_stok) -> aman dari bentrok dengan penjualan bersamaan
+  const { error } = await sb.rpc('tambah_stok', {
+    p_jenis: 'bahan', p_item: bahanBakuId, p_cabang: cabangId, p_jumlah: tambahan,
+    p_keterangan: `${fmtKonversi(jumlahBeli)} ${satuanBeli}`
+  });
 
   if(error){ alert("Gagal update stok: " + error.message); return; }
   await loadBahanBakuStock();
@@ -4899,20 +5108,27 @@ function kurangiStokBahanBakuFromRow(btn){
   kurangiStokBahanBaku(row.dataset.bahanid, row.dataset.nama, Number(row.dataset.stok), row.dataset.cabang);
 }
 
+// angka stok di layar bisa sudah basi (kepotong penjualan sejak halaman dibuka) -> selalu ambil yang terbaru sebelum ditambah
+async function ambilStokBahanTerbaru(bahanBakuId, cabangId){
+  const { data, error } = await sb.from('bahan_baku_stok').select('stok').eq('bahan_baku_id', bahanBakuId).eq('cabang_id', cabangId).maybeSingle();
+  if(error){ alert('Gagal mengambil stok terbaru: ' + error.message); return null; }
+  return data ? Number(data.stok) : 0;
+}
+
 async function tambahStokBahanBaku(bahanBakuId, nama, stokSekarang, cabangId){
+  const stokTerbaru = await ambilStokBahanTerbaru(bahanBakuId, cabangId);
+  if(stokTerbaru === null) return;
+  stokSekarang = stokTerbaru;
   const input = prompt(`Tambah stok "${nama}"\nStok sekarang: ${stokSekarang}\n\nMasukkan jumlah tambahan:`);
   if(input === null) return;
-  const jumlah = Number(input);
+  const jumlah = Number(String(input).replace(",", "."));
   if(!jumlah || jumlah <= 0){
     alert("Masukkan angka yang valid dan lebih dari 0.");
     return;
   }
 
-  const { error } = await sb
-    .from('bahan_baku_stok')
-    .update({ stok: stokSekarang + jumlah })
-    .eq('bahan_baku_id', bahanBakuId)
-    .eq('cabang_id', cabangId);
+  // penjumlahan di database (fungsi tambah_stok) -> aman dari bentrok dengan penjualan bersamaan
+  const { error } = await sb.rpc('tambah_stok', { p_jenis: 'bahan', p_item: bahanBakuId, p_cabang: cabangId, p_jumlah: jumlah });
 
   if(error){
     alert("Gagal update stok: " + error.message);
