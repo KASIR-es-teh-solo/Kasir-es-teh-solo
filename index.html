@@ -10,8 +10,52 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<meta name="app-version" content="2026-09-25.1">
+<script>
+// ===== VERSI APLIKASI =====
+// Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
+// supaya tablet yang masih terbuka mendapat pemberitahuan "ada versi baru".
+var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || 'tanpa-versi';
+
+// ===== CATATAN ERROR OTOMATIS =====
+// Dipasang paling awal supaya error apa pun (termasuk library gagal dimuat) ikut tercatat.
+// Disimpan dulu di HP, lalu dikirim ke database (tabel log_error) setelah login & online.
+(function(){
+  var KEY = 'antrianErrorApp', MAX = 30, sudah = {}, jumlahSesi = 0;
+  function catat(jenis, pesan, sumber, stack){
+    try{
+      pesan = String(pesan || '').slice(0, 1000);
+      var sig = jenis + '|' + pesan + '|' + (sumber || '');
+      if(sudah[sig] || jumlahSesi >= 20) return; // error yang sama cukup sekali per buka aplikasi
+      sudah[sig] = 1; jumlahSesi++;
+      var q = JSON.parse(localStorage.getItem(KEY) || '[]');
+      q.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+        waktu: new Date().toISOString(), versi: APP_VERSION, jenis: jenis, pesan: pesan,
+        sumber: String(sumber || '').slice(0, 300), stack: String(stack || '').slice(0, 3000),
+        halaman: String(window.__halamanAktif || '').slice(0, 100),
+        perangkat: String(navigator.userAgent || '').slice(0, 300)
+      });
+      if(q.length > MAX) q = q.slice(-MAX);
+      localStorage.setItem(KEY, JSON.stringify(q));
+      if(window.kirimCatatanError) setTimeout(window.kirimCatatanError, 2000);
+    }catch(e){}
+  }
+  window.catatError = catat;
+  window.addEventListener('error', function(ev){
+    var t = ev && ev.target;
+    if(t && t !== window && (t.src || t.href)){ catat('gagal_muat', 'Gagal memuat file', t.src || t.href, ''); return; }
+    catat('error', ev && ev.message, ev && ((ev.filename || '') + ':' + ev.lineno + ':' + ev.colno), ev && ev.error && ev.error.stack);
+  }, true);
+  window.addEventListener('unhandledrejection', function(ev){
+    var r = ev && ev.reason;
+    catat('promise', r && (r.message || String(r)), '', r && r.stack);
+  });
+})();
+</script>
+<!-- versi library DIKUNCI: update dari pembuat library tidak bisa tiba-tiba merusak aplikasi -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{
@@ -1309,13 +1353,32 @@ async function doLogin(){
 }
 
 async function loadProfileAndEnter(){
-  const { data: profile, error } = await sb
-    .from('users')
-    .select('*, cabang:cabang_id(id, nama, latitude, longitude)')
-    .eq('id', currentUser.id)
-    .single();
+  let profile = null, error = null;
+  if(navigator.onLine){
+    const res = await sb
+      .from('users')
+      .select('*, cabang:cabang_id(id, nama, latitude, longitude)')
+      .eq('id', currentUser.id)
+      .single();
+    profile = res.data; error = res.error;
+  } else {
+    error = { message: 'offline', code: '' };
+  }
 
-  if(error || !profile){
+  if(profile){
+    try{ localStorage.setItem('profilCache_' + currentUser.id, JSON.stringify(profile)); }catch(e){}
+  } else if(!isManualLoginAttempt && !(error && error.code === 'PGRST116')){
+    // gagal karena internet (BUKAN karena akun tidak terdaftar) -> jangan dikeluarkan,
+    // pakai data profil terakhir yang tersimpan di HP supaya kasir tetap bisa jualan offline
+    try{ profile = JSON.parse(localStorage.getItem('profilCache_' + currentUser.id) || 'null'); }catch(e){ profile = null; }
+    if(!profile){
+      document.getElementById('loginError').textContent = "Tidak bisa terhubung ke server. Periksa internet, lalu buka ulang aplikasi.";
+      document.getElementById('loginError').classList.add('show');
+      return;
+    }
+  }
+
+  if(!profile){
     document.getElementById('loginError').textContent = "Akun ini belum terdaftar sebagai pegawai. Hubungi owner.";
     document.getElementById('loginError').classList.add('show');
     await sb.auth.signOut();
@@ -1370,11 +1433,15 @@ async function loadProfileAndEnter(){
     if(profile.role === 'admin'){
       document.getElementById('ownerChartSection').classList.remove('hidden');
     }
-    const { data: ucData } = await sb
-      .from('user_cabang')
-      .select('cabang:cabang_id(id, nama, latitude, longitude)')
-      .eq('user_id', currentUser.id);
-    userAllowedCabang = (ucData || []).map(r => r.cabang).filter(Boolean);
+    const { data: ucData, error: ucErr } = navigator.onLine
+      ? await sb.from('user_cabang').select('cabang:cabang_id(id, nama, latitude, longitude)').eq('user_id', currentUser.id)
+      : { data: null, error: { message: 'offline' } };
+    if(!ucErr && ucData){
+      userAllowedCabang = ucData.map(r => r.cabang).filter(Boolean);
+      try{ localStorage.setItem('cabangIzinCache_' + currentUser.id, JSON.stringify(userAllowedCabang)); }catch(e){}
+    } else {
+      try{ userAllowedCabang = JSON.parse(localStorage.getItem('cabangIzinCache_' + currentUser.id) || '[]'); }catch(e){ userAllowedCabang = []; }
+    }
     if(userAllowedCabang.length === 0 && profile.cabang){
       userAllowedCabang = [profile.cabang]; // jaga-jaga kalau data lama belum sempat diisi ke user_cabang
     }
@@ -1424,6 +1491,7 @@ async function loadProfileAndEnter(){
   await loadProduk();
   updateConnStatus();
   if(navigator.onLine){ trySyncPending(); }
+  setTimeout(kirimCatatanError, 3000);
 
   if(profile.role === 'kasir' || profile.role === 'admin'){
     mulaiPresenceHeartbeat();
@@ -2359,8 +2427,16 @@ function changeOwnerCabang(selectEl){
 }
 
 async function loadCabangList(){
-  const { data, error } = await sb.from('cabang').select('id, nama, latitude, longitude').eq('aktif', true).order('nama');
-  cabangList = (!error && data) ? data : [];
+  const { data, error } = navigator.onLine
+    ? await sb.from('cabang').select('id, nama, latitude, longitude').eq('aktif', true).order('nama')
+    : { data: null, error: { message: 'offline' } };
+  if(!error && data){
+    cabangList = data;
+    try{ localStorage.setItem('cabangListCache', JSON.stringify(data)); }catch(e){}
+  } else {
+    // offline -> pakai daftar cabang terakhir yang tersimpan di HP
+    try{ cabangList = JSON.parse(localStorage.getItem('cabangListCache') || '[]'); }catch(e){ cabangList = []; }
+  }
 }
 
 let sedangLogout = false;
@@ -2477,11 +2553,28 @@ sb.auth.onAuthStateChange((event)=>{
 
 // auto-login kalau sesi masih ada
 async function checkSession(){
-  const { data } = await sb.auth.getSession();
-  if(data.session){
-    currentUser = data.session.user;
+  let session = null;
+  try{ const { data } = await sb.auth.getSession(); session = data && data.session; }catch(e){}
+  if(session){
+    currentUser = session.user;
     await loadProfileAndEnter();
+    return;
   }
+  // Dibuka saat internet mati & tanda login sudah kedaluwarsa (tidak bisa diperbarui tanpa internet):
+  // tetap masuk pakai data login yang tersimpan di HP. Begitu online, tanda login diperbarui otomatis.
+  if(!navigator.onLine){
+    const u = ambilUserTersimpan();
+    if(u){ currentUser = u; await loadProfileAndEnter(); }
+  }
+}
+
+function ambilUserTersimpan(){
+  try{
+    const ref = new URL(SUPABASE_URL).hostname.split('.')[0];
+    const s = JSON.parse(localStorage.getItem('sb-' + ref + '-auth-token') || 'null');
+    const u = s && (s.user || (s.currentSession && s.currentSession.user));
+    return (u && u.id) ? u : null;
+  }catch(e){ return null; }
 }
 
 // ================== VIEW SWITCH ==================
@@ -2494,6 +2587,7 @@ function setActiveNav(activeId){
 
 // ================== INGAT HALAMAN TERAKHIR (biar refresh tidak balik ke POS) ==================
 function simpanViewState(state){
+  try{ window.__halamanAktif = JSON.stringify(state); }catch(e){}
   if(!currentUser) return;
   localStorage.setItem('viewState_' + currentUser.id, JSON.stringify(state));
 }
@@ -3109,14 +3203,25 @@ let sedangSyncPending = false;
 
 async function trySyncPending(){
   if(sedangSyncPending) return;
-  const queue = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
-  if(queue.length === 0 || !navigator.onLine){ updateConnStatus(); return; }
+  const cekAntrian = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
+  if(cekAntrian.length === 0 || !navigator.onLine){ updateConnStatus(); return; }
   // belum login (mis. habis logout) -> jangan kirim: server pasti menolak karena tidak ada akun,
   // dan itu BUKAN alasan transaksi dianggap gagal permanen. Tunggu sampai login lagi.
   if(!currentUser){ updateConnStatus(); return; }
 
-  sedangSyncPending = true;
+  sedangSyncPending = true; // dikunci SEBELUM ada proses tunggu, supaya sinkron tidak jalan dobel
   try{
+    // tanda login belum valid (mis. baru online setelah dibuka offline & token belum sempat diperbarui):
+    // tunggu dulu, JANGAN kirim -> kalau dikirim, server menolak dan transaksi bisa salah dianggap gagal permanen
+    let sesiValid = false;
+    try{
+      const { data: ses } = await sb.auth.getSession();
+      sesiValid = !!(ses && ses.session);
+    }catch(e){ sesiValid = false; }
+    if(!sesiValid){ updateConnStatus(); return; }
+
+    // baca ulang antrian terbaru (bisa bertambah selama menunggu di atas)
+    const queue = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]');
     await kirimAntrianPending(queue);
   } finally {
     sedangSyncPending = false;
@@ -5967,6 +6072,85 @@ function renderSOPList(){
     `;
   }).join('');
 }
+
+// ================== KIRIM CATATAN ERROR KE DATABASE ==================
+// Catatan error dikumpulkan di HP (lihat bagian paling atas halaman), dikirim ke tabel log_error
+// kalau sudah login & online. Owner/Claude bisa melihat penyebab error tanpa perlu screenshot.
+let sedangKirimError = false;
+async function kirimCatatanError(){
+  if(sedangKirimError || !currentUser || !navigator.onLine) return;
+  let q;
+  try{ q = JSON.parse(localStorage.getItem('antrianErrorApp') || '[]'); }catch(e){ q = []; }
+  if(!q.length) return;
+  sedangKirimError = true;
+  try{
+    const kirim = q.slice(0, 20);
+    const { error } = await rpcBatasWaktu('catat_error', {
+      p_items: kirim.map(x => ({ ...x, cabang_id: activeCabangId || null }))
+    }, 15000);
+    if(!error){
+      const terkirim = new Set(kirim.map(x => x.id));
+      const sisa = JSON.parse(localStorage.getItem('antrianErrorApp') || '[]').filter(x => !terkirim.has(x.id));
+      localStorage.setItem('antrianErrorApp', JSON.stringify(sisa));
+    }
+  }catch(e){ /* dicoba lagi nanti */ }
+  finally{ sedangKirimError = false; }
+}
+window.kirimCatatanError = kirimCatatanError;
+setInterval(kirimCatatanError, 60000);
+window.addEventListener('online', () => setTimeout(kirimCatatanError, 3000));
+
+// ================== BISA DIBUKA SAAT OFFLINE (service worker) ==================
+// sw.js menyimpan salinan aplikasi + library di HP. Halaman tetap diambil versi terbaru kalau internet ada.
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      if(window.catatError) window.catatError('service_worker', 'Gagal memasang mode offline: ' + (err && err.message), '', '');
+    });
+  });
+}
+
+// ================== PEMBERITAHUAN VERSI BARU ==================
+// Tablet yang dibiarkan terbuka berhari-hari tetap memakai versi lama walau sudah ada perbaikan.
+// Tiap 5 menit dicek; kalau ada versi baru muncul tombol "ketuk untuk memperbarui" (tidak memaksa).
+let bannerVersiTampil = false;
+async function cekVersiBaru(){
+  if(bannerVersiTampil || !navigator.onLine || location.protocol === 'file:') return;
+  try{
+    const res = await fetch(location.pathname + '?cekversi=' + Date.now(), { cache: 'no-store' });
+    if(!res.ok) return;
+    const html = await res.text();
+    const m = html.match(/<meta name="app-version" content="([^"]+)"/);
+    if(m && m[1] !== APP_VERSION) tampilkanBannerVersi();
+  }catch(e){ /* offline / sinyal lemah: cek lagi nanti */ }
+}
+
+function tampilkanBannerVersi(){
+  if(bannerVersiTampil) return;
+  bannerVersiTampil = true;
+  const b = document.createElement('div');
+  b.id = 'bannerVersiBaru';
+  b.setAttribute('role', 'button');
+  b.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99999;background:#0c1f14;color:#fff;border:2px solid #d4a017;border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.4);cursor:pointer;max-width:calc(100% - 32px);text-align:center;';
+  b.textContent = '🔄 Ada versi baru aplikasi — ketuk untuk memperbarui';
+  b.onclick = perbaruiAplikasi;
+  document.body.appendChild(b);
+}
+
+async function perbaruiAplikasi(){
+  if(typeof cart !== 'undefined' && cart.length > 0 &&
+     !confirm('Masih ada pesanan di keranjang.\n\nPerbarui sekarang? Keranjang akan kosong.\n(Transaksi yang sudah dibayar tetap aman.)')) return;
+  // transaksi offline aman: tersimpan di HP dan tetap dikirim setelah halaman dimuat ulang
+  try{
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if(reg) await reg.update();
+  }catch(e){}
+  location.reload();
+}
+
+setTimeout(cekVersiBaru, 20000);
+setInterval(cekVersiBaru, 5 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') cekVersiBaru(); });
 
 checkSession();
 
