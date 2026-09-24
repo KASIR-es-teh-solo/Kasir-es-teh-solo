@@ -507,14 +507,6 @@
         </div>
         <div class="summary-row"><span>Diskon</span><span id="sumDiskon">- Rp 0</span></div>
         <div class="summary-row total"><span>Total</span><span id="sumTotal">Rp 0</span></div>
-        <div class="field" style="margin:10px 0 4px;">
-          <label>Metode Pembayaran</label>
-          <div id="metodeBayarPicker" style="display:flex;gap:6px;">
-            <button type="button" class="metode-bayar-btn active" data-metode="tunai" onclick="pilihMetodeBayar('tunai', this)">💵 Tunai</button>
-            <button type="button" class="metode-bayar-btn" data-metode="qris" onclick="pilihMetodeBayar('qris', this)">📱 QRIS</button>
-            <button type="button" class="metode-bayar-btn" data-metode="transfer" onclick="pilihMetodeBayar('transfer', this)">🏦 Transfer</button>
-          </div>
-        </div>
         <button class="checkout-btn" id="checkoutBtn" disabled onclick="bukaKonfirmasiBayar()">Bayar & Cetak Struk</button>
         <button class="clear-btn" onclick="clearCart()">Kosongkan pesanan</button>
       </div>
@@ -2686,11 +2678,8 @@ function renderCart(){
 
 // ================== CHECKOUT (online + offline) ==================
 let selectedMetodeBayar = 'tunai';
-function pilihMetodeBayar(metode, btnEl){
-  selectedMetodeBayar = metode;
-  document.querySelectorAll('.metode-bayar-btn').forEach(b=>b.classList.remove('active'));
-  btnEl.classList.add('active');
-}
+// Metode bayar QRIS/Transfer dihapus: semua transaksi dicatat tunai
+// (pembayaran QRIS di outlet dicairkan jadi uang fisik saat penutupan)
 
 // tampilkan dulu preview struk (BELUM masuk database) -> kasir masih bisa cek/ubah pesanan
 function bukaKonfirmasiBayar(){
@@ -2797,8 +2786,7 @@ async function konfirmasiBayar(){
   lastReceiptText = buildReceiptText(cartSnapshot, totalPrice, diskon, metodeBayar);
 
   document.getElementById('diskonInput').value = 0;
-  document.querySelectorAll('.metode-bayar-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.metode-bayar-btn[data-metode="tunai"]').classList.add('active');
+  selectedMetodeBayar = 'tunai';
   selectedMetodeBayar = 'tunai';
   btn.disabled = false;
   btn.textContent = "BAYAR";
