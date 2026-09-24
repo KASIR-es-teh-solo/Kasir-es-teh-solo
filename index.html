@@ -313,6 +313,19 @@
   .size-option.habis{opacity:.45;cursor:not-allowed;background:#eee;border-style:dashed;}
   .size-option.habis:hover{border-color:var(--line-soft);}
   .size-option .size-sisa{display:block;font-size:11px;font-weight:600;color:#c0392b;margin-top:2px;}
+  .lk-sub{font-size:12px;color:rgba(12,31,20,.6);line-height:1.45;margin-bottom:10px}
+  .lk-sub b{color:var(--ink)}
+  .lk-status{border-radius:10px;padding:9px;text-align:center;font-weight:800;font-size:13px;margin-bottom:6px}
+  .lk-status.pas{background:rgba(46,125,50,.12);color:#2e7d32}
+  .lk-status.kurang{background:rgba(192,57,43,.12);color:#c0392b}
+  .lk-status.lebih{background:rgba(230,160,30,.15);color:#a06000}
+  .lk-judul{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--forest-dark);margin:12px 0 4px}
+  .lk-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dashed rgba(12,31,20,.15)}
+  .lk-row.kecil{font-size:12px;color:rgba(12,31,20,.7);padding-left:8px}
+  .lk-row.total{font-size:16px;border-bottom:none;border-top:2px solid var(--forest-dark);margin-top:4px;padding-top:8px}
+  .lk-catatan{font-size:12px;color:rgba(12,31,20,.6);margin:6px 0 14px}
+  .lk-btn{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line-soft);background:#fff;font-weight:800;font-size:13px;margin-bottom:8px;color:var(--ink);cursor:pointer}
+  .lk-btn.gold{background:var(--gold);border-color:var(--gold)}
   .modal-close{width:100%;padding:10px;background:none;border:none;color:rgba(12,31,20,.5);font-size:12px;cursor:pointer;margin-top:4px;}
 
   .receipt{background:var(--cream);color:var(--ink);border-radius:10px;padding:22px;width:100%;max-width:300px;font-family:'Courier New', monospace;}
@@ -1077,6 +1090,17 @@
   </div>
 </div>
 
+<!-- laporan penutupan kas -->
+<div class="overlay" id="laporanKasOverlay">
+  <div class="modal" style="max-width:380px;">
+    <h3>🧾 Laporan Penutupan Kas</h3>
+    <div id="laporanKasBody"></div>
+    <button class="lk-btn gold" onclick="cetakLaporanKas()">🖨️ Cetak Laporan</button>
+    <button class="lk-btn" onclick="kirimLaporanKas()">📋 Salin / Kirim WA</button>
+    <button class="modal-close" onclick="document.getElementById('laporanKasOverlay').classList.remove('show')">Tutup</button>
+  </div>
+</div>
+
 <!-- tambah bahan ke resep -->
 <div class="overlay" id="resepBahanOverlay">
   <div class="modal">
@@ -1727,6 +1751,14 @@ async function submitHitungKas(){
   closeKasModal();
   refreshSaldoHeader();
 
+  try{
+    await tampilkanLaporanKas({
+      kasAwal, kasFisik, kasSistem, selisih, catatan,
+      totalTunai, jumlahTx: (txData||[]).length, totalBiaya, sejak: startOfDay.toISOString()
+    });
+    return;
+  }catch(e){ /* kalau laporan gagal dibuat, tetap tampilkan notifikasi biasa */ }
+
   if(selisih === 0){
     showSuccessToast('✅', 'Kas pas!', 'Kas seharusnya ' + fmt(kasSistem) + ', sesuai hitungan.');
   } else if(selisih > 0){
@@ -1734,6 +1766,89 @@ async function submitHitungKas(){
   } else {
     showSuccessToast('⚠️', 'Kas kurang ' + fmt(Math.abs(selisih)), 'Seharusnya: ' + fmt(kasSistem) + ' · Dihitung: ' + fmt(kasFisik));
   }
+}
+
+// ================== LAPORAN PENUTUPAN KAS ==================
+let laporanKasTeks = '';
+async function tampilkanLaporanKas(d){
+  const cabang = (userAllowedCabang || []).find(c=>c.id===activeCabangId);
+  const namaCabang = cabang ? cabang.nama : '-';
+  const namaKasir = (currentProfile && currentProfile.nama) || '-';
+  const sekarang = new Date();
+  const tglStr = sekarang.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const jamStr = sekarang.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+  const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+  const esc = t => String(t||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const namaBiaya = b => (b.deskripsi || b.kategori || 'Belanja').split(' · dicatat')[0];
+
+  let biaya = [];
+  const { data: rows, error } = await sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: d.sejak });
+  if(!error && rows) biaya = rows;
+
+  const status = d.selisih === 0 ? ['pas','✅ KAS PAS — tidak ada selisih']
+    : d.selisih < 0 ? ['kurang', '⚠️ KAS KURANG ' + fmt(Math.abs(d.selisih))]
+    : ['lebih', '⚠️ KAS LEBIH ' + fmt(d.selisih)];
+  const warnaSelisih = d.selisih === 0 ? '#2e7d32' : (d.selisih < 0 ? '#c0392b' : '#a06000');
+  const teksSelisih = (d.selisih < 0 ? '− ' : d.selisih > 0 ? '+ ' : '') + fmt(Math.abs(d.selisih));
+
+  document.getElementById('laporanKasBody').innerHTML = `
+    <div class="lk-sub">${esc(namaCabang)}<br>${tglStr} · ${jamStr}<br>Kasir yang input: <b>${esc(namaKasir)}</b></div>
+    <div class="lk-status ${status[0]}">${status[1]}</div>
+    <div class="lk-judul">Uang masuk</div>
+    <div class="lk-row"><span>Kas awal (modal kembalian)</span><b>${fmt(d.kasAwal)}</b></div>
+    <div class="lk-row"><span>Penjualan tunai (${d.jumlahTx} transaksi)</span><b>${fmt(d.totalTunai)}</b></div>
+    <div class="lk-judul">Uang keluar dari laci</div>
+    ${biaya.length ? biaya.map(b=>`<div class="lk-row kecil"><span>${esc(namaBiaya(b))} · ${jam(b.created_at)}${b.pencatat ? ' · '+esc(b.pencatat) : ''}</span><span>− ${fmt(b.jumlah)}</span></div>`).join('')
+      : '<div class="lk-row kecil"><span>Tidak ada belanja tunai</span><span></span></div>'}
+    <div class="lk-row"><span>Total keluar</span><b>− ${fmt(d.totalBiaya)}</b></div>
+    <div class="lk-judul">Hasil hitung</div>
+    <div class="lk-row"><span>Seharusnya di laci</span><b>${fmt(d.kasSistem)}</b></div>
+    <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
+    <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
+    <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
+
+  const garis = '--------------------------------\n';
+  const baris = (kiri, kanan) => {
+    const k = String(kiri), n = String(kanan);
+    const spasi = Math.max(1, 32 - k.length - n.length);
+    return (k.length + n.length + 1 > 32) ? k + '\n' + ' '.repeat(Math.max(0, 32 - n.length)) + n + '\n' : k + ' '.repeat(spasi) + n + '\n';
+  };
+  let t = 'LAPORAN PENUTUPAN KAS\nES TEH S.O.L.O\n' + garis;
+  t += namaCabang + '\n' + tglStr + ' ' + jamStr + '\nKasir: ' + namaKasir + '\n' + garis;
+  t += baris('Kas awal', fmt(d.kasAwal));
+  t += baris('Penjualan (' + d.jumlahTx + ' trx)', fmt(d.totalTunai));
+  t += garis + 'Uang keluar:\n';
+  if(biaya.length){ biaya.forEach(b=>{ t += baris(' ' + namaBiaya(b) + ' ' + jam(b.created_at) + (b.pencatat ? ' ' + b.pencatat : ''), '-' + fmt(b.jumlah)); }); }
+  else { t += ' (tidak ada)\n'; }
+  t += baris('Total keluar', '-' + fmt(d.totalBiaya)) + garis;
+  t += baris('Seharusnya', fmt(d.kasSistem));
+  t += baris('Dihitung', fmt(d.kasFisik));
+  t += baris('SELISIH', teksSelisih);
+  t += (d.selisih === 0 ? 'STATUS: KAS PAS' : d.selisih < 0 ? 'STATUS: KAS KURANG' : 'STATUS: KAS LEBIH') + '\n';
+  if(d.catatan) t += 'Catatan: ' + d.catatan + '\n';
+  laporanKasTeks = t;
+
+  document.getElementById('laporanKasOverlay').classList.add('show');
+}
+
+async function cetakLaporanKas(){
+  if(!laporanKasTeks) return;
+  try{
+    await printReceiptToPrinter(laporanKasTeks + '\n\n\n');
+    showSuccessToast('🖨️', 'Laporan dicetak', '');
+  }catch(e){
+    alert('Gagal cetak: ' + e.message + ' Sambungkan printer dulu lewat menu Printer.');
+  }
+}
+
+async function kirimLaporanKas(){
+  if(!laporanKasTeks) return;
+  const teks = laporanKasTeks.replace(/ {2,}/g, ' ');
+  if(navigator.share){
+    try{ await navigator.share({ text: teks }); return; }catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  try{ await navigator.clipboard.writeText(teks); showSuccessToast('📋', 'Laporan disalin', 'Tinggal tempel di WhatsApp'); }
+  catch(e){ window.open('https://wa.me/?text=' + encodeURIComponent(teks), '_blank'); }
 }
 
 async function loadStokMenipis(){
