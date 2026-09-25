@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.7">
+<meta name="app-version" content="2026-09-25.8">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -2945,12 +2945,18 @@ const CATEGORY_STYLE = {
   'Fruit Series':  { color:'#d9720a', icon:'🍓', order:4 },
   'Coffee Series': { color:'#6b4423', icon:'☕', order:5 },
   'Menu Nescafe':  { color:'#3d2314', icon:'🥤', order:6 },
+  'Jumat Berkah':  { color:'#1b8a4a', icon:'🤲', order:98 },
 };
+// Kategori "Jumat Berkah" (Es Teh Jumat Berkah untuk masjid) hanya tampil di kasir pada hari JUMAT,
+// supaya hari lain kasir tidak salah pencet. Owner tetap bisa mengatur resep/menunya kapan saja.
+const KATEGORI_AMAL = 'Jumat Berkah';
+function hariJumat(){ return new Date().getDay() === 5; }
+function kategoriTampil(cat){ return cat !== KATEGORI_AMAL || hariJumat(); }
 function catStyle(cat){
   return CATEGORY_STYLE[cat] || { color:'var(--forest)', icon:'🍹', order:99 };
 }
 function sortedCategories(){
-  return Object.keys(produkByKategori).sort((a,b)=> catStyle(a).order - catStyle(b).order);
+  return Object.keys(produkByKategori).filter(kategoriTampil).sort((a,b)=> catStyle(a).order - catStyle(b).order);
 }
 
 function renderTabs(){
@@ -3031,6 +3037,7 @@ function filterMenuSearch(){
 
   const matched = [];
   Object.entries(produkByKategori).forEach(([cat, items])=>{
+    if(!kategoriTampil(cat)) return;
     items.forEach(it=>{
       if(it.nama.toLowerCase().includes(q)) matched.push({ ...it, kategori: cat });
     });
