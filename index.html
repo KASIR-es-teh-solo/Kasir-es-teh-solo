@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.2">
+<meta name="app-version" content="2026-09-25.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -38,7 +38,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       });
       if(q.length > MAX) q = q.slice(-MAX);
       localStorage.setItem(KEY, JSON.stringify(q));
-      if(window.kirimCatatanError) setTimeout(window.kirimCatatanError, 2000);
+      if(window.kirimCatatanError) setTimeout(function(){ try{ window.kirimCatatanError(); }catch(e){} }, 2000);
     }catch(e){}
   }
   window.catatError = catat;
@@ -1413,6 +1413,7 @@ async function loadProfileAndEnter(){
   document.getElementById('ownerCabangSelector').classList.add('hidden');
   document.getElementById('kasirCabangStatus').classList.add('hidden');
   document.getElementById('izinKeluarBtn').classList.add('hidden');
+  tampilkanBannerIzin(null);
   document.getElementById('kasBtn').classList.add('hidden');
   document.getElementById('belanjaKecilBtn').classList.add('hidden');
   document.getElementById('penjualanHariIniBtn').classList.add('hidden');
@@ -1498,7 +1499,10 @@ async function loadProfileAndEnter(){
     if(freshLogin){ catatLoginKerja(); }
     cekPesanMasuk();
     if(pesanMasukPollInterval) clearInterval(pesanMasukPollInterval);
-    pesanMasukPollInterval = setInterval(()=>{ cekLogoutPaksa(); cekPesanMasuk(); }, 20000);
+    pesanMasukPollInterval = setInterval(()=>{
+      cekLogoutPaksa(); cekPesanMasuk();
+      if(currentProfile && currentProfile.role === 'kasir') refreshIzinKeluarBtnState();
+    }, 20000);
   }
 
   // pulihkan halaman terakhir yang dibuka sebelum refresh (kalau masih valid buat role ini)
@@ -1624,7 +1628,7 @@ async function submitIzinKeluar(){
   const { data, error } = await sb
     .from('izin_keluar')
     .insert({ user_id: currentUser.id, cabang_id: activeCabangId, absensi_id: absensiId, alasan, status: 'aktif' })
-    .select('id')
+    .select('id, waktu_mulai')
     .single();
 
   btn.disabled = false;
@@ -1637,42 +1641,106 @@ async function submitIzinKeluar(){
   }
 
   closeIzinKeluarModal();
-  setIzinKeluarBtnState(data.id);
-  showSuccessToast('🚪', 'Izin keluar terkirim', 'Jangan lupa pencet "Sudah Kembali" kalau sudah balik ke outlet.');
+  setIzinKeluarBtnState(data.id, data.waktu_mulai);
+  showSuccessToast('🚪', 'Izin keluar terkirim', 'Kalau sudah balik ke outlet, tekan tombol "✅ Saya Sudah Kembali" di atas layar.');
 }
 
+let sedangTutupIzin = false;
 async function submitKembaliDariIzin(izinId){
-  await sb.from('izin_keluar').update({ waktu_selesai: new Date().toISOString(), status: 'selesai' }).eq('id', izinId);
+  if(sedangTutupIzin) return;
+  sedangTutupIzin = true;
+  const tombol = document.getElementById('izinBannerKembaliBtn');
+  if(tombol){ tombol.disabled = true; tombol.textContent = 'Menyimpan...'; }
+  // hanya menyentuh tabel izin_keluar (TIDAK mengubah absensi / jam kerja)
+  const { error } = await sb.from('izin_keluar')
+    .update({ waktu_selesai: new Date().toISOString(), status: 'selesai' })
+    .eq('id', izinId)
+    .eq('status', 'aktif'); // sudah ditutup Owner / logout paksa -> tidak diubah lagi, tetap dianggap beres
+  sedangTutupIzin = false;
+  if(error){
+    if(tombol){ tombol.disabled = false; tombol.textContent = '✅ Saya Sudah Kembali'; }
+    alert('Gagal menutup izin keluar: ' + error.message + '\n\nPeriksa internet, lalu tekan "Saya Sudah Kembali" lagi.');
+    return;
+  }
   setIzinKeluarBtnState(null);
   showSuccessToast('✅', 'Selamat datang kembali', 'Status izin keluar sudah ditutup.');
 }
 
-function setIzinKeluarBtnState(izinId){
+// logout biasa saat izin masih aktif -> izin ikut ditutup (kalau tidak, di Dashboard Owner tetap "Belum kembali" selamanya)
+async function tutupIzinAktifSaatLogout(){
+  if(!currentUser) return;
+  try{
+    await sb.from('izin_keluar')
+      .update({ waktu_selesai: new Date().toISOString(), status: 'selesai' })
+      .eq('user_id', currentUser.id)
+      .eq('status', 'aktif');
+  }catch(e){ /* offline: Owner bisa lihat di riwayat, izin ditutup saat logout paksa */ }
+}
+
+function setIzinKeluarBtnState(izinId, waktuMulai){
   const btn = document.getElementById('izinKeluarBtn');
   const label = document.getElementById('izinKeluarLabel');
+  const ikon = btn.querySelector('.side-icon');
   if(izinId){
     btn.dataset.izinId = izinId;
     btn.style.background = 'rgba(192,57,43,.15)';
-    label.textContent = 'Sudah Kembali?';
+    label.textContent = 'Sudah Kembali';
+    if(ikon) ikon.textContent = '↩️'; // beda dari ikon 🚪 tombol Keluar (logout) supaya tidak tertukar
   } else {
     delete btn.dataset.izinId;
     btn.style.background = '';
     label.textContent = 'Izin Keluar';
+    if(ikon) ikon.textContent = '🚪';
   }
+  tampilkanBannerIzin(izinId, waktuMulai);
+}
+
+// Banner besar di atas layar selama izin keluar aktif -> tombol "Sudah Kembali" selalu kelihatan
+// (sebelumnya cuma label kecil di sidebar yang bisa tersembunyi / tertukar dengan tombol logout)
+let izinBannerTimer = null;
+function tampilkanBannerIzin(izinId, waktuMulai){
+  let b = document.getElementById('izinAktifBanner');
+  if(izinBannerTimer){ clearInterval(izinBannerTimer); izinBannerTimer = null; }
+  if(!izinId){
+    if(b) b.remove();
+    return;
+  }
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'izinAktifBanner';
+    b.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9000;background:#c0392b;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);font-size:13px;font-weight:700;';
+    b.innerHTML = '<span id="izinBannerTeks">🚪 Sedang izin keluar</span>' +
+      '<button id="izinBannerKembaliBtn" style="background:#fff;color:#c0392b;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:14px;cursor:pointer;">✅ Saya Sudah Kembali</button>';
+    document.body.appendChild(b);
+  }
+  const tombol = document.getElementById('izinBannerKembaliBtn');
+  tombol.disabled = false;
+  tombol.textContent = '✅ Saya Sudah Kembali';
+  tombol.onclick = () => submitKembaliDariIzin(izinId);
+  const teks = document.getElementById('izinBannerTeks');
+  const perbarui = () => {
+    if(!waktuMulai){ teks.textContent = '🚪 Sedang izin keluar'; return; }
+    const mulai = new Date(waktuMulai);
+    const menit = Math.max(0, Math.floor((Date.now() - mulai.getTime()) / 60000));
+    teks.textContent = `🚪 Sedang izin keluar sejak ${mulai.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} (${menit} menit)`;
+  };
+  perbarui();
+  izinBannerTimer = setInterval(perbarui, 30000);
 }
 
 // dipanggil tiap kasir masuk/refresh, biar tombol Izin Keluar sinkron kalau ada izin yang masih aktif
 async function refreshIzinKeluarBtnState(){
-  if(!currentUser) return;
-  const { data } = await sb
+  if(!currentUser || sedangTutupIzin) return;
+  const { data, error } = await sb
     .from('izin_keluar')
-    .select('id')
+    .select('id, waktu_mulai')
     .eq('user_id', currentUser.id)
     .eq('status', 'aktif')
     .order('waktu_mulai', { ascending:false })
     .limit(1)
     .maybeSingle();
-  setIzinKeluarBtnState(data ? data.id : null);
+  if(error || sedangTutupIzin) return; // offline / gagal / sedang menutup izin: biarkan tampilan sekarang
+  setIzinKeluarBtnState(data ? data.id : null, data ? data.waktu_mulai : null);
 }
 
 // ================== KAS (1 langkah: hitung kas pas mau tutup outlet) ==================
@@ -2499,6 +2567,7 @@ async function doLogout(){
   hentikanPresenceHeartbeat();
   hentikanPollingAktif();
   if(pesanMasukPollInterval){ clearInterval(pesanMasukPollInterval); pesanMasukPollInterval = null; }
+  await tutupIzinAktifSaatLogout();
   await tutupAbsensiKeluar();
   if(currentUser){
     await sb.from('user_presence').delete().eq('user_id', currentUser.id);
@@ -2578,6 +2647,7 @@ async function tutupSesiAbsensi(absensiId, nama, masukIso){
 }
 
 function resetKeHalamanLogin(){
+  tampilkanBannerIzin(null);
   currentUser = null;
   currentProfile = null;
   cart = [];
@@ -2719,6 +2789,10 @@ function showDashPanel(panelName){
   if(panelName === 'aktif'){
     loadAktifSekarang();
     aktifPollInterval = setInterval(loadAktifSekarang, 30000); // refresh tiap 30 detik
+  }
+  if(panelName === 'karyawan'){
+    // status izin keluar ikut diperbarui otomatis (karyawan menekan "Sudah Kembali" -> langsung terlihat)
+    aktifPollInterval = setInterval(()=>loadIzinKeluarList(true), 30000);
   }
   simpanViewState({ type:'dash', panel: panelName });
 }
@@ -3549,6 +3623,21 @@ async function ambilProdukStokOtomatis(){
   }catch(e){ return new Set(); }
 }
 
+// Supabase membatasi 1 permintaan maksimal 1.000 baris (bisa lebih kecil kalau disetel server).
+// Ambil bertahap per halaman sampai habis, supaya laporan tidak terpotong diam-diam.
+// buatQuery = fungsi yang mengembalikan query BARU (sudah difilter & diurutkan unik) tiap dipanggil.
+async function ambilSemuaBaris(buatQuery, ukuranHalaman = 1000){
+  let semua = [];
+  for(let dari = 0; ; ){
+    const { data, error } = await buatQuery().range(dari, dari + ukuranHalaman - 1);
+    if(error) return { data: null, error };
+    if(!data || data.length === 0) break;
+    semua = semua.concat(data);
+    dari += data.length; // maju sebanyak yang benar-benar diterima (aman walau batas server < ukuranHalaman)
+  }
+  return { data: semua, error: null };
+}
+
 async function loadDashboard(){
   document.getElementById('dashTxList').innerHTML = '<div class="empty-msg">Memuat...</div>';
   document.getElementById('dashStockList').innerHTML = '<div class="empty-msg">Memuat...</div>';
@@ -3857,13 +3946,15 @@ async function loadTerlarisDanKategori(){
     ? (document.getElementById('ringkasanCabangFilter').value === 'semua' ? null : document.getElementById('ringkasanCabangFilter').value)
     : activeCabangId;
 
-  let query = sb
-    .from('transaksi_item')
-    .select('qty, subtotal, produk:produk_id(nama, kategori:kategori_id(nama)), transaksi:transaksi_id!inner(status, created_at, cabang_id)')
-    .gte('transaksi.created_at', rangeStart.toISOString());
-  if(filterCabangId){ query = query.eq('transaksi.cabang_id', filterCabangId); }
-
-  const { data, error } = await query;
+  const { data, error } = await ambilSemuaBaris(() => {
+    let query = sb
+      .from('transaksi_item')
+      .select('qty, subtotal, produk:produk_id(nama, kategori:kategori_id(nama)), transaksi:transaksi_id!inner(status, created_at, cabang_id)')
+      .gte('transaksi.created_at', rangeStart.toISOString())
+      .order('id');
+    if(filterCabangId){ query = query.eq('transaksi.cabang_id', filterCabangId); }
+    return query;
+  });
 
   const terlarisBox = document.getElementById('dashTerlarisList');
   const kategoriBox = document.getElementById('dashKategoriList');
@@ -3933,19 +4024,21 @@ async function renderSalesChart(){
   }
   const rangeStart = days[0];
 
-  let txRangeQuery = sb
-    .from('transaksi')
-    .select('total, created_at')
-    .eq('status', 'selesai')
-    .gte('created_at', rangeStart.toISOString());
-
   const isOwner = currentProfile && currentProfile.role === 'owner';
   const filterCabangId = isOwner
     ? (document.getElementById('ringkasanCabangFilter').value === 'semua' ? null : document.getElementById('ringkasanCabangFilter').value)
     : activeCabangId;
-  if(filterCabangId){ txRangeQuery = txRangeQuery.eq('cabang_id', filterCabangId); }
 
-  const { data: txRange, error } = await txRangeQuery;
+  const { data: txRange, error } = await ambilSemuaBaris(() => {
+    let txRangeQuery = sb
+      .from('transaksi')
+      .select('total, created_at')
+      .eq('status', 'selesai')
+      .gte('created_at', rangeStart.toISOString())
+      .order('id');
+    if(filterCabangId){ txRangeQuery = txRangeQuery.eq('cabang_id', filterCabangId); }
+    return txRangeQuery;
+  });
 
   if(error){ return; }
 
@@ -4125,10 +4218,10 @@ function resetJamKerjaFilter(){
   loadJamKerja();
 }
 
-async function loadIzinKeluarList(){
+async function loadIzinKeluarList(diam){
   const box = document.getElementById('dashIzinKeluarList');
   if(!box) return;
-  box.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  if(!diam) box.innerHTML = '<div class="empty-msg">Memuat...</div>';
 
   const isOwner = currentProfile && currentProfile.role === 'owner';
   let query = sb
@@ -4141,7 +4234,7 @@ async function loadIzinKeluarList(){
 
   const { data, error } = await query;
   if(error){
-    box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
+    if(!diam) box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
     return;
   }
   if(!data || data.length===0){
@@ -4149,14 +4242,18 @@ async function loadIzinKeluarList(){
     return;
   }
 
+  const lama = (dari, sampai) => {
+    const menit = Math.max(0, Math.round((new Date(sampai) - new Date(dari)) / 60000));
+    return menit >= 60 ? `${Math.floor(menit/60)}j ${menit%60}m` : `${menit}m`;
+  };
   box.innerHTML = data.map(r=>`
     <div class="tx-row" style="flex-wrap:wrap;">
       <span>${r.status==='aktif' ? '🔴' : '✅'} ${escTG(r.user ? r.user.nama : '-')}${r.cabang ? ' · '+escTG(r.cabang.nama) : ''}</span>
       <span class="time">${new Date(r.waktu_mulai).toLocaleString('id-ID')}</span>
       <span style="width:100%;font-size:12px;opacity:.8;margin-top:4px;">
         Alasan: ${escTG(r.alasan || '-')}${r.waktu_selesai
-          ? ' · Kembali: '+new Date(r.waktu_selesai).toLocaleString('id-ID')
-          : (r.status==='aktif' ? ' · <b style="color:#c0392b;">Belum kembali</b>' : '')}
+          ? ' · Kembali: '+new Date(r.waktu_selesai).toLocaleString('id-ID')+' · lama keluar '+lama(r.waktu_mulai, r.waktu_selesai)
+          : (r.status==='aktif' ? ' · <b style="color:#c0392b;">Belum kembali (sudah '+lama(r.waktu_mulai, Date.now())+')</b>' : '')}
       </span>
     </div>
   `).join('');
@@ -4280,16 +4377,18 @@ async function filterTransaksi(){
     return;
   }
 
-  let query = sb.from('transaksi').select('id, total, created_at, status, alasan_batal, metode_bayar').order('created_at', { ascending:false });
-
-  if(dari){
-    query = query.gte('created_at', new Date(dari + 'T00:00:00').toISOString());
-  }
-  if(sampai){
-    query = query.lte('created_at', new Date(sampai + 'T23:59:59').toISOString());
-  }
-
-  const { data, error } = await query;
+  // diambil bertahap (bisa > 1.000 transaksi); hasilnya dipakai juga untuk Export Excel & Cetak/PDF
+  const { data, error } = await ambilSemuaBaris(() => {
+    let query = sb.from('transaksi').select('id, total, created_at, status, alasan_batal, metode_bayar')
+      .order('created_at', { ascending:false }).order('id', { ascending:false });
+    if(dari){
+      query = query.gte('created_at', new Date(dari + 'T00:00:00').toISOString());
+    }
+    if(sampai){
+      query = query.lte('created_at', new Date(sampai + 'T23:59:59').toISOString());
+    }
+    return query;
+  });
   if(error){
     alert("Gagal mencari transaksi: " + error.message);
     return;
