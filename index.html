@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.3">
+<meta name="app-version" content="2026-09-25.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -317,19 +317,26 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   /* FIX: panel Pesanan tidak ketutup blur topbar saat discroll (landscape/tablet) */
   @media (min-width:881px){
     /* panel Pesanan penuh dari atas sampai bawah layar */
-    .layout{grid-template-columns:1fr;padding-right:340px;}
-    .cart{position:fixed;top:0;right:0;bottom:0;width:340px;z-index:25;min-height:0;height:100vh;height:100dvh;overflow-y:auto;}
-    .app-main:has(#kasirView:not(.hidden)) .topbar{margin-right:340px;width:auto;}
+    /* panel Pesanan dibuat lebih ramping (250px) supaya daftar menu dapat ruang lebih lebar */
+    .layout{grid-template-columns:1fr;padding-right:250px;}
+    .cart{position:fixed;top:0;right:0;bottom:0;width:250px;z-index:25;min-height:0;height:100vh;height:100dvh;overflow-y:auto;}
+    .app-main:has(#kasirView:not(.hidden)) .topbar{margin-right:250px;width:auto;}
     .cart-items{max-height:none;min-height:190px;}
     /* versi ringkas supaya banyak item pesanan kelihatan tanpa digeser */
     .cart{padding:10px 12px;}
     .cart-head{margin-bottom:6px;}
     .cart h2{font-size:15px;}
-    .cart-line{padding:6px 8px;margin-bottom:5px;display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:center;}
-    .cart-line-top{grid-column:1 / -1;font-size:13px;}
-    .cart-line-sub{font-size:10.5px;margin-top:1px;}
-    .cart-line-bottom{margin-top:0;gap:10px;justify-content:flex-end;}
+    /* tulisan pesanan BESAR supaya mudah dibaca kasir: 3 baris (nama+harga / ukuran / tombol jumlah) */
+    .cart-line{padding:8px 10px;margin-bottom:6px;display:block;}
+    .cart-line-top{font-size:19px;line-height:1.2;gap:6px;}
+    .cart-line-top span:last-child{font-size:17px;white-space:nowrap;}
+    .cart-line-sub{font-size:13.5px;margin-top:2px;}
+    .cart-line-bottom{display:flex;margin-top:6px;justify-content:space-between;align-items:center;}
     .qty-btn{width:26px;height:26px;}
+    .cart .qty-control{gap:10px;}
+    .cart .qty-btn{width:34px;height:34px;font-size:19px;}
+    .cart .qty-num{font-size:19px;min-width:22px;}
+    .cart .remove-btn{font-size:13.5px;}
     .cart-summary{padding-top:6px;margin-top:6px;}
     .summary-row{font-size:12px;margin-bottom:2px;}
     .summary-row.total{font-size:16px;margin-top:2px;}
