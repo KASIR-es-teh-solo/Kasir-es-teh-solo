@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.6">
+<meta name="app-version" content="2026-09-25.7">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1006,6 +1006,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" class="metode-bayar-btn" data-kat="Gas" onclick="pilihKategoriBelanja(this)">🔥 Gas</button>
         <button type="button" class="metode-bayar-btn" data-kat="Kebersihan" onclick="pilihKategoriBelanja(this)">🧽 Kebersihan</button>
         <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
+        <button type="button" class="metode-bayar-btn hidden" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
+      </div>
+      <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
+        🧾 Untuk <b>membayar bahan yang stoknya sudah dicatat sebelumnya</b> (misal gula yang dibeli kemarin, bayar hari ini).
+        Uang laci tetap berkurang, tapi <b>tidak mengurangi Laba</b> — modal bahan sudah dihitung dari harga modal tiap cup.
       </div>
     </div>
     <div class="field">
@@ -1052,6 +1057,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <option value="Gaji">Gaji</option>
         <option value="Perawatan Alat">Perawatan Alat</option>
         <option value="Lainnya">Lainnya</option>
+        <option value="Bayar Hutang Bahan">Bayar Hutang Bahan (tidak mengurangi laba)</option>
       </select>
     </div>
     <div class="field">
@@ -3868,10 +3874,11 @@ async function loadRingkasan(){
       totalModal += modalSatuan * it.qty;
     });
 
-    let biayaQuery = sb.from('biaya_operasional').select('jumlah, cabang_id').gte('created_at', startOfDay.toISOString());
+    let biayaQuery = sb.from('biaya_operasional').select('jumlah, cabang_id, kategori').gte('created_at', startOfDay.toISOString());
     if(filterCabangId){ biayaQuery = biayaQuery.eq('cabang_id', filterCabangId); }
     const { data: biayaRows } = await biayaQuery;
-    const totalBiayaHariIni = (biayaRows||[]).reduce((s,b)=>s+Number(b.jumlah),0);
+    // "Bayar Hutang Bahan" tidak mengurangi laba (modal bahan sudah dihitung dari harga modal produk)
+    const totalBiayaHariIni = (biayaRows||[]).filter(b => b.kategori !== KATEGORI_BAYAR_HUTANG).reduce((s,b)=>s+Number(b.jumlah),0);
 
     document.getElementById('dashLabaHariIni').textContent = fmt(totalHariIni - totalModal - totalBiayaHariIni);
 
@@ -5622,7 +5629,13 @@ async function hapusBahanRusak(id){
 // ================== PEMBELIAN BAHAN BAKU ==================
 let editingPembelianId = null;
 
-function openPembelianModal(){
+async function pastikanBahanBakuTermuat(){
+  // daftar bahan baku dulu hanya dimuat saat menu Stok dibuka -> form Pembelian bisa kosong. Muat kalau belum ada.
+  if(!bahanBakuList || bahanBakuList.length === 0){ await loadBahanBakuList(); }
+}
+
+async function openPembelianModal(){
+  await pastikanBahanBakuTermuat();
   editingPembelianId = null;
   document.getElementById('pembelianModalTitle').textContent = 'Catat Pembelian';
   document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
@@ -5636,7 +5649,8 @@ function openPembelianModal(){
   document.getElementById('pembelianOverlay').classList.add('show');
 }
 
-function openEditPembelianModal(p){
+async function openEditPembelianModal(p){
+  await pastikanBahanBakuTermuat();
   editingPembelianId = p.id;
   document.getElementById('pembelianModalTitle').textContent = 'Edit Pembelian';
   document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
@@ -5868,9 +5882,13 @@ async function submitGantiPassword(){
 }
 
 // ================== BELANJA KECIL DARI LACI (KASIR) ==================
+// Kategori khusus: bayar hutang bahan yang stoknya sudah dicatat -> mengurangi uang laci, TIDAK mengurangi laba
+const KATEGORI_BAYAR_HUTANG = 'Bayar Hutang Bahan';
 function pilihKategoriBelanja(btn){
   document.querySelectorAll('#belanjaKecilKategori .metode-bayar-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  const info = document.getElementById('belanjaInfoHutang');
+  if(info) info.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_BAYAR_HUTANG);
 }
 
 async function bukaBelanjaKecil(){
@@ -5878,6 +5896,9 @@ async function bukaBelanjaKecil(){
   document.getElementById('belanjaKecilJumlah').value = '';
   document.getElementById('belanjaKecilKet').value = '';
   document.getElementById('belanjaKecilError').classList.remove('show');
+  // "Bayar Hutang Bahan" khusus Owner (kasir tidak melihat tombol ini)
+  const btnHutang = document.getElementById('btnBayarHutangBahan');
+  if(btnHutang) btnHutang.classList.toggle('hidden', !(currentProfile && currentProfile.role === 'owner'));
   pilihKategoriBelanja(document.querySelector('#belanjaKecilKategori .metode-bayar-btn'));
   document.getElementById('belanjaKecilOverlay').classList.add('show');
   await loadBelanjaKecilHariIni();
