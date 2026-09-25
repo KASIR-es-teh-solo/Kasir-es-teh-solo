@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.5">
+<meta name="app-version" content="2026-09-25.6">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -966,16 +966,26 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <div class="field">
       <label>Jumlah Dibeli <span id="pembelianSatuanLabel" style="opacity:.7;"></span></label>
-      <input type="number" id="pembelianJumlah" placeholder="0">
+      <input type="number" id="pembelianJumlah" placeholder="0" oninput="updateTotalPembelian()">
     </div>
     <div class="field">
       <label>Harga Satuan (Rp) <span id="pembelianHargaLabel" style="opacity:.7;"></span></label>
-      <input type="number" id="pembelianHargaSatuan" placeholder="0">
+      <input type="number" id="pembelianHargaSatuan" placeholder="0" oninput="updateTotalPembelian()">
+    </div>
+    <div id="pembelianTotalInfo" style="display:flex;justify-content:space-between;align-items:center;background:rgba(12,31,20,.05);border-radius:8px;padding:10px 12px;margin:-4px 0 12px;font-size:14px;">
+      <span>Total uang keluar</span><b id="pembelianTotalNilai" style="font-size:17px;">Rp 0</b>
     </div>
     <div class="field">
       <label>Catatan (opsional)</label>
       <input type="text" id="pembelianCatatan" placeholder="misal: beli di Toko Makmur">
     </div>
+    <label for="pembelianDariLaci" style="display:flex;gap:10px;align-items:flex-start;background:#fff8e1;border:1px solid #e0a030;border-radius:10px;padding:10px 12px;margin:4px 0 12px;cursor:pointer;">
+      <input type="checkbox" id="pembelianDariLaci" style="width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:#2e7d32;">
+      <span style="font-size:13px;line-height:1.35;color:var(--ink);">
+        <b>💵 Dibayar dari uang laci</b><br>
+        <span style="opacity:.75;">Centang kalau uangnya diambil dari laci kasir. Saldo Kas &amp; Hitung Kas ikut berkurang. Laba tidak terpotong dobel.</span>
+      </span>
+    </label>
     <button class="login-btn" id="pembelianSubmitBtn" onclick="submitPembelian()">Simpan</button>
     <button class="modal-close" onclick="closePembelianModal()">Batal</button>
   </div>
@@ -1915,12 +1925,12 @@ async function submitHitungKas(){
     return;
   }
 
-  const { data: biayaData, error: biayaError } = await sb
-    .from('biaya_operasional')
-    .select('jumlah')
-    .eq('cabang_id', activeCabangId)
-    .eq('sumber_dana', 'tunai')
-    .gt('created_at', startOfDay.toISOString());
+  // uang keluar dari laci: biaya tunai + pembelian stok yang dibayar dari laci (lewat fungsi database,
+  // karena kasir tidak boleh membaca tabel pembelian langsung)
+  const { data: biayaSemua, error: biayaError } = await sb.rpc('laporan_biaya_kas', {
+    p_cabang: activeCabangId, p_sejak: startOfDay.toISOString()
+  });
+  const biayaData = (biayaSemua || []).filter(b => new Date(b.created_at) > startOfDay);
 
   if(biayaError){
     btn.disabled = false;
@@ -3740,14 +3750,15 @@ async function hitungSaldoKas(daftarCabang){
     const sejak = lastKas.waktu_tutup;
     const { data: tx } = await sb.from('transaksi').select('total')
       .eq('cabang_id', c.id).eq('status','selesai').gt('created_at', sejak);
-    const { data: by } = await sb.from('biaya_operasional').select('jumlah')
-      .eq('cabang_id', c.id).eq('sumber_dana','tunai').gt('created_at', sejak);
+    // uang keluar dari laci = biaya tunai + pembelian stok dari laci
+    const { data: bySemua } = await sb.rpc('laporan_biaya_kas', { p_cabang: c.id, p_sejak: sejak });
+    const by = (bySemua || []).filter(b => new Date(b.created_at) > new Date(sejak));
     const masuk = (tx||[]).reduce((a,t)=>a+Number(t.total),0);
     const keluar = (by||[]).reduce((a,b)=>a+Number(b.jumlah),0);
     total += Number(lastKas.kas_fisik) + masuk - keluar;
     const tgl = new Date(sejak).toLocaleString('id-ID',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
     info.push(`${daftarCabang.length>1 ? c.nama+': ' : ''}Hitung Kas ${tgl} ${fmt(Number(lastKas.kas_fisik))}` +
-      (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} biaya` : ''));
+      (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} keluar laci` : ''));
   }
   return { total, info };
 }
@@ -5619,6 +5630,8 @@ function openPembelianModal(){
   document.getElementById('pembelianJumlah').value = '';
   document.getElementById('pembelianHargaSatuan').value = '';
   document.getElementById('pembelianCatatan').value = '';
+  document.getElementById('pembelianDariLaci').checked = false;
+  updateTotalPembelian();
   document.getElementById('pembelianError').classList.remove('show');
   document.getElementById('pembelianOverlay').classList.add('show');
 }
@@ -5631,8 +5644,18 @@ function openEditPembelianModal(p){
   document.getElementById('pembelianJumlah').value = p.jumlah;
   document.getElementById('pembelianHargaSatuan').value = p.harga_satuan;
   document.getElementById('pembelianCatatan').value = p.catatan || '';
+  document.getElementById('pembelianDariLaci').checked = p.sumber_dana === 'tunai';
+  updateTotalPembelian();
   document.getElementById('pembelianError').classList.remove('show');
   document.getElementById('pembelianOverlay').classList.add('show');
+}
+
+// total = jumlah x harga satuan, ditampilkan langsung supaya tidak salah isi (mis. harga per slop vs per pcs)
+function updateTotalPembelian(){
+  const j = Number(document.getElementById('pembelianJumlah').value) || 0;
+  const h = Number(document.getElementById('pembelianHargaSatuan').value) || 0;
+  const el = document.getElementById('pembelianTotalNilai');
+  if(el) el.textContent = fmt(j * h);
 }
 
 function updatePembelianSatuanInfo(){
@@ -5658,6 +5681,7 @@ async function submitPembelian(){
   const jumlah = Number(document.getElementById('pembelianJumlah').value);
   const hargaSatuan = Number(document.getElementById('pembelianHargaSatuan').value) || 0;
   const catatan = document.getElementById('pembelianCatatan').value.trim();
+  const sumberDana = document.getElementById('pembelianDariLaci').checked ? 'tunai' : 'non_tunai';
   const errBox = document.getElementById('pembelianError');
   const btn = document.getElementById('pembelianSubmitBtn');
   errBox.classList.remove('show');
@@ -5682,12 +5706,12 @@ async function submitPembelian(){
   if(editingPembelianId){
     ({ error } = await sb
       .from('pembelian')
-      .update({ bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan })
+      .update({ bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan, sumber_dana: sumberDana })
       .eq('id', editingPembelianId));
   } else {
     ({ error } = await sb
       .from('pembelian')
-      .insert({ cabang_id: activeCabangId, bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan, dibeli_oleh: currentUser.id }));
+      .insert({ cabang_id: activeCabangId, bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan, sumber_dana: sumberDana, dibeli_oleh: currentUser.id }));
   }
 
   btn.disabled = false;
@@ -5722,7 +5746,7 @@ async function loadPembelianData(){
 
   let query = sb
     .from('pembelian')
-    .select('id, jumlah, harga_satuan, total, catatan, created_at, bahan_baku_id, cabang_id, bahan_baku:bahan_baku_id(nama, satuan, satuan_beli), cabang:cabang_id(nama)')
+    .select('id, jumlah, harga_satuan, total, catatan, sumber_dana, created_at, bahan_baku_id, cabang_id, bahan_baku:bahan_baku_id(nama, satuan, satuan_beli), cabang:cabang_id(nama)')
     .order('created_at', { ascending:false });
 
   const isOwner = currentProfile && currentProfile.role === 'owner';
@@ -5751,7 +5775,7 @@ async function loadPembelianData(){
 
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${escTG(p.bahan_baku ? p.bahan_baku.nama : '-')} · ${p.jumlah} ${escTG(p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : '')}${isOwner && p.cabang ? ' · '+escTG(p.cabang.nama) : ''}</span>
+      <span>${escTG(p.bahan_baku ? p.bahan_baku.nama : '-')} · ${p.jumlah} ${escTG(p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : '')}${isOwner && p.cabang ? ' · '+escTG(p.cabang.nama) : ''}${p.sumber_dana === 'tunai' ? ' <span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Dari laci</span>' : ''}</span>
       <span class="time">${new Date(p.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
         <span style="opacity:.6;">${fmt(p.harga_satuan)}/satuan${p.catatan ? ' · '+escTG(p.catatan) : ''}</span>
