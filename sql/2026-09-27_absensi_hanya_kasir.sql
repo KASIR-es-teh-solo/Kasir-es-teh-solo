@@ -1,0 +1,8 @@
+-- 2026-09-27 — sudah dijalankan di Supabase oleh Mey atas permintaan Owner.
+-- Absensi / jam kerja hanya untuk kasir: trigger jaga_absensi menolak insert untuk akun admin/owner.
+-- (Versi lengkap fungsi ada di migration "absensi_hanya_kasir" di Supabase; bagian yang ditambahkan:)
+--   if tg_op = 'INSERT' and exists (select 1 from users
+--        where id = case when public.is_owner() then coalesce(new.user_id, auth.uid()) else auth.uid() end
+--          and role <> 'kasir') then
+--     raise exception 'Absensi / jam kerja hanya untuk kasir.' using errcode = '42501';
+--   end if;
