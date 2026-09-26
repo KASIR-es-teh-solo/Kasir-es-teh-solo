@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-25.9">
+<meta name="app-version" content="2026-09-26.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -516,6 +516,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="navKaryawanBtn" onclick="showDashPanel('karyawan')"><span class="side-icon">👥</span><span class="side-label">Karyawan</span></button>
     <button class="side-btn hidden" id="navPembelianBtn" onclick="showDashPanel('pembelian')"><span class="side-icon">📥</span><span class="side-label">Pembelian</span></button>
     <button class="side-btn hidden" id="navBiayaBtn" onclick="showDashPanel('biaya')"><span class="side-icon">💸</span><span class="side-label">Biaya</span></button>
+    <button class="side-btn hidden" id="navBrankasBtn" onclick="showDashPanel('brankas')"><span class="side-icon">🔒</span><span class="side-label">Brankas</span></button>
     <button class="side-btn hidden" id="settingsBtn" onclick="showSettingsView()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <div class="side-spacer"></div>
     <button class="side-btn" id="sidebarPasswordBtn" onclick="openGantiPasswordModal()"><span class="side-icon">🔑</span><span class="side-label">Password</span></button>
@@ -595,6 +596,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
 
       <div class="ringkasan-tab-content" id="ringkasanTabContent-ringkasan">
+      <div id="tabunganBanner" class="hidden"></div>
       <div id="belumHitungKasBanner" class="hidden" style="background:rgba(255,245,244,.95);border:1px solid var(--danger);color:var(--danger);padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px;font-weight:700;"></div>
       <div class="dash-section hidden" id="dashTransaksiGagalSection" style="margin-bottom:16px;border:2px solid var(--danger);">
         <h3>⚠️ Transaksi Gagal (perlu dicek)</h3>
@@ -622,6 +624,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">📈</span>
           <div class="label">Laba Bersih Hari Ini</div>
           <div class="value" id="dashLabaHariIni">Rp 0</div>
+          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Tabungan &amp; bayar hutang bahan tidak memotong laba</div>
         </div>
         <div class="dash-card hidden" id="dashKasCard">
           <span class="icon">💵</span>
@@ -846,6 +849,25 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
     </div>
 
+    <!-- BRANKAS (khusus Owner) -->
+    <div class="dash-panel hidden" id="dashPanel-brankas">
+      <div class="dash-cards" style="margin-bottom:18px;">
+        <div class="dash-card">
+          <span class="icon">🔒</span>
+          <div class="label">Isi Brankas Sekarang</div>
+          <div class="value" id="brankasSaldo">Rp 0</div>
+          <div id="brankasInfoBulan" style="font-size:12px;color:#f3e6b5;margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="dash-section" style="margin-bottom:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">📒 Riwayat Tabungan</h3>
+          <button class="header-btn" style="background:#fff;color:#c62828;border-color:#fff;" onclick="ambilDariBrankas()">− Ambil</button>
+        </div>
+        <div id="brankasList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
+
     <!-- BIAYA OPERASIONAL -->
     <div class="dash-panel hidden" id="dashPanel-biaya">
       <div class="dash-cards" style="margin-bottom:18px;">
@@ -999,18 +1021,21 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <p>Catat uang tunai yang diambil dari laci untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas.</p>
     <div class="login-error" id="belanjaKecilError"></div>
     <div class="field">
-      <label>Belanja apa?</label>
+      <label>Untuk apa?</label>
       <div id="belanjaKecilKategori" style="display:flex;flex-wrap:wrap;gap:6px;">
         <button type="button" class="metode-bayar-btn active" data-kat="Es Batu" onclick="pilihKategoriBelanja(this)">🧊 Es Batu</button>
         <button type="button" class="metode-bayar-btn" data-kat="Air Galon" onclick="pilihKategoriBelanja(this)">💧 Galon</button>
         <button type="button" class="metode-bayar-btn" data-kat="Gas" onclick="pilihKategoriBelanja(this)">🔥 Gas</button>
         <button type="button" class="metode-bayar-btn" data-kat="Kebersihan" onclick="pilihKategoriBelanja(this)">🧽 Kebersihan</button>
         <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
-        <button type="button" class="metode-bayar-btn hidden" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
+        <button type="button" class="metode-bayar-btn" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Tabungan</button>
+        <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
       </div>
       <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        🧾 Untuk <b>membayar bahan yang stoknya sudah dicatat sebelumnya</b> (misal gula yang dibeli kemarin, bayar hari ini).
-        Uang laci tetap berkurang, tapi <b>tidak mengurangi Laba</b> — modal bahan sudah dihitung dari harga modal tiap cup.
+        🧾 Untuk <b>bayar bahan yang sudah diantar sebelumnya</b> (misal gula). Kas laci berkurang, tapi <b>tidak mengurangi laba</b>.
+      </div>
+      <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
+        💰 Uang tabungan diambil dari laci. Kas laci berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
     </div>
     <div class="field">
@@ -1449,7 +1474,7 @@ async function loadProfileAndEnter(){
   document.getElementById('kasBtn').classList.add('hidden');
   document.getElementById('belanjaKecilBtn').classList.add('hidden');
   document.getElementById('penjualanHariIniBtn').classList.add('hidden');
-  ['navRingkasanBtn','navAktifBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn'].forEach(id=>{
+  ['navRingkasanBtn','navAktifBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
   });
 
@@ -1459,6 +1484,7 @@ async function loadProfileAndEnter(){
     document.getElementById('settingsBtn').classList.remove('hidden');
     document.getElementById('ownerChartSection').classList.remove('hidden');
     document.getElementById('navStokMenipisBtn').classList.remove('hidden');
+    document.getElementById('navBrankasBtn').classList.remove('hidden'); // Brankas khusus Owner
     document.getElementById('sidebarPasswordBtn').classList.add('hidden'); // owner ganti password lewat Pengaturan
     userAllowedCabang = cabangList;
   } else {
@@ -2733,7 +2759,7 @@ function ambilUserTersimpan(){
 
 // ================== VIEW SWITCH ==================
 function setActiveNav(activeId){
-  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','settingsBtn'].forEach(id=>{
+  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','settingsBtn'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
@@ -2768,7 +2794,8 @@ const DASH_NAV_MAP = {
   stokmenipis: 'navStokMenipisBtn',
   karyawan: 'navKaryawanBtn',
   pembelian: 'navPembelianBtn',
-  biaya: 'navBiayaBtn'
+  biaya: 'navBiayaBtn',
+  brankas: 'navBrankasBtn'
 };
 
 function showDashPanel(panelName){
@@ -2790,6 +2817,10 @@ function showDashPanel(panelName){
 
   if(panelName === 'stokmenipis'){
     loadStokMenipis();
+  }
+
+  if(panelName === 'brankas'){
+    loadBrankas();
   }
 
   if(panelName === 'stok'){
@@ -3858,6 +3889,7 @@ async function loadRingkasan(){
   // ===== SALDO KAS OUTLET: hasil Hitung Kas terakhir + penjualan tunai sesudahnya - biaya tunai sesudahnya =====
   document.getElementById('dashSaldoCard').classList.toggle('hidden', !isOwner);
   if(isOwner){ loadSaldoKasOutlet(filterCabangId); }
+  loadNotifTabungan();
 
   const performaSection = document.getElementById('performaCabangSection');
 
@@ -5891,11 +5923,15 @@ async function submitGantiPassword(){
 // ================== BELANJA KECIL DARI LACI (KASIR) ==================
 // Kategori khusus: bayar hutang bahan yang stoknya sudah dicatat -> mengurangi uang laci, TIDAK mengurangi laba
 const KATEGORI_BAYAR_HUTANG = 'Bayar Hutang Bahan';
+// Tabungan: uang laci pindah ke Brankas (tabel brankas, hanya Owner yang bisa lihat) -> kas laci berkurang, laba TIDAK terpotong
+const KATEGORI_TABUNGAN = 'Tabungan';
 function pilihKategoriBelanja(btn){
   document.querySelectorAll('#belanjaKecilKategori .metode-bayar-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const info = document.getElementById('belanjaInfoHutang');
   if(info) info.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_BAYAR_HUTANG);
+  const infoTab = document.getElementById('belanjaInfoTabungan');
+  if(infoTab) infoTab.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_TABUNGAN);
 }
 
 async function bukaBelanjaKecil(){
@@ -5903,9 +5939,6 @@ async function bukaBelanjaKecil(){
   document.getElementById('belanjaKecilJumlah').value = '';
   document.getElementById('belanjaKecilKet').value = '';
   document.getElementById('belanjaKecilError').classList.remove('show');
-  // "Bayar Hutang Bahan" khusus Owner (kasir tidak melihat tombol ini)
-  const btnHutang = document.getElementById('btnBayarHutangBahan');
-  if(btnHutang) btnHutang.classList.toggle('hidden', !(currentProfile && currentProfile.role === 'owner'));
   pilihKategoriBelanja(document.querySelector('#belanjaKecilKategori .metode-bayar-btn'));
   document.getElementById('belanjaKecilOverlay').classList.add('show');
   await loadBelanjaKecilHariIni();
@@ -5928,7 +5961,15 @@ async function submitBelanjaKecil(){
   if(!confirm(`Ambil ${fmt(jumlah)} dari laci untuk ${kategori}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
-  const { error } = await sb.from('biaya_operasional').insert({
+  const { error } = kategori === KATEGORI_TABUNGAN
+    ? await sb.from('brankas').insert({
+        cabang_id: activeCabangId,
+        jenis: 'masuk',
+        jumlah,
+        keterangan: ket || null,
+        dicatat_oleh: currentUser.id
+      })
+    : await sb.from('biaya_operasional').insert({
     cabang_id: activeCabangId,
     kategori,
     deskripsi: (ket ? ket + ' · ' : '') + 'dicatat di kasir',
@@ -6053,6 +6094,88 @@ async function loadBelanjaKecilHariIni(){
       <span>${escTG(r.kategori)}${r.deskripsi ? ' <span style="opacity:.6;">· '+escTG(r.deskripsi)+'</span>' : ''}</span>
       <span><b>${fmt(r.jumlah)}</b> <span style="opacity:.6;">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></span>
     </div>`).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar laci hari ini.</div>';
+}
+
+// ================== BRANKAS / TABUNGAN (khusus Owner) ==================
+const tglJamWIB = t => new Date(t).toLocaleString('id-ID', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+async function loadNotifTabungan(){
+  const box = document.getElementById('tabunganBanner');
+  if(!box) return;
+  const isOwner = currentProfile && currentProfile.role === 'owner';
+  if(!isOwner || !navigator.onLine){ box.classList.add('hidden'); return; }
+  const { data, error } = await sb.from('brankas')
+    .select('id, jumlah, keterangan, created_at, cabang:cabang_id(nama), pencatat:dicatat_oleh(nama)')
+    .eq('jenis','masuk').eq('dilihat_owner', false)
+    .order('created_at', { ascending:false }).limit(20);
+  if(error || !data || data.length === 0){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const total = data.reduce((s,r)=>s+Number(r.jumlah),0);
+  window.__notifTabunganIds = data.map(r=>r.id);
+  box.innerHTML = `
+    <div style="background:rgba(232,245,233,.97);border:1px solid #43a047;color:#1b5e20;padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;">
+      💰 <b style="font-size:15px;">Tabungan masuk ${fmt(total)}</b>${data.length > 1 ? ` <span style="opacity:.8;">(${data.length} kali)</span>` : ''}
+      ${data.map(r=>`<div style="margin-top:4px;">${fmt(r.jumlah)} dari <b>${escTG(r.pencatat?.nama || '-')}</b> · ${escTG(r.cabang?.nama || '-')} · ${tglJamWIB(r.created_at)}${r.keterangan ? `<br><span style="opacity:.8;">Ket: ${escTG(r.keterangan)}</span>` : ''}</div>`).join('')}
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        <button onclick="tandaiTabunganDilihat(true)" style="padding:6px 12px;border-radius:14px;border:1px solid #43a047;background:#43a047;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">🔒 Lihat Brankas</button>
+        <button onclick="tandaiTabunganDilihat(false)" style="padding:6px 12px;border-radius:14px;border:1px solid #43a047;background:#fff;color:#1b5e20;font-weight:700;font-size:12px;cursor:pointer;">✓ Oke, sudah tahu</button>
+      </div>
+    </div>`;
+  box.classList.remove('hidden');
+}
+
+async function tandaiTabunganDilihat(bukaBrankas){
+  const ids = window.__notifTabunganIds || [];
+  if(ids.length){ await sb.from('brankas').update({ dilihat_owner: true }).in('id', ids); }
+  window.__notifTabunganIds = [];
+  const box = document.getElementById('tabunganBanner');
+  if(box){ box.classList.add('hidden'); box.innerHTML = ''; }
+  if(bukaBrankas) showDashPanel('brankas');
+}
+
+async function loadBrankas(){
+  const list = document.getElementById('brankasList');
+  if(!(currentProfile && currentProfile.role === 'owner')){ list.innerHTML = '<div class="empty-msg">Khusus Owner.</div>'; return; }
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const { data, error } = await sb.from('brankas')
+    .select('id, jenis, jumlah, keterangan, created_at, dilihat_owner, cabang:cabang_id(nama), pencatat:dicatat_oleh(nama)')
+    .order('created_at', { ascending:false });
+  if(error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
+  const rows = data || [];
+  const saldo = rows.reduce((s,r)=>s + (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah), 0);
+  const awalBulan = new Date(); awalBulan.setDate(1); awalBulan.setHours(0,0,0,0);
+  const bulanIni = rows.filter(r => new Date(r.created_at) >= awalBulan);
+  const masukBln = bulanIni.filter(r=>r.jenis==='masuk').reduce((s,r)=>s+Number(r.jumlah),0);
+  const keluarBln = bulanIni.filter(r=>r.jenis==='keluar').reduce((s,r)=>s+Number(r.jumlah),0);
+  document.getElementById('brankasSaldo').textContent = fmt(saldo);
+  document.getElementById('brankasInfoBulan').textContent = `Masuk bulan ini ${fmt(masukBln)} · Keluar ${fmt(keluarBln)}`;
+  list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
+      <span>${r.jenis === 'masuk' ? '💰 Tabungan' : '💼 Ambil'}${r.keterangan ? ' · ' + escTG(r.keterangan) : ''}
+        <small style="display:block;opacity:.6;font-size:11px;">${tglJamWIB(r.created_at)} · ${escTG(r.pencatat?.nama || '-')}${r.cabang?.nama ? ' · ' + escTG(r.cabang.nama) : ''}</small></span>
+      <span style="font-weight:800;white-space:nowrap;color:${r.jenis === 'masuk' ? '#1b5e20' : '#c62828'};">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span>
+    </div>`).join('') + `</div>` : '<div class="empty-msg">Belum ada tabungan.</div>';
+  // buka menu Brankas = notifikasi dianggap sudah dilihat
+  const belum = rows.filter(r => r.jenis === 'masuk' && !r.dilihat_owner).map(r => r.id);
+  if(belum.length){ await sb.from('brankas').update({ dilihat_owner: true }).in('id', belum); }
+  window.__notifTabunganIds = [];
+  const banner = document.getElementById('tabunganBanner');
+  if(banner){ banner.classList.add('hidden'); banner.innerHTML = ''; }
+}
+
+async function ambilDariBrankas(){
+  if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
+  const input = prompt('Ambil uang dari Brankas berapa? (angka saja, misal 200000)');
+  if(input === null) return;
+  const jumlah = Number(String(input).replace(/[^0-9]/g,''));
+  if(!jumlah || jumlah <= 0){ alert('Masukkan jumlah yang valid.'); return; }
+  const saldoTeks = document.getElementById('brankasSaldo').textContent.replace(/[^0-9-]/g,'');
+  const saldo = Number(saldoTeks || 0);
+  if(jumlah > saldo && !confirm(`Isi brankas cuma ${fmt(saldo)}. Tetap ambil ${fmt(jumlah)}?`)) return;
+  const ket = prompt('Keterangan (misal: setor ke bank)', '') || null;
+  const { error } = await sb.from('brankas').insert({ jenis: 'keluar', jumlah, keterangan: ket, dicatat_oleh: currentUser.id, dilihat_owner: true });
+  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  catatLog('Ambil Brankas', `Ambil ${fmt(jumlah)} dari Brankas${ket ? ' · ' + ket : ''}`);
+  await loadBrankas();
 }
 
 // ================== BIAYA OPERASIONAL ==================
