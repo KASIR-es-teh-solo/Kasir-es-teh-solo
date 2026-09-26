@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-26.3">
+<meta name="app-version" content="2026-09-27.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1262,7 +1262,30 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div id="laporanKasBody"></div>
     <button class="lk-btn gold" onclick="cetakLaporanKas()">🖨️ Cetak Laporan</button>
     <button class="lk-btn" onclick="kirimLaporanKas()">📋 Salin / Kirim WA</button>
-    <button class="modal-close" onclick="document.getElementById('laporanKasOverlay').classList.remove('show')">Tutup</button>
+    <button class="login-btn hidden" id="laporanKasSelesaiBtn" style="margin-top:10px;" onclick="tanyaAkhiriShift()">✅ Selesai &amp; Akhiri Shift</button>
+    <button class="modal-close" id="laporanKasTutupBtn" onclick="document.getElementById('laporanKasOverlay').classList.remove('show')">Tutup</button>
+  </div>
+</div>
+
+<!-- konfirmasi akhiri shift (kasir, setelah laporan penutupan kas tersimpan) -->
+<div class="overlay" id="akhiriShiftOverlay" style="z-index:10000;">
+  <div class="modal" style="max-width:360px;">
+    <h3>🔒 Akhiri Shift?</h3>
+    <p style="font-size:14px;line-height:1.5;">Laporan penutupan kas sudah tersimpan.</p>
+    <p style="font-size:13px;line-height:1.5;">Kalau disetujui:<br>• Jam kerja kamu hari ini <b>ditutup sekarang</b>.<br>• Aplikasi kasir <b>dikunci</b>.<br>• Untuk membuka lagi, kamu harus <b>absen masuk</b> dulu.</p>
+    <p style="font-size:12px;">Sudah cetak / kirim laporannya? Kalau belum, tekan <b>Belum</b> dulu.</p>
+    <button class="login-btn" onclick="akhiriShift()">✅ Ya, akhiri shift</button>
+    <button class="modal-close" onclick="document.getElementById('akhiriShiftOverlay').classList.remove('show')">Belum</button>
+  </div>
+</div>
+
+<!-- layar kunci setelah shift selesai (dipakai kalau absen foto belum diwajibkan) -->
+<div id="kunciShiftGate" class="hidden" style="position:fixed;inset:0;z-index:9999;background:rgba(8,22,14,.94);display:flex;justify-content:center;align-items:center;padding:14px;">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <h3>✅ Shift Selesai</h3>
+    <p id="kunciShiftInfo" style="font-size:14px;line-height:1.5;">Jam kerja sudah ditutup. Aplikasi kasir dikunci.</p>
+    <button class="login-btn" onclick="mulaiShiftBaru()">▶️ Mulai Shift Baru (absen masuk)</button>
+    <button class="modal-close" onclick="keluarDariKunciShift()">🚪 Keluar (logout)</button>
   </div>
 </div>
 
@@ -1626,7 +1649,6 @@ async function loadProfileAndEnter(){
   if(profile.role === 'kasir' || profile.role === 'admin'){
     mulaiPresenceHeartbeat();
     if(profile.role === 'kasir'){ mulaiKerjaKasir(freshLogin); }
-    else if(freshLogin){ catatLoginKerja(); }
     cekPesanMasuk();
     if(pesanMasukPollInterval) clearInterval(pesanMasukPollInterval);
     pesanMasukPollInterval = setInterval(()=>{
@@ -1757,9 +1779,63 @@ async function absensiTerbukaValid(){
 
 async function mulaiKerjaKasir(freshLogin){
   const cfg = await ambilPengaturanAbsen();
-  if(!cfg.wajib){ if(freshLogin) catatLoginKerja(); return; }
-  if(!freshLogin && await absensiTerbukaValid()) return;
+  const kunciKey = 'shiftSelesai_' + currentUser.id;
+  if(!cfg.wajib){
+    if(freshLogin){ localStorage.removeItem(kunciKey); catatLoginKerja(); return; }
+    if(localStorage.getItem(kunciKey)) tampilkanKunciShift();
+    return;
+  }
+  if(!freshLogin && !localStorage.getItem(kunciKey) && await absensiTerbukaValid()) return;
   bukaGerbangAbsen();
+}
+
+// ================== AKHIRI SHIFT (setelah laporan penutupan kas tersimpan) ==================
+// Kasir menyetujui -> jam kerja ditutup, aplikasi dikunci (tanpa logout akun).
+// Membuka lagi harus absen masuk (gerbang foto kalau absen foto wajib, atau tombol Mulai Shift Baru kalau belum wajib).
+function tanyaAkhiriShift(){
+  document.getElementById('akhiriShiftOverlay').classList.add('show');
+}
+
+function resetTombolLaporanKas(){
+  document.getElementById('laporanKasSelesaiBtn').classList.add('hidden');
+  document.getElementById('laporanKasTutupBtn').classList.remove('hidden');
+}
+
+async function akhiriShift(){
+  document.getElementById('akhiriShiftOverlay').classList.remove('show');
+  document.getElementById('laporanKasOverlay').classList.remove('show');
+  resetTombolLaporanKas();
+  try{ clearCart(); }catch(e){}
+  await tutupAbsensiKeluar();
+  localStorage.setItem('shiftSelesai_' + currentUser.id, new Date().toISOString());
+  const cfg = await ambilPengaturanAbsen();
+  if(cfg.wajib) bukaGerbangAbsen(); else tampilkanKunciShift();
+}
+
+function tampilkanKunciShift(){
+  const t = localStorage.getItem('shiftSelesai_' + (currentUser ? currentUser.id : ''));
+  const jam = t ? new Date(t).toLocaleString('id-ID', { weekday:'long', hour:'2-digit', minute:'2-digit' }) : '';
+  document.getElementById('kunciShiftInfo').innerHTML =
+    `Jam kerja <b>${escTG((currentProfile && currentProfile.nama) || '')}</b> sudah ditutup${jam ? ' (' + escTG(jam) + ')' : ''}.<br>Aplikasi kasir dikunci sampai absen masuk lagi.`;
+  document.getElementById('kunciShiftGate').classList.remove('hidden');
+}
+
+async function mulaiShiftBaru(){
+  const cfg = await ambilPengaturanAbsen();
+  if(cfg.wajib){ document.getElementById('kunciShiftGate').classList.add('hidden'); bukaGerbangAbsen(); return; }
+  if(!confirm('Mulai shift baru sekarang? Jam masuk dicatat mulai sekarang.')) return;
+  localStorage.removeItem('shiftSelesai_' + currentUser.id);
+  await catatLoginKerja();
+  document.getElementById('kunciShiftGate').classList.add('hidden');
+  showSuccessToast('✅', 'Shift dimulai', 'Jam masuk sudah dicatat. Selamat bekerja!');
+}
+
+async function keluarDariKunciShift(){
+  if(!confirm('Keluar dari akun?')) return;
+  document.getElementById('kunciShiftGate').classList.add('hidden');
+  const confirmAsli = window.confirm;
+  window.confirm = () => true;
+  try{ await doLogout(); } finally { window.confirm = confirmAsli; }
 }
 
 function jarakMeterAbsen(lat1, lon1, lat2, lon2){
@@ -1986,6 +2062,8 @@ async function ambilFotoAbsen(jarak){
     tulisPesanAbsen(`🎉 <b>Absen berhasil — jam masuk ${jam} WIB.</b> Selamat bekerja! Membuka kasir...`, 'ok');
     document.getElementById('absenBubble').textContent = '✅ Berhasil';
     s.selesai = true;
+    localStorage.removeItem('shiftSelesai_' + currentUser.id);
+    document.getElementById('kunciShiftGate').classList.add('hidden');
     setTimeout(tutupGerbangAbsen, 1500);
   }catch(e){
     gagal('Terjadi kesalahan: ' + (e && e.message ? e.message : e));
@@ -2433,6 +2511,11 @@ async function submitHitungKas(){
       kasAwal, kasFisik, kasSistem, selisih, catatan,
       totalTunai, jumlahTx: (txData||[]).length, totalBiaya, sejak: startOfDay.toISOString()
     });
+    // kasir: laporan sudah tersimpan & tampil -> wajib akhiri shift lewat tombol "Selesai & Akhiri Shift"
+    if(currentProfile && currentProfile.role === 'kasir'){
+      document.getElementById('laporanKasSelesaiBtn').classList.remove('hidden');
+      document.getElementById('laporanKasTutupBtn').classList.add('hidden');
+    }
     return;
   }catch(e){ /* kalau laporan gagal dibuat, tetap tampilkan notifikasi biasa */ }
 
