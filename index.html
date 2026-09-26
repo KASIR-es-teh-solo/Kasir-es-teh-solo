@@ -1272,7 +1272,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
-<!-- Menu Outlet (owner): gabungan Kasir POS, SOP Menu, Kas, Belanja, Transaksi -->
+<!-- Menu Outlet (owner): gabungan Kasir POS, SOP Menu, Kas, Belanja -->
 <div class="overlay" id="menuOutletOverlay" onclick="if(event.target===this) tutupMenuOutlet()">
   <div class="modal" style="max-width:360px;">
     <h3>🏪 Menu Outlet</h3>
@@ -1282,7 +1282,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(showSOPView)">📋 SOP Menu</button>
       <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(bukaKasModal)">💵 Kas</button>
       <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(bukaBelanjaKecil)">🧊 Belanja</button>
-      <button class="login-btn" style="margin:0;grid-column:1/-1;" onclick="pilihMenuOutlet(bukaTransaksiJam)">🧾 Transaksi</button>
     </div>
     <button class="modal-close" onclick="tutupMenuOutlet()">Tutup</button>
   </div>
@@ -1664,8 +1663,8 @@ async function loadProfileAndEnter(){
     document.getElementById('transaksiJamBtn').classList.remove('hidden');
   }
   if(profile.role === 'owner'){
-    // owner: Kasir POS, SOP Menu, Kas, Belanja, Transaksi digabung jadi satu tombol "Menu Outlet"
-    ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn','transaksiJamBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    // owner: Kasir POS, SOP Menu, Kas, Belanja digabung jadi satu tombol "Menu Outlet" (Transaksi tetap terpisah)
+    ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuOutletBtn').classList.remove('hidden');
   }
 
