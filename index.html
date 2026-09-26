@@ -932,6 +932,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <span style="font-size:13px;font-weight:700;">Jarak maksimal dari outlet</span>
         <span><input type="number" id="absenRadiusInput" min="5" max="1000" style="width:80px;padding:8px;border-radius:8px;border:1px solid var(--line-soft);"> m</span>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin-bottom:10px;">
+        <span style="font-size:13px;font-weight:700;">Akhiri shift otomatis setelah Hitung Kas<br><span style="font-weight:400;font-size:11px;">Jam kerja ditutup &amp; aplikasi kasir dikunci sampai absen masuk lagi</span></span>
+        <input type="checkbox" id="akhiriShiftToggle" style="width:22px;height:22px;flex-shrink:0;">
+      </div>
       <button class="header-btn gold" onclick="simpanPengaturanAbsen()">Simpan Pengaturan Absen</button>
       <div id="absenStikerList" style="margin-top:12px;"></div>
     </div>
@@ -1766,7 +1770,7 @@ async function ambilPengaturanAbsen(){
     }
   }catch(e){}
   try{ absenCfg = JSON.parse(localStorage.getItem('absenCfg') || 'null'); }catch(e){ absenCfg = null; }
-  return absenCfg || { wajib:false, radius:35 };
+  return absenCfg || { wajib:false, radius:35, akhiri_shift:false };
 }
 
 async function absensiTerbukaValid(){
@@ -1780,6 +1784,7 @@ async function absensiTerbukaValid(){
 async function mulaiKerjaKasir(freshLogin){
   const cfg = await ambilPengaturanAbsen();
   const kunciKey = 'shiftSelesai_' + currentUser.id;
+  if(!cfg.akhiri_shift) localStorage.removeItem(kunciKey);
   if(!cfg.wajib){
     if(freshLogin){ localStorage.removeItem(kunciKey); catatLoginKerja(); return; }
     if(localStorage.getItem(kunciKey)) tampilkanKunciShift();
@@ -2076,6 +2081,7 @@ async function loadPengaturanAbsenOwner(){
   if(!box || !(currentProfile && currentProfile.role === 'owner')) return;
   const cfg = await ambilPengaturanAbsen();
   document.getElementById('absenWajibToggle').checked = !!cfg.wajib;
+  document.getElementById('akhiriShiftToggle').checked = !!cfg.akhiri_shift;
   document.getElementById('absenRadiusInput').value = cfg.radius;
   box.innerHTML = (cabangList || []).map(c => `
     <div class="tx-row" style="flex-wrap:wrap;gap:6px;">
@@ -2090,10 +2096,13 @@ async function loadPengaturanAbsenOwner(){
 async function simpanPengaturanAbsen(){
   const wajib = document.getElementById('absenWajibToggle').checked;
   const radius = Number(document.getElementById('absenRadiusInput').value);
+  const akhiri = document.getElementById('akhiriShiftToggle').checked;
   const { data, error } = await sb.rpc('set_pengaturan_absen', { p_wajib: wajib, p_radius: radius });
   if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  const r2 = await sb.rpc('set_akhiri_shift', { p_aktif: akhiri });
+  if(r2.error){ alert('Gagal menyimpan akhiri shift: ' + r2.error.message); return; }
   await ambilPengaturanAbsen();
-  alert((data || 'Tersimpan') + `\nAbsen foto: ${wajib ? 'WAJIB' : 'tidak wajib'} · jarak maks ${radius} m`);
+  alert((data || 'Tersimpan') + `\nAbsen foto: ${wajib ? 'WAJIB' : 'tidak wajib'} · jarak maks ${radius} m\nAkhiri shift otomatis: ${akhiri ? 'ON' : 'OFF'}`);
 }
 
 async function gantiKodeAbsen(cabangId, nama){
@@ -2512,7 +2521,8 @@ async function submitHitungKas(){
       totalTunai, jumlahTx: (txData||[]).length, totalBiaya, sejak: startOfDay.toISOString()
     });
     // kasir: laporan sudah tersimpan & tampil -> wajib akhiri shift lewat tombol "Selesai & Akhiri Shift"
-    if(currentProfile && currentProfile.role === 'kasir'){
+    const cfgShift = await ambilPengaturanAbsen().catch(()=>({}));
+    if(currentProfile && currentProfile.role === 'kasir' && cfgShift && cfgShift.akhiri_shift){
       document.getElementById('laporanKasSelesaiBtn').classList.remove('hidden');
       document.getElementById('laporanKasTutupBtn').classList.add('hidden');
     }
