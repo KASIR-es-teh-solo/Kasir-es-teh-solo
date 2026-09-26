@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-26.1">
+<meta name="app-version" content="2026-09-26.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -409,6 +409,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #penjualanHariIniOverlay .stock-row .low{color:#c0392b;}
   #penjualanHariIniOverlay .login-btn{color:#fff;}
   #penjualanHariIniOverlay .modal-close{color:#000;}
+  #transaksiJamOverlay .modal, #transaksiJamOverlay .modal *{color:#000;text-shadow:none;opacity:1 !important;}
+  #transaksiJamOverlay .login-btn{color:#fff;}
+  #transaksiJamOverlay .trx-batal-label{color:#c0392b !important;}
   .empty-msg{color:rgba(255,255,255,.85);font-size:13px;padding:14px;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 
   /* ===== PRINT REPORT ===== */
@@ -509,6 +512,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
+    <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -1066,6 +1070,19 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
+<!-- daftar transaksi hari ini per jam (kasir & owner, cabang aktif) -->
+<div class="overlay" id="transaksiJamOverlay">
+  <div class="modal">
+    <h3>🧾 Transaksi Hari Ini</h3>
+    <p id="tjSubjudul" style="font-size:12px;">-</p>
+    <select id="tjFilterJam" onchange="renderTransaksiJam()" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:#000;font-size:14px;margin-bottom:6px;"></select>
+    <div id="tjRingkas" style="font-size:12px;margin-bottom:6px;"></div>
+    <div id="tjList" style="max-height:55vh;overflow:auto;"><div class="empty-msg">Memuat...</div></div>
+    <button class="login-btn" style="margin-top:12px;" onclick="loadTransaksiJam()">🔄 Perbarui</button>
+    <button class="modal-close" onclick="tutupTransaksiJam()">Tutup</button>
+  </div>
+</div>
+
 <!-- catat / edit biaya operasional -->
 <div class="overlay" id="biayaOverlay">
   <div class="modal">
@@ -1474,6 +1491,7 @@ async function loadProfileAndEnter(){
   document.getElementById('kasBtn').classList.add('hidden');
   document.getElementById('belanjaKecilBtn').classList.add('hidden');
   document.getElementById('penjualanHariIniBtn').classList.add('hidden');
+  document.getElementById('transaksiJamBtn').classList.add('hidden');
   ['navRingkasanBtn','navAktifBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
   });
@@ -1545,6 +1563,7 @@ async function loadProfileAndEnter(){
     document.getElementById('kasBtn').classList.remove('hidden');
     document.getElementById('belanjaKecilBtn').classList.remove('hidden');
     document.getElementById('penjualanHariIniBtn').classList.remove('hidden');
+    document.getElementById('transaksiJamBtn').classList.remove('hidden');
   }
 
   await loadProduk();
@@ -6079,6 +6098,78 @@ async function loadPenjualanHariIni(){
         <div class="stock-row"><span>${escTG(nama)} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
   `;
+}
+
+// ================== TRANSAKSI HARI INI PER JAM ==================
+let tjData = [];
+async function bukaTransaksiJam(){
+  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
+  document.getElementById('transaksiJamOverlay').classList.add('show');
+  await loadTransaksiJam();
+}
+function tutupTransaksiJam(){
+  document.getElementById('transaksiJamOverlay').classList.remove('show');
+}
+async function loadTransaksiJam(){
+  const list = document.getElementById('tjList');
+  const cabang = (userAllowedCabang || []).find(c=>c.id===activeCabangId);
+  const sekarang = new Date();
+  document.getElementById('tjSubjudul').textContent =
+    `${cabang ? cabang.nama : 'Cabang aktif'} · ${sekarang.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`;
+  if(!navigator.onLine){
+    document.getElementById('tjFilterJam').innerHTML = '';
+    document.getElementById('tjRingkas').innerHTML = '';
+    list.innerHTML = '<div class="empty-msg">Sedang offline. Sambungkan internet untuk melihat transaksi.</div>';
+    return;
+  }
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const { data, error } = await sb
+    .from('transaksi')
+    .select('id, total, diskon, status, alasan_batal, created_at, kasir:kasir_id(nama), transaksi_item(qty, ukuran, produk:produk_id(nama))')
+    .eq('cabang_id', activeCabangId)
+    .gte('created_at', startOfDay.toISOString())
+    .order('created_at', { ascending:false });
+  if(error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
+  tjData = data || [];
+  const sel = document.getElementById('tjFilterJam');
+  const pilihLama = sel.value;
+  const pad = n => String(n).padStart(2,'0');
+  const jamAda = [...new Set(tjData.map(t=>new Date(t.created_at).getHours()))].sort((a,b)=>a-b);
+  sel.innerHTML = `<option value="">🕒 Semua jam (${tjData.length} transaksi)</option>` +
+    jamAda.map(j=>{
+      const n = tjData.filter(t=>new Date(t.created_at).getHours()===j).length;
+      return `<option value="${j}">Jam ${pad(j)}.00 – ${pad(j)}.59 (${n} transaksi)</option>`;
+    }).join('');
+  if(pilihLama !== '' && jamAda.includes(Number(pilihLama))) sel.value = pilihLama;
+  renderTransaksiJam();
+}
+function renderTransaksiJam(){
+  const list = document.getElementById('tjList');
+  const pilih = document.getElementById('tjFilterJam').value;
+  const rows = pilih === '' ? tjData : tjData.filter(t=>new Date(t.created_at).getHours()===Number(pilih));
+  const sukses = rows.filter(t=>t.status !== 'dibatalkan');
+  const cup = sukses.reduce((s,t)=>s+(t.transaksi_item||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
+  document.getElementById('tjRingkas').innerHTML = rows.length
+    ? `<b>${sukses.length}</b> transaksi · <b>${cup}</b> cup · <b>${fmt(sukses.reduce((s,t)=>s+Number(t.total||0),0))}</b>`
+    : '';
+  if(rows.length === 0){ list.innerHTML = '<div class="empty-msg">Belum ada transaksi hari ini.</div>'; return; }
+  list.innerHTML = rows.map(t=>{
+    const batal = t.status === 'dibatalkan';
+    const jam = new Date(t.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const item = (t.transaksi_item||[]).map(i=>
+      `${Number(i.qty)}× ${escTG(i.produk ? i.produk.nama : '(menu terhapus)')}${i.ukuran ? ' ('+escTG(i.ukuran)+')' : ''}`
+    ).join(', ');
+    return `
+      <div style="border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:8px;margin-bottom:6px;${batal ? 'background:#fdecea;' : ''}">
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px;">
+          <span>🕒 ${jam} <span style="font-weight:400;font-size:11px;">#${escTG(String(t.id).slice(0,8))}</span></span>
+          <span${batal ? ' style="text-decoration:line-through;"' : ''}>${fmt(t.total)}</span>
+        </div>
+        <div style="font-size:12px;margin-top:3px;">${item || '-'}</div>
+        <div style="font-size:11px;margin-top:3px;">👤 ${escTG(t.kasir ? t.kasir.nama : '-')}${Number(t.diskon||0) > 0 ? ' · diskon '+fmt(t.diskon) : ''}${batal ? ' · <b class="trx-batal-label">DIBATALKAN</b>'+(t.alasan_batal ? ': '+escTG(t.alasan_batal) : '') : ''}</div>
+      </div>`;
+  }).join('');
 }
 
 async function loadBelanjaKecilHariIni(){
