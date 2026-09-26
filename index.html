@@ -514,6 +514,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
+    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -909,7 +910,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div class="dash-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h3 style="margin:0;">👥 Manajemen Karyawan</h3>
-        <button class="header-btn gold" onclick="openAddKaryawanModal()">+ Tambah Karyawan</button>
+        <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="header-btn gold" onclick="showDashPanel('karyawan')">🕒 Jam Kerja &amp; Izin</button>
+          <button class="header-btn gold" onclick="openAddKaryawanModal()">+ Tambah Karyawan</button>
+        </span>
       </div>
       <div id="settingsKaryawanList"><div class="empty-msg">Memuat...</div></div>
     </div>
@@ -1287,6 +1291,22 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
+<!-- Laporan & Keuangan (owner): gabungan Ringkasan, Stok, Pembelian, Biaya, Brankas -->
+<div class="overlay" id="menuLaporanOverlay" onclick="if(event.target===this) tutupMenuLaporan()">
+  <div class="modal" style="max-width:360px;">
+    <h3>📊 Laporan &amp; Keuangan</h3>
+    <p style="font-size:12px;">Laporan penjualan, stok, dan uang usaha.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('ringkasan')">📊 Ringkasan</button>
+      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('stok')">📦 Stok</button>
+      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('pembelian')">📥 Pembelian</button>
+      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('biaya')">💸 Biaya</button>
+      <button class="login-btn" style="margin:0;grid-column:1/-1;" onclick="pilihMenuLaporan('brankas')">🔒 Brankas</button>
+    </div>
+    <button class="modal-close" onclick="tutupMenuLaporan()">Tutup</button>
+  </div>
+</div>
+
 <!-- konfirmasi akhiri shift (kasir, setelah laporan penutupan kas tersimpan) -->
 <div class="overlay" id="akhiriShiftOverlay" style="z-index:10000;">
   <div class="modal" style="max-width:360px;">
@@ -1578,6 +1598,7 @@ async function loadProfileAndEnter(){
   document.getElementById('kasirBtn').classList.remove('hidden');
   document.getElementById('sopBtn').classList.remove('hidden');
   document.getElementById('menuOutletBtn').classList.add('hidden');
+  document.getElementById('menuLaporanBtn').classList.add('hidden');
   document.getElementById('settingsBtn').classList.add('hidden');
   document.getElementById('ownerChartSection').classList.add('hidden');
   document.getElementById('cartToggleBtn').classList.remove('hidden');
@@ -1666,6 +1687,9 @@ async function loadProfileAndEnter(){
     // owner: Kasir POS, SOP Menu, Kas, Belanja digabung jadi satu tombol "Menu Outlet" (Transaksi tetap terpisah)
     ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuOutletBtn').classList.remove('hidden');
+    // owner: Ringkasan, Stok, Pembelian, Biaya, Brankas digabung jadi "Laporan & Keuangan"; Karyawan pindah ke Pengaturan
+    ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','navKaryawanBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    document.getElementById('menuLaporanBtn').classList.remove('hidden');
   }
 
   await loadProduk();
@@ -3295,7 +3319,7 @@ function ambilUserTersimpan(){
 
 // ================== VIEW SWITCH ==================
 function setActiveNav(activeId){
-  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','settingsBtn'].forEach(id=>{
+  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','settingsBtn','menuOutletBtn','menuLaporanBtn'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
@@ -3341,7 +3365,10 @@ function showDashPanel(panelName){
   document.getElementById('ownerView').classList.remove('hidden');
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
-  setActiveNav(DASH_NAV_MAP[panelName]);
+  const ownerNav = (currentProfile && currentProfile.role === 'owner')
+    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn' })[panelName]
+    : null;
+  setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
   loadDashboard();
   loadKaryawan();
   loadPembelianData();
@@ -6626,6 +6653,11 @@ async function loadPenjualanHariIni(){
 function bukaMenuOutlet(){ document.getElementById('menuOutletOverlay').classList.add('show'); }
 function tutupMenuOutlet(){ document.getElementById('menuOutletOverlay').classList.remove('show'); }
 function pilihMenuOutlet(fn){ tutupMenuOutlet(); fn(); }
+
+// ================== LAPORAN & KEUANGAN (owner) ==================
+function bukaMenuLaporan(){ document.getElementById('menuLaporanOverlay').classList.add('show'); }
+function tutupMenuLaporan(){ document.getElementById('menuLaporanOverlay').classList.remove('show'); }
+function pilihMenuLaporan(panel){ tutupMenuLaporan(); showDashPanel(panel); }
 
 // ================== TRANSAKSI HARI INI PER JAM ==================
 let tjData = [];
