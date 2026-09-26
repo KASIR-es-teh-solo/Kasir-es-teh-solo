@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-26.2">
+<meta name="app-version" content="2026-09-26.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -921,6 +921,21 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div id="settingsCabangList"><div class="empty-msg">Memuat...</div></div>
     </div>
 
+    <div class="dash-section">
+      <h3>📸 Absen Masuk (Foto + QR + GPS)</h3>
+      <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:12px;">Kasir wajib selfie + senyum di depan mesin sealer yang ditempel stiker QR, dan harus berada di outlet. Jam masuk dihitung saat verifikasi berhasil.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--page-bg);padding:12px;border-radius:10px;margin-bottom:10px;">
+        <span style="font-size:13px;font-weight:700;">Wajib absen foto untuk Kasir</span>
+        <input type="checkbox" id="absenWajibToggle" style="width:22px;height:22px;">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin-bottom:10px;">
+        <span style="font-size:13px;font-weight:700;">Jarak maksimal dari outlet</span>
+        <span><input type="number" id="absenRadiusInput" min="5" max="1000" style="width:80px;padding:8px;border-radius:8px;border:1px solid var(--line-soft);"> m</span>
+      </div>
+      <button class="header-btn gold" onclick="simpanPengaturanAbsen()">Simpan Pengaturan Absen</button>
+      <div id="absenStikerList" style="margin-top:12px;"></div>
+    </div>
+
     <div class="dash-section" style="margin-bottom:0;">
       <h3>🖨️ Pengaturan Printer</h3>
       <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:12px;">Sambungkan & atur cetak struk otomatis ke printer thermal Bluetooth.</p>
@@ -977,6 +992,43 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <button class="login-btn" id="rusakSubmitBtn" onclick="submitBahanRusak()">Simpan</button>
     <button class="modal-close" onclick="closeRusakModal()">Batal</button>
+  </div>
+</div>
+
+<!-- ABSEN MASUK: selfie + QR mesin sealer + GPS + senyum (khusus kasir) -->
+<div id="absenGate" class="hidden" style="position:fixed;inset:0;z-index:9999;background:rgba(8,22,14,.94);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:14px;">
+  <div class="modal" style="max-width:380px;max-height:none;overflow:visible;">
+    <h3>📸 Absen Masuk</h3>
+    <p id="absenSub" style="font-size:12px;">Selfie di depan <b>mesin cup sealer</b> sampai stiker QR kelihatan, lalu <b>senyum</b>. Foto diambil otomatis.</p>
+    <div style="position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:3/4;">
+      <video id="absenVideo" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
+      <div id="absenBubble" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#f2c230;color:#0c1f14;font-weight:900;font-size:16px;padding:7px 14px;border-radius:18px;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.3);">Menyiapkan kamera...</div>
+    </div>
+    <canvas id="absenQrCanvas" style="display:none;"></canvas>
+    <div id="absenCekList" style="margin-top:10px;"></div>
+    <div id="absenPesan"></div>
+    <button class="login-btn" style="margin-top:8px;" onclick="ulangiGerbangAbsen()">🔄 Coba Lagi</button>
+    <button class="modal-close" onclick="keluarDariGerbangAbsen()">🚪 Keluar (logout)</button>
+  </div>
+</div>
+
+<!-- lihat foto absen (Owner) -->
+<div class="overlay" id="fotoAbsenOverlay" onclick="this.classList.remove('show')">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <img id="fotoAbsenImg" alt="Foto absen" style="width:100%;border-radius:10px;">
+    <div id="fotoAbsenKet" style="font-size:12px;margin-top:8px;"></div>
+    <button class="modal-close">Tutup</button>
+  </div>
+</div>
+
+<!-- stiker QR absen (Owner) -->
+<div class="overlay" id="stikerAbsenOverlay">
+  <div class="modal" style="max-width:360px;text-align:center;">
+    <h3>🖨️ Stiker QR Absen</h3>
+    <p style="font-size:12px;">Cetak lalu tempel di <b>mesin cup sealer</b>. Kasir harus selfie dengan stiker ini supaya bisa absen.</p>
+    <img id="stikerAbsenImg" alt="Stiker QR" style="width:100%;border:1px solid var(--line-soft);border-radius:10px;">
+    <a id="stikerAbsenDownload" class="login-btn" style="display:block;text-decoration:none;margin-top:10px;" download="stiker-absen.png">⬇️ Download Stiker (PNG)</a>
+    <button class="modal-close" onclick="document.getElementById('stikerAbsenOverlay').classList.remove('show')">Tutup</button>
   </div>
 </div>
 
@@ -1573,7 +1625,8 @@ async function loadProfileAndEnter(){
 
   if(profile.role === 'kasir' || profile.role === 'admin'){
     mulaiPresenceHeartbeat();
-    if(freshLogin){ catatLoginKerja(); }
+    if(profile.role === 'kasir'){ mulaiKerjaKasir(freshLogin); }
+    else if(freshLogin){ catatLoginKerja(); }
     cekPesanMasuk();
     if(pesanMasukPollInterval) clearInterval(pesanMasukPollInterval);
     pesanMasukPollInterval = setInterval(()=>{
@@ -1669,6 +1722,350 @@ async function tutupAbsensiKeluar(){
     await sb.from('absensi').update({ waktu_keluar: new Date().toISOString() }).eq('id', absensiId);
     localStorage.removeItem(key);
   }
+}
+
+// ================== ABSEN MASUK: FOTO + QR MESIN SEALER + GPS + SENYUM ==================
+// Kasir baru bisa masuk ke halaman kasir setelah: GPS dekat outlet, wajah + stiker QR outlet kelihatan
+// di kamera, lalu senyum (harus wajah biasa dulu -> senyum, supaya foto diam di layar HP lain tidak lolos).
+// Verifikasi akhir (jarak, kode QR, foto) dilakukan di server lewat fungsi absen_masuk; jam masuk = jam server.
+const MP_VISION_VER = '0.10.14';
+const MP_FACE_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const QR_ABSEN_PREFIX = 'ESTEHSOLO-ABSEN:';
+let absenCfg = null;
+let absenState = null;
+let faceLandmarker = null;
+let barcodeDetectorAbsen = null;
+
+async function ambilPengaturanAbsen(){
+  try{
+    if(navigator.onLine){
+      const { data, error } = await sb.rpc('pengaturan_absen');
+      if(!error && data){ absenCfg = data; try{ localStorage.setItem('absenCfg', JSON.stringify(data)); }catch(e){} return data; }
+    }
+  }catch(e){}
+  try{ absenCfg = JSON.parse(localStorage.getItem('absenCfg') || 'null'); }catch(e){ absenCfg = null; }
+  return absenCfg || { wajib:false, radius:35 };
+}
+
+async function absensiTerbukaValid(){
+  const id = localStorage.getItem('absensiId_' + currentUser.id);
+  if(!id) return false;
+  if(!navigator.onLine) return true; // offline: percaya catatan di HP
+  const { data } = await sb.from('absensi').select('id, waktu_keluar, terverifikasi, cabang_id').eq('id', id).maybeSingle();
+  return !!(data && !data.waktu_keluar && data.terverifikasi && data.cabang_id === activeCabangId);
+}
+
+async function mulaiKerjaKasir(freshLogin){
+  const cfg = await ambilPengaturanAbsen();
+  if(!cfg.wajib){ if(freshLogin) catatLoginKerja(); return; }
+  if(!freshLogin && await absensiTerbukaValid()) return;
+  bukaGerbangAbsen();
+}
+
+function jarakMeterAbsen(lat1, lon1, lat2, lon2){
+  const R = 6371000, rad = d => d * Math.PI / 180;
+  const a = Math.sin(rad(lat2-lat1)/2)**2 + Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(rad(lon2-lon1)/2)**2;
+  return Math.round(R * 2 * Math.asin(Math.sqrt(a)));
+}
+
+function muatScriptAbsen(src){
+  return new Promise((res, rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)) return res();
+    const sc = document.createElement('script'); sc.src = src;
+    sc.onload = res; sc.onerror = () => rej(new Error('Gagal memuat ' + src));
+    document.head.appendChild(sc);
+  });
+}
+
+async function siapkanFaceLandmarker(){
+  if(faceLandmarker) return faceLandmarker;
+  const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VISION_VER}/vision_bundle.mjs`);
+  const fileset = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VISION_VER}/wasm`);
+  const opsi = delegate => ({ baseOptions:{ modelAssetPath: MP_FACE_MODEL, delegate }, outputFaceBlendshapes:true, runningMode:'VIDEO', numFaces:1 });
+  try{ faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, opsi('GPU')); }
+  catch(e){ faceLandmarker = await vision.FaceLandmarker.createFromOptions(fileset, opsi('CPU')); }
+  return faceLandmarker;
+}
+
+async function scanQrAbsen(canvas){
+  if('BarcodeDetector' in window && barcodeDetectorAbsen !== false){
+    try{
+      if(!barcodeDetectorAbsen) barcodeDetectorAbsen = new BarcodeDetector({ formats:['qr_code'] });
+      const hasil = await barcodeDetectorAbsen.detect(canvas);
+      const hit = hasil.find(x => (x.rawValue || '').startsWith(QR_ABSEN_PREFIX));
+      return hit ? hit.rawValue : null;
+    }catch(e){ barcodeDetectorAbsen = false; }
+  }
+  if(!window.jsQR){
+    try{ await muatScriptAbsen('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'); }catch(e){ return null; }
+  }
+  const ctx = canvas.getContext('2d', { willReadFrequently:true });
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const r = window.jsQR(img.data, img.width, img.height, { inversionAttempts:'attemptBoth' });
+  return (r && r.data && r.data.startsWith(QR_ABSEN_PREFIX)) ? r.data : null;
+}
+
+function cabangAktifAbsen(){
+  return (userAllowedCabang || []).find(c => c.id === activeCabangId) || (cabangList || []).find(c => c.id === activeCabangId) || null;
+}
+
+function tulisPesanAbsen(html, jenis){
+  const warna = jenis === 'ok' ? 'background:#e8f5e9;border:1px solid #66bb6a;color:#1b5e20;'
+    : jenis === 'no' ? 'background:#fdecea;border:1px solid #e57373;color:#b71c1c;'
+    : 'background:#fff8e1;border:1px solid #e0a030;color:#6d4c00;';
+  document.getElementById('absenPesan').innerHTML = html ? `<div style="${warna}font-size:13px;line-height:1.4;padding:8px 10px;border-radius:8px;margin-top:6px;">${html}</div>` : '';
+}
+
+function tutupGerbangAbsen(){
+  const s = absenState;
+  if(s){
+    s.selesai = true;
+    if(s.raf) cancelAnimationFrame(s.raf);
+    if(s.watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(s.watchId);
+    if(s.stream) s.stream.getTracks().forEach(t => t.stop());
+  }
+  absenState = null;
+  const v = document.getElementById('absenVideo'); if(v) v.srcObject = null;
+  document.getElementById('absenGate').classList.add('hidden');
+}
+
+function ulangiGerbangAbsen(){ tutupGerbangAbsen(); bukaGerbangAbsen(); }
+
+async function keluarDariGerbangAbsen(){
+  if(!confirm('Keluar dari akun?')) return;
+  tutupGerbangAbsen();
+  const confirmAsli = window.confirm;
+  window.confirm = () => true;
+  try{ await doLogout(); } finally { window.confirm = confirmAsli; }
+}
+
+async function bukaGerbangAbsen(){
+  if(absenState && !absenState.selesai) return;
+  document.getElementById('absenGate').classList.remove('hidden');
+  document.getElementById('absenBubble').textContent = 'Menyiapkan kamera...';
+  document.getElementById('absenCekList').innerHTML = '';
+  tulisPesanAbsen('');
+  const s = absenState = { gps:null, gpsErr:null, qr:null, qrAt:0, face:false, smile:0, netralSejak:0, mengirim:false, jedaSampai:0, selesai:false, stream:null, watchId:null, raf:null };
+  const cabang = cabangAktifAbsen();
+  document.getElementById('absenSub').innerHTML = `Outlet: <b>${escTG(cabang ? cabang.nama : '-')}</b>. Selfie di depan <b>mesin cup sealer</b> sampai stiker QR kelihatan, lalu <b>senyum</b>. Foto diambil otomatis.`;
+
+  if(!navigator.onLine){ tulisPesanAbsen('📶 Absen butuh internet. Nyalakan data/WiFi lalu tekan <b>Coba Lagi</b>.', 'no'); document.getElementById('absenBubble').textContent = 'Offline'; return; }
+  if(!cabang || cabang.latitude == null || cabang.longitude == null){ tulisPesanAbsen('📍 Titik GPS outlet ini belum diatur Owner. Hubungi Owner.', 'no'); document.getElementById('absenBubble').textContent = 'Outlet belum diatur'; return; }
+  await ambilPengaturanAbsen();
+
+  if(!navigator.geolocation){ tulisPesanAbsen('HP ini tidak mendukung GPS.', 'no'); return; }
+  s.watchId = navigator.geolocation.watchPosition(
+    p => { s.gps = { lat:p.coords.latitude, lng:p.coords.longitude, acc:Math.round(p.coords.accuracy || 0) }; s.gpsErr = null; },
+    err => { s.gpsErr = err.code === 1 ? 'Izin lokasi ditolak. Izinkan lokasi untuk aplikasi ini di pengaturan browser.' : 'GPS belum dapat sinyal. Pastikan GPS/Lokasi HP menyala.'; },
+    { enableHighAccuracy:true, maximumAge:0, timeout:20000 }
+  );
+
+  try{
+    s.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:1280 }, height:{ ideal:960 } }, audio:false });
+    if(s.selesai){ s.stream.getTracks().forEach(t => t.stop()); return; }
+    const v = document.getElementById('absenVideo');
+    v.srcObject = s.stream;
+    await v.play().catch(()=>{});
+  }catch(e){
+    tulisPesanAbsen('📷 Kamera tidak bisa dibuka. Izinkan kamera untuk aplikasi ini di pengaturan browser, lalu tekan <b>Coba Lagi</b>.', 'no');
+    document.getElementById('absenBubble').textContent = 'Kamera belum diizinkan';
+    return;
+  }
+
+  document.getElementById('absenBubble').textContent = 'Menyiapkan pendeteksi wajah...';
+  try{ await siapkanFaceLandmarker(); }
+  catch(e){
+    tulisPesanAbsen('Gagal memuat pendeteksi wajah. Cek internet lalu tekan <b>Coba Lagi</b>.', 'no');
+    document.getElementById('absenBubble').textContent = 'Gagal memuat';
+    return;
+  }
+  if(s.selesai) return;
+  s.raf = requestAnimationFrame(loopAbsen);
+}
+
+function loopAbsen(){
+  const s = absenState;
+  if(!s || s.selesai) return;
+  const v = document.getElementById('absenVideo');
+  const now = performance.now();
+
+  if(v.readyState >= 2 && now - (s.lastFace || 0) > 120){
+    s.lastFace = now;
+    try{
+      const r = faceLandmarker.detectForVideo(v, now);
+      s.face = !!(r.faceLandmarks && r.faceLandmarks.length > 0);
+      if(s.face && r.faceBlendshapes && r.faceBlendshapes[0]){
+        const cat = r.faceBlendshapes[0].categories;
+        const g = n => (cat.find(x => x.categoryName === n) || {}).score || 0;
+        s.smile = (g('mouthSmileLeft') + g('mouthSmileRight')) / 2;
+      } else { s.smile = 0; }
+    }catch(e){}
+  }
+
+  if(v.readyState >= 2 && v.videoWidth && !s.qrBusy && now - (s.lastQr || 0) > 450){
+    s.lastQr = now; s.qrBusy = true;
+    const c = document.getElementById('absenQrCanvas');
+    const w = Math.min(960, v.videoWidth);
+    c.width = w; c.height = Math.round(v.videoHeight * w / v.videoWidth);
+    c.getContext('2d', { willReadFrequently:true }).drawImage(v, 0, 0, c.width, c.height);
+    scanQrAbsen(c).then(q => { if(q){ s.qr = q; s.qrAt = performance.now(); } }).finally(() => { s.qrBusy = false; });
+  }
+
+  const cabang = cabangAktifAbsen();
+  const radius = Number((absenCfg && absenCfg.radius) || 35);
+  const jarak = (s.gps && cabang) ? jarakMeterAbsen(s.gps.lat, s.gps.lng, cabang.latitude, cabang.longitude) : null;
+  const gpsOk = jarak !== null && jarak <= radius;
+  const qrOk = !!s.qr && (now - s.qrAt) < 2500;
+  const semua = gpsOk && s.face && qrOk && now > s.jedaSampai;
+
+  let bubble;
+  if(s.mengirim){ bubble = '⏳ Memverifikasi...'; }
+  else if(!semua){
+    s.netralSejak = 0;
+    bubble = !gpsOk ? '📍 Cek lokasi...' : !s.face ? '🙂 Hadapkan wajah ke kamera' : !qrOk ? '🔲 Tunjukkan QR mesin sealer' : '⏳ Tunggu sebentar...';
+  } else {
+    if(s.smile < 0.3 && !s.netralSejak) s.netralSejak = now;
+    const netralCukup = s.netralSejak && (now - s.netralSejak) > 400;
+    bubble = netralCukup ? '😁 Senyum!' : '😐 Wajah biasa dulu...';
+    if(netralCukup && s.smile > 0.6){ s.mengirim = true; ambilFotoAbsen(jarak); }
+  }
+  document.getElementById('absenBubble').textContent = bubble;
+
+  const baris = (ok, teks) => `<div style="font-size:12.5px;padding:6px 10px;border-radius:8px;margin-bottom:5px;${ok ? 'background:#e8f5e9;border:1px solid #66bb6a;color:#1b5e20;' : 'background:#fff8e1;border:1px solid #e0a030;color:#6d4c00;'}">${ok ? '✅' : '⏳'} ${teks}</div>`;
+  const teksGps = s.gpsErr ? s.gpsErr
+    : jarak === null ? '<b>Lokasi:</b> mencari sinyal GPS...'
+    : `<b>Lokasi:</b> ${jarak} m dari outlet (maks. ${radius} m${s.gps && s.gps.acc ? ', akurasi ±' + s.gps.acc + ' m' : ''})${gpsOk ? '' : ' — mendekat ke outlet'}`;
+  document.getElementById('absenCekList').innerHTML =
+    baris(gpsOk, teksGps) +
+    baris(s.face, s.face ? '<b>Wajah</b> terdeteksi' : '<b>Wajah</b> belum terlihat') +
+    baris(qrOk, qrOk ? '<b>QR mesin sealer</b> terbaca' : '<b>QR mesin sealer</b> belum terbaca') +
+    baris(s.mengirim, s.mengirim ? '<b>Senyum</b> terdeteksi → foto diambil' : '<b>Senyum</b> untuk ambil foto');
+
+  s.raf = requestAnimationFrame(loopAbsen);
+}
+
+async function ambilFotoAbsen(jarak){
+  const s = absenState;
+  if(!s) return;
+  const v = document.getElementById('absenVideo');
+  const cabang = cabangAktifAbsen();
+  const c = document.createElement('canvas');
+  const w = Math.min(720, v.videoWidth);
+  c.width = w; c.height = Math.round(v.videoHeight * w / v.videoWidth);
+  const ctx = c.getContext('2d');
+  ctx.drawImage(v, 0, 0, c.width, c.height);
+  const baris = [
+    `${currentProfile ? currentProfile.nama : ''} · Kasir`,
+    new Date().toLocaleString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }) + ' WIB',
+    `${s.gps.lat.toFixed(5)}, ${s.gps.lng.toFixed(5)} · ${cabang ? cabang.nama : ''} · ${jarak} m`
+  ];
+  const fs = Math.max(14, Math.round(c.width / 34));
+  const tinggi = fs * 1.5 * baris.length + fs;
+  const grad = ctx.createLinearGradient(0, c.height - tinggi - fs, 0, c.height);
+  grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,.8)');
+  ctx.fillStyle = grad; ctx.fillRect(0, c.height - tinggi - fs, c.width, tinggi + fs);
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${fs}px sans-serif`;
+  baris.forEach((t, i) => ctx.fillText(t, fs * 0.7, c.height - tinggi + fs * 1.5 * (i + 1)));
+
+  const gagal = (pesan) => {
+    tulisPesanAbsen('❌ ' + escTG(pesan), 'no');
+    s.mengirim = false; s.netralSejak = 0; s.jedaSampai = performance.now() + 3000;
+  };
+  try{
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.75));
+    const path = `${currentUser.id}/${Date.now()}.jpg`;
+    tulisPesanAbsen('⏳ Mengirim foto & memverifikasi...', '');
+    const up = await sb.storage.from('absensi-foto').upload(path, blob, { contentType:'image/jpeg', upsert:false });
+    if(up.error) return gagal('Gagal upload foto: ' + up.error.message);
+    const { data, error } = await sb.rpc('absen_masuk', {
+      p_cabang: activeCabangId, p_lat: s.gps.lat, p_lng: s.gps.lng, p_akurasi: s.gps.acc || null, p_qr: s.qr, p_foto_path: path
+    });
+    if(error) return gagal(error.message);
+    localStorage.setItem('absensiId_' + currentUser.id, data.absensi_id);
+    const jam = new Date(data.waktu_masuk).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+    tulisPesanAbsen(`🎉 <b>Absen berhasil — jam masuk ${jam} WIB.</b> Selamat bekerja! Membuka kasir...`, 'ok');
+    document.getElementById('absenBubble').textContent = '✅ Berhasil';
+    s.selesai = true;
+    setTimeout(tutupGerbangAbsen, 1500);
+  }catch(e){
+    gagal('Terjadi kesalahan: ' + (e && e.message ? e.message : e));
+  }
+}
+
+// ----- Owner: pengaturan absen, stiker QR, lihat foto -----
+async function loadPengaturanAbsenOwner(){
+  const box = document.getElementById('absenStikerList');
+  if(!box || !(currentProfile && currentProfile.role === 'owner')) return;
+  const cfg = await ambilPengaturanAbsen();
+  document.getElementById('absenWajibToggle').checked = !!cfg.wajib;
+  document.getElementById('absenRadiusInput').value = cfg.radius;
+  box.innerHTML = (cabangList || []).map(c => `
+    <div class="tx-row" style="flex-wrap:wrap;gap:6px;">
+      <span><b>${escTG(c.nama)}</b>${c.latitude == null ? ' <span style="color:var(--danger);">· titik GPS belum diatur</span>' : ''}</span>
+      <span style="display:flex;gap:6px;">
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="tampilkanStikerAbsen('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🖨️ Stiker QR</button>
+        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="gantiKodeAbsen('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🔄 Ganti Kode</button>
+      </span>
+    </div>`).join('') || '<div class="empty-msg">Belum ada cabang.</div>';
+}
+
+async function simpanPengaturanAbsen(){
+  const wajib = document.getElementById('absenWajibToggle').checked;
+  const radius = Number(document.getElementById('absenRadiusInput').value);
+  const { data, error } = await sb.rpc('set_pengaturan_absen', { p_wajib: wajib, p_radius: radius });
+  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  await ambilPengaturanAbsen();
+  alert((data || 'Tersimpan') + `\nAbsen foto: ${wajib ? 'WAJIB' : 'tidak wajib'} · jarak maks ${radius} m`);
+}
+
+async function gantiKodeAbsen(cabangId, nama){
+  if(!confirm(`Ganti kode QR absen "${nama}"? Stiker lama langsung TIDAK berlaku, jadi cetak & tempel stiker baru.`)) return;
+  const { error } = await sb.rpc('ganti_kode_absen', { p_cabang: cabangId });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  await tampilkanStikerAbsen(cabangId, nama);
+}
+
+async function tampilkanStikerAbsen(cabangId, nama){
+  let { data } = await sb.from('cabang_kode_absen').select('kode').eq('cabang_id', cabangId).maybeSingle();
+  if(!data){
+    const r = await sb.rpc('ganti_kode_absen', { p_cabang: cabangId });
+    if(r.error){ alert('Gagal membuat kode: ' + r.error.message); return; }
+    data = { kode: r.data };
+  }
+  try{ await muatScriptAbsen('https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'); }
+  catch(e){ alert('Gagal memuat pembuat QR. Cek internet.'); return; }
+  const qr = window.qrcode(0, 'M');
+  qr.addData(QR_ABSEN_PREFIX + data.kode);
+  qr.make();
+  const qrImg = new Image();
+  qrImg.src = qr.createDataURL(12, 2);
+  await new Promise(r => { qrImg.onload = r; qrImg.onerror = r; });
+  const W = 700, H = 900;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#0c1f14'; x.lineWidth = 10; x.strokeRect(15, 15, W - 30, H - 30);
+  x.fillStyle = '#0c1f14'; x.textAlign = 'center';
+  x.font = 'bold 48px sans-serif'; x.fillText('Es Teh S.O.L.O', W / 2, 105);
+  x.font = '30px sans-serif'; x.fillText('Titik Absen · ' + nama, W / 2, 155);
+  const q = 520; x.imageSmoothingEnabled = false;
+  x.drawImage(qrImg, (W - q) / 2, 190, q, q);
+  x.font = 'bold 28px sans-serif'; x.fillText('Selfie + senyum dengan stiker ini', W / 2, 765);
+  x.font = '26px sans-serif'; x.fillText('untuk absen masuk kerja', W / 2, 805);
+  x.font = '20px sans-serif'; x.fillStyle = '#777'; x.fillText('Jangan difoto / disebar', W / 2, 850);
+  const url = c.toDataURL('image/png');
+  document.getElementById('stikerAbsenImg').src = url;
+  const a = document.getElementById('stikerAbsenDownload');
+  a.href = url; a.download = `stiker-absen-${nama.replace(/[^a-z0-9]+/gi,'-')}.png`;
+  document.getElementById('stikerAbsenOverlay').classList.add('show');
+}
+
+async function lihatFotoAbsen(path, nama, waktu){
+  const { data, error } = await sb.storage.from('absensi-foto').createSignedUrl(path, 300);
+  if(error){ alert('Gagal membuka foto: ' + error.message); return; }
+  document.getElementById('fotoAbsenImg').src = data.signedUrl;
+  document.getElementById('fotoAbsenKet').textContent = `${nama} · masuk ${new Date(waktu).toLocaleString('id-ID')}`;
+  document.getElementById('fotoAbsenOverlay').classList.add('show');
 }
 
 // ================== IZIN KELUAR OUTLET (khusus Kasir) ==================
@@ -2615,6 +3012,10 @@ async function tutupPesanMasuk(){
 function changeOwnerCabang(selectEl){
   activeCabangId = selectEl.value;
   localStorage.setItem('activeCabang_' + currentUser.id, activeCabangId);
+  if(currentProfile && currentProfile.role === 'kasir' && absenCfg && absenCfg.wajib){
+    // pindah cabang = tutup jam kerja cabang lama, absen ulang di cabang baru
+    tutupAbsensiKeluar().then(()=>bukaGerbangAbsen());
+  }
 
   loadProduk();
   if(!document.getElementById('ownerView').classList.contains('hidden')){
@@ -2904,6 +3305,7 @@ function showSettingsView(){
   setActiveNav('settingsBtn');
   loadKaryawan();
   loadCabangManageList();
+  loadPengaturanAbsenOwner();
   hentikanPollingAktif();
   simpanViewState({ type:'settings' });
 
@@ -4254,7 +4656,7 @@ async function loadJamKerja(){
 
   let query = sb
     .from('absensi')
-    .select('id, user_id, waktu_masuk, waktu_keluar, user:user_id(nama, role), cabang:cabang_id(nama)')
+    .select('id, user_id, waktu_masuk, waktu_keluar, foto_path, jarak_meter, terverifikasi, user:user_id(nama, role), cabang:cabang_id(nama)')
     .order('waktu_masuk', { ascending:false })
     .limit(100);
 
@@ -4293,6 +4695,10 @@ async function loadJamKerja(){
           <span style="opacity:.7;">${keluar ? 'Keluar: '+keluar.toLocaleString('id-ID') : '🟢 Masih standby / belum logout'}</span>
           <b>${durasiTxt}</b>
         </span>
+        ${a.terverifikasi ? `<span style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:12px;color:#1b5e20;">
+          <span>📸 Absen foto terverifikasi · ${Number(a.jarak_meter||0)} m dari outlet</span>
+          ${(isOwner && a.foto_path) ? `<button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="lihatFotoAbsen('${a.foto_path}', '${a.user ? a.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}', '${a.waktu_masuk}')">Lihat Foto</button>` : ''}
+        </span>` : ''}
         ${(!keluar && isOwner) ? `
         <span style="width:100%;display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
           <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="tutupSesiAbsensi('${a.id}', '${a.user ? a.user.nama.replace(ATTR_JS_RE, attrJsEsc) : ''}', '${a.waktu_masuk}')">⏹ Tutup Sesi</button>
