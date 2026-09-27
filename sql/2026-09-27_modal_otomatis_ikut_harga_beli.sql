@@ -5,3 +5,8 @@
 -- Trigger: trg_modal_ikut_pembelian (after insert/update harga_satuan, bahan_baku_id)
 --          trg_modal_ikut_hapus_pembelian (after delete)
 -- Versi lengkap ada di migration "modal_otomatis_ikut_harga_beli" & "modal_ikut_hapus_pembelian" di Supabase.
+
+-- Tambahan: kolom bahan_baku.harga_patokan (per satuan beli). Kalau diisi, modal pakai patokan ini,
+-- bukan harga pembelian terakhir. Teh original dikunci patokan 193.75/gram biang (Rp62.000/320 gr).
+-- Trigger trg_modal_ikut_patokan: ubah harga_patokan/konversi -> modal dihitung ulang.
+-- (migration "harga_patokan_bahan")
