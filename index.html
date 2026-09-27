@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-27.2">
+<meta name="app-version" content="2026-09-27.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -580,7 +580,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div class="summary-row"><span>Subtotal</span><span id="sumSubtotal">Rp 0</span></div>
         <div class="field" style="margin:8px 0 4px;">
           <label>Diskon (Rp)</label>
-          <input type="number" id="diskonInput" value="0" min="0" oninput="renderCart()" placeholder="0">
+          <input type="text" inputmode="numeric" class="input-rupiah" id="diskonInput" value="0" oninput="renderCart()" placeholder="0">
         </div>
         <div class="summary-row"><span>Diskon</span><span id="sumDiskon">- Rp 0</span></div>
         <div class="summary-row total"><span>Total</span><span id="sumTotal">Rp 0</span></div>
@@ -1057,7 +1057,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <div class="field">
       <label>Harga Satuan (Rp) <span id="pembelianHargaLabel" style="opacity:.7;"></span></label>
-      <input type="number" id="pembelianHargaSatuan" placeholder="0" oninput="updateTotalPembelian()">
+      <input type="text" inputmode="decimal" class="input-rupiah" id="pembelianHargaSatuan" placeholder="0" oninput="updateTotalPembelian()">
     </div>
     <div id="pembelianTotalInfo" style="display:flex;justify-content:space-between;align-items:center;background:rgba(12,31,20,.05);border-radius:8px;padding:10px 12px;margin:-4px 0 12px;font-size:14px;">
       <span>Total uang keluar</span><b id="pembelianTotalNilai" style="font-size:17px;">Rp 0</b>
@@ -1105,7 +1105,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <div class="field">
       <label>Jumlah Uang (Rp)</label>
-      <input type="number" id="belanjaKecilJumlah" placeholder="misal: 20000" min="0">
+      <input type="text" inputmode="numeric" class="input-rupiah" id="belanjaKecilJumlah" placeholder="misal: 20.000">
     </div>
     <div class="field">
       <label>Keterangan (opsional)</label>
@@ -1169,7 +1169,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <div class="field">
       <label>Jumlah (Rp)</label>
-      <input type="number" id="biayaJumlah" placeholder="0">
+      <input type="text" inputmode="numeric" class="input-rupiah" id="biayaJumlah" placeholder="0">
     </div>
     <div class="field">
       <label>Sumber Dana</label>
@@ -1502,6 +1502,40 @@ function getActiveCabangId(){
 }
 
 function fmt(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
+
+// ================== KOLOM UANG: TITIK RIBUAN OTOMATIS SAAT MENGETIK ==================
+// Kolom ber-class "input-rupiah" tampil 35.000 / 1.250.000 (desimal pakai koma, mis. 47,5).
+// Baca nilainya selalu lewat angkaRupiah(), jangan Number(el.value).
+function formatRupiahTeks(teks){
+  let t = String(teks == null ? '' : teks).replace(/[^0-9,]/g, '');
+  const i = t.indexOf(',');
+  let bulat = i >= 0 ? t.slice(0, i) : t;
+  const desimal = i >= 0 ? t.slice(i + 1).replace(/,/g, '').slice(0, 2) : null;
+  bulat = bulat.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return desimal !== null ? (bulat || '0') + ',' + desimal : bulat;
+}
+function angkaRupiah(idAtauEl){
+  const el = typeof idAtauEl === 'string' ? document.getElementById(idAtauEl) : idAtauEl;
+  const v = String(el ? el.value : '').replace(/\./g, '').replace(',', '.').trim();
+  return v === '' ? NaN : Number(v);
+}
+function setInputRupiah(id, nilai){
+  const el = document.getElementById(id);
+  if(el) el.value = (nilai === '' || nilai == null) ? '' : formatRupiahTeks(String(nilai).replace('.', ','));
+}
+document.addEventListener('input', e => {
+  const el = e.target;
+  if(!el || !el.classList || !el.classList.contains('input-rupiah')) return;
+  const lama = el.value;
+  const posisi = el.selectionStart == null ? lama.length : el.selectionStart;
+  const digitSebelum = lama.slice(0, posisi).replace(/[^0-9,]/g, '').length;
+  const baru = formatRupiahTeks(lama);
+  if(baru === lama) return;
+  el.value = baru;
+  let n = 0, pos = 0;
+  while(pos < baru.length && n < digitSebelum){ if(/[0-9,]/.test(baru[pos])) n++; pos++; }
+  try{ el.setSelectionRange(pos, pos); }catch(_){}
+}, true);
 
 // escape teks buat argumen '...' di dalam onclick="..." (nama pakai tanda petik, mis. Nur'aini, tidak bikin tombol mati)
 const ATTR_JS_RE = /[\\'"&<>]/g;
@@ -2388,12 +2422,12 @@ async function bukaKasModal(){
     </p>
     <div class="field">
       <label>Kas Awal (uang buat kembalian)</label>
-      <input type="number" id="kasAwalInput" placeholder="Contoh: 100000" min="0" value="${kasAwalDefault}">
+      <input type="text" inputmode="numeric" class="input-rupiah" id="kasAwalInput" placeholder="Contoh: 100.000" value="${formatRupiahTeks(String(kasAwalDefault ?? '').replace('.', ','))}">
       <div style="font-size:11px;color:rgba(12,31,20,.5);margin-top:4px;">${keteranganAwal}</div>
     </div>
     <div class="field">
       <label>Hasil Hitung Uang di Laci Sekarang</label>
-      <input type="number" id="kasFisikInput" placeholder="Contoh: 450000" min="0">
+      <input type="text" inputmode="numeric" class="input-rupiah" id="kasFisikInput" placeholder="Contoh: 450.000">
     </div>
     <div class="field">
       <label>Catatan (wajib diisi kalau ternyata kas tidak pas)</label>
@@ -2460,8 +2494,8 @@ async function submitHitungKas(){
   const errBox = document.getElementById('kasError');
   errBox.classList.remove('show');
 
-  const kasAwal = Number(kasAwalInput.value);
-  const kasFisik = Number(kasFisikInput.value);
+  const kasAwal = angkaRupiah(kasAwalInput);
+  const kasFisik = angkaRupiah(kasFisikInput);
   const catatan = catatanInput.value.trim();
   if(kasAwalInput.value === '' || isNaN(kasAwal) || kasAwal < 0){
     errBox.textContent = "Isi dulu kas awalnya ya.";
@@ -3761,7 +3795,7 @@ function renderCart(){
   }
   const totalCount = cart.reduce((s,c)=>s+c.qty,0);
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
-  let diskon = Number(document.getElementById('diskonInput').value) || 0;
+  let diskon = angkaRupiah('diskonInput') || 0;
   if(diskon < 0) diskon = 0;
   if(diskon > subtotal) diskon = subtotal;
   const totalPrice = subtotal - diskon;
@@ -3784,7 +3818,7 @@ function bukaKonfirmasiBayar(){
   if(cart.length === 0) return;
 
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
-  let diskon = Number(document.getElementById('diskonInput').value) || 0;
+  let diskon = angkaRupiah('diskonInput') || 0;
   if(diskon < 0) diskon = 0;
   if(diskon > subtotal) diskon = subtotal;
   const totalPrice = subtotal - diskon;
@@ -3819,7 +3853,7 @@ async function konfirmasiBayar(){
   btn.textContent = "Menyimpan...";
 
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
-  let diskon = Number(document.getElementById('diskonInput').value) || 0;
+  let diskon = angkaRupiah('diskonInput') || 0;
   if(diskon < 0) diskon = 0;
   if(diskon > subtotal) diskon = subtotal;
   const totalPrice = subtotal - diskon;
@@ -6263,7 +6297,7 @@ async function openEditPembelianModal(p){
   document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
   updatePembelianSatuanInfo();
   document.getElementById('pembelianJumlah').value = p.jumlah;
-  document.getElementById('pembelianHargaSatuan').value = p.harga_satuan;
+  setInputRupiah('pembelianHargaSatuan', p.harga_satuan);
   document.getElementById('pembelianCatatan').value = p.catatan || '';
   document.getElementById('pembelianDariLaci').checked = p.sumber_dana === 'tunai';
   updateTotalPembelian();
@@ -6274,7 +6308,7 @@ async function openEditPembelianModal(p){
 // total = jumlah x harga satuan, ditampilkan langsung supaya tidak salah isi (mis. harga per slop vs per pcs)
 function updateTotalPembelian(){
   const j = Number(document.getElementById('pembelianJumlah').value) || 0;
-  const h = Number(document.getElementById('pembelianHargaSatuan').value) || 0;
+  const h = angkaRupiah('pembelianHargaSatuan') || 0;
   const el = document.getElementById('pembelianTotalNilai');
   if(el) el.textContent = fmt(j * h);
 }
@@ -6300,7 +6334,7 @@ async function submitPembelian(){
 
   const bahanBakuId = document.getElementById('pembelianBahanBaku').value;
   const jumlah = Number(document.getElementById('pembelianJumlah').value);
-  const hargaSatuan = Number(document.getElementById('pembelianHargaSatuan').value) || 0;
+  const hargaSatuan = angkaRupiah('pembelianHargaSatuan') || 0;
   const catatan = document.getElementById('pembelianCatatan').value.trim();
   const sumberDana = document.getElementById('pembelianDariLaci').checked ? 'tunai' : 'non_tunai';
   const errBox = document.getElementById('pembelianError');
@@ -6522,7 +6556,7 @@ async function submitBelanjaKecil(){
   errBox.classList.remove('show');
   const aktif = document.querySelector('#belanjaKecilKategori .metode-bayar-btn.active');
   const kategori = aktif ? aktif.dataset.kat : 'Lainnya';
-  const jumlah = Number(document.getElementById('belanjaKecilJumlah').value);
+  const jumlah = angkaRupiah('belanjaKecilJumlah');
   const ket = document.getElementById('belanjaKecilKet').value.trim();
 
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
@@ -6847,7 +6881,7 @@ function openEditBiayaModal(b){
   document.getElementById('biayaModalTitle').textContent = 'Edit Biaya Operasional';
   document.getElementById('biayaKategori').value = b.kategori;
   document.getElementById('biayaDeskripsi').value = b.deskripsi || '';
-  document.getElementById('biayaJumlah').value = b.jumlah;
+  setInputRupiah('biayaJumlah', b.jumlah);
   document.getElementById('biayaSumberDana').value = b.sumber_dana || 'tunai';
   document.getElementById('biayaError').classList.remove('show');
   document.getElementById('biayaOverlay').classList.add('show');
@@ -6861,7 +6895,7 @@ function closeBiayaModal(){
 async function submitBiaya(){
   const kategori = document.getElementById('biayaKategori').value;
   const deskripsi = document.getElementById('biayaDeskripsi').value.trim();
-  const jumlah = Number(document.getElementById('biayaJumlah').value);
+  const jumlah = angkaRupiah('biayaJumlah');
   const sumberDana = document.getElementById('biayaSumberDana').value;
   const errBox = document.getElementById('biayaError');
   const btn = document.getElementById('biayaSubmitBtn');
