@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-27.3">
+<meta name="app-version" content="2026-09-27.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1787,6 +1787,8 @@ let presenceInterval = null;
 
 async function kirimPresenceSkali(){
   if(!currentUser || !activeCabangId) return;
+  // kasir yang shift-nya sudah diakhiri (aplikasi terkunci) tidak dihitung "Aktif Sekarang"
+  if(currentProfile && currentProfile.role === 'kasir' && localStorage.getItem('shiftSelesai_' + currentUser.id)) return;
   await sb.from('user_presence').upsert({
     user_id: currentUser.id,
     cabang_id: activeCabangId,
@@ -1894,6 +1896,7 @@ async function akhiriShift(){
   try{ clearCart(); }catch(e){}
   await tutupAbsensiKeluar();
   localStorage.setItem('shiftSelesai_' + currentUser.id, new Date().toISOString());
+  try{ await sb.from('user_presence').delete().eq('user_id', currentUser.id); }catch(e){}
   const cfg = await ambilPengaturanAbsen();
   if(cfg.wajib) bukaGerbangAbsen(); else tampilkanKunciShift();
 }
@@ -1912,6 +1915,7 @@ async function mulaiShiftBaru(){
   if(!confirm('Mulai shift baru sekarang? Jam masuk dicatat mulai sekarang.')) return;
   localStorage.removeItem('shiftSelesai_' + currentUser.id);
   await catatLoginKerja();
+  kirimPresenceSkali();
   document.getElementById('kunciShiftGate').classList.add('hidden');
   showSuccessToast('✅', 'Shift dimulai', 'Jam masuk sudah dicatat. Selamat bekerja!');
 }
@@ -2150,6 +2154,7 @@ async function ambilFotoAbsen(jarak){
     s.selesai = true;
     localStorage.removeItem('shiftSelesai_' + currentUser.id);
     document.getElementById('kunciShiftGate').classList.add('hidden');
+    kirimPresenceSkali();
     setTimeout(tutupGerbangAbsen, 1500);
   }catch(e){
     gagal('Terjadi kesalahan: ' + (e && e.message ? e.message : e));
