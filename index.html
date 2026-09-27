@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-27.4">
+<meta name="app-version" content="2026-09-27.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1604,7 +1604,7 @@ async function loadProfileAndEnter(){
   if(!profile){
     document.getElementById('loginError').textContent = "Akun ini belum terdaftar sebagai pegawai. Hubungi owner.";
     document.getElementById('loginError').classList.add('show');
-    await sb.auth.signOut();
+    await sb.auth.signOut({ scope: 'local' });
     isManualLoginAttempt = false;
     return;
   }
@@ -1613,7 +1613,7 @@ async function loadProfileAndEnter(){
     const labelMap = { owner:'Owner', admin:'Admin', kasir:'Kasir' };
     document.getElementById('loginError').textContent = `Akun ini terdaftar sebagai ${labelMap[profile.role] || profile.role}, bukan ${labelMap[selectedLoginRole]}. Pilih tab yang sesuai lalu coba lagi.`;
     document.getElementById('loginError').classList.add('show');
-    await sb.auth.signOut();
+    await sb.auth.signOut({ scope: 'local' });
     isManualLoginAttempt = false;
     return;
   }
@@ -3229,7 +3229,7 @@ async function doLogout(){
   if(currentUser){
     await sb.from('user_presence').delete().eq('user_id', currentUser.id);
   }
-  await sb.auth.signOut();
+  await sb.auth.signOut({ scope: 'local' });
   resetKeHalamanLogin();
   sedangLogout = false;
 }
@@ -3250,7 +3250,7 @@ async function cekLogoutPaksa(){
   return false;
 }
 
-async function keluarKarenaLogoutPaksa(){
+async function keluarKarenaLogoutPaksa(alasan){
   if(sedangLogout) return;
   sedangLogout = true;
   hentikanPresenceHeartbeat();
@@ -3262,7 +3262,10 @@ async function keluarKarenaLogoutPaksa(){
   const antrian = JSON.parse(localStorage.getItem('pendingTransaksi') || '[]').length;
   resetKeHalamanLogin();
   sedangLogout = false;
-  alert("🚪 Akun Anda sudah di-logout oleh Owner.\n\nSilakan login lagi kalau masih bertugas." +
+  alert((alasan === 'sesi'
+          ? "🔑 Sesi login di perangkat ini berakhir (di-logout oleh Owner, atau tanda login kedaluwarsa)."
+          : "🚪 Akun Anda sudah di-logout oleh Owner.") +
+        "\n\nSilakan login lagi kalau masih bertugas." +
         (antrian > 0 ? `\n\nAda ${antrian} transaksi offline yang belum terkirim, akan dikirim otomatis setelah login lagi.` : ''));
 }
 
@@ -3326,22 +3329,29 @@ document.addEventListener('visibilitychange', ()=>{
 // sesi login dicabut server (misal setelah logout paksa & token habis) -> balik ke halaman login
 sb.auth.onAuthStateChange((event)=>{
   if(event === 'SIGNED_OUT' && currentUser && !sedangLogout && currentProfile && currentProfile.role !== 'owner'){
-    keluarKarenaLogoutPaksa();
+    keluarKarenaLogoutPaksa('sesi');
   }
 });
 
 // auto-login kalau sesi masih ada
+function errorJaringan(err){
+  if(!err) return false;
+  return err.name === 'AuthRetryableFetchError' || err.status === 0 ||
+         /fetch|network|timeout|jaringan|Load failed/i.test(String(err.message || err));
+}
+
 async function checkSession(){
-  let session = null;
-  try{ const { data } = await sb.auth.getSession(); session = data && data.session; }catch(e){}
+  let session = null, sesErr = null;
+  try{ const { data, error } = await sb.auth.getSession(); session = data && data.session; sesErr = error; }
+  catch(e){ sesErr = e; }
   if(session){
     currentUser = session.user;
     await loadProfileAndEnter();
     return;
   }
-  // Dibuka saat internet mati & tanda login sudah kedaluwarsa (tidak bisa diperbarui tanpa internet):
-  // tetap masuk pakai data login yang tersimpan di HP. Begitu online, tanda login diperbarui otomatis.
-  if(!navigator.onLine){
+  // Dibuka saat internet mati / sinyal lemah & tanda login sudah kedaluwarsa (tidak bisa diperbarui):
+  // tetap masuk pakai data login yang tersimpan di HP. Begitu sinyal bagus, tanda login diperbarui otomatis.
+  if(!navigator.onLine || errorJaringan(sesErr)){
     const u = ambilUserTersimpan();
     if(u){ currentUser = u; await loadProfileAndEnter(); }
   }
@@ -6509,7 +6519,7 @@ async function submitGantiPassword(){
     btn.textContent = "Simpan Password Baru";
     return;
   }
-  await sbTemp.auth.signOut();
+  await sbTemp.auth.signOut({ scope: 'local' });
 
   btn.textContent = "Menyimpan...";
   const { error: updateErr } = await sb.auth.updateUser({ password: passwordBaru });
