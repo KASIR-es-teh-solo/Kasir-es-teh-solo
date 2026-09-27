@@ -1,0 +1,7 @@
+-- 2026-09-27 — sudah dijalankan di Supabase oleh Mey atas permintaan Owner.
+-- Harga modal menu otomatis dihitung ulang setiap ada pembelian bahan (insert/ubah harga/hapus),
+-- memakai harga pembelian TERAKHIR tiap bahan: harga_satuan / konversi (kalau ada) x takaran resep.
+-- Fungsi: public.hitung_ulang_modal_bahan(p_bahan uuid)
+-- Trigger: trg_modal_ikut_pembelian (after insert/update harga_satuan, bahan_baku_id)
+--          trg_modal_ikut_hapus_pembelian (after delete)
+-- Versi lengkap ada di migration "modal_otomatis_ikut_harga_beli" & "modal_ikut_hapus_pembelian" di Supabase.
