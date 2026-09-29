@@ -1299,6 +1299,15 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <button class="header-btn gold" onclick="catatSeduhTeh(null)">Simpan</button>
     </div>
     <div style="border-top:1px solid rgba(0,0,0,.12);margin:14px 0 8px;"></div>
+    <div id="tehKemarinBox" class="hidden" style="background:#fff4e0;border:1px solid #e0a030;border-radius:8px;padding:8px;margin-bottom:8px;">
+      <div style="font-size:13px;margin-bottom:6px;">📦 Sisa teh kemarin: <b id="tehKemarinMl">-</b> (masih dihitung)</div>
+      <button id="tehBuangKemarinBtn" style="width:100%;padding:9px;border-radius:8px;border:1px solid #c0392b;background:#fdecea;color:#c0392b;font-weight:800;font-size:13px;" onclick="buangTehKemarin()">🗑️ Teh kemarin basi / tidak dipakai — buang</button>
+    </div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Buang teh basi (ml)</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <input type="text" inputmode="numeric" id="tehBuangMl" placeholder="Jumlah dibuang dalam ml, mis. 600" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
+      <button class="header-btn gold" onclick="buangTeh(null)">Buang</button>
+    </div>
     <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Cocokkan dengan isi wadah (cek tongkat takar)</div>
     <div style="display:flex;gap:6px;">
       <input type="text" inputmode="numeric" id="tehSisaAsli" placeholder="Sisa di wadah dalam ml, mis. 600" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
@@ -6794,6 +6803,13 @@ function renderTehSiap(){
   }
   bar.style.background = warna;
   teks.textContent = isi;
+  const kem = Math.max(0, Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0));
+  const boxKem = document.getElementById('tehKemarinBox');
+  if(boxKem){
+    boxKem.classList.toggle('hidden', !(d.aktif && kem > 0));
+    document.getElementById('tehKemarinMl').textContent = literTeks(kem);
+    document.getElementById('tehBuangKemarinBtn').textContent = `🗑️ Teh kemarin basi / tidak dipakai — buang ${literTeks(kem)}`;
+  }
   const info = document.getElementById('tehSiapInfo');
   if(info){
     info.innerHTML = !d.aktif ? 'Belum ada catatan seduh. Catat seduhan pertama (biasanya pagi 5 L).'
@@ -6803,6 +6819,7 @@ function renderTehSiap(){
 function bukaTehSiap(){
   document.getElementById('tehSeduhLain').value = '';
   document.getElementById('tehSisaAsli').value = '';
+  document.getElementById('tehBuangMl').value = '';
   renderTehSiap();
   document.getElementById('tehSiapOverlay').classList.add('show');
   refreshTehSiap();
@@ -6817,7 +6834,9 @@ async function catatTehSiap(jenis, liter){
   const { data, error } = await sb.rpc('catat_teh_siap', { p_cabang: getActiveCabangId(), p_jenis: jenis, p_ml: Math.round(liter * 1000) });
   if(error){ alert('Gagal mencatat: ' + error.message); return; }
   tehSiapData = data; tehSiapSudahDiingatkan = false; renderTehSiap(); tutupTehSiap();
-  showSuccessToast('🫖', jenis === 'seduh' ? `Seduh ${literTeks(liter*1000)} dicatat` : `Sisa teh diatur ${literTeks(liter*1000)}`, `Teh siap saji sekarang ${literTeks(data.sisa_ml)}`);
+  const judul = jenis === 'seduh' ? `Seduh ${literTeks(liter*1000)} dicatat`
+    : jenis === 'buang' ? `Teh ${literTeks(liter*1000)} dibuang` : `Sisa teh diatur ${literTeks(liter*1000)}`;
+  showSuccessToast('🫖', judul, `Teh siap saji sekarang ${literTeks(data.sisa_ml)}`);
 }
 function catatSeduhTeh(liter){
   if(liter === null){
@@ -6826,6 +6845,19 @@ function catatSeduhTeh(liter){
     liter = ml / 1000;
   }
   catatTehSiap('seduh', liter);
+}
+function buangTeh(ml){
+  if(ml === null){
+    ml = bacaMl('tehBuangMl');
+    if(!(ml > 0) || ml > 50000){ alert('Isi jumlah teh yang dibuang dalam ml, misal 600'); return; }
+  }
+  if(!confirm(`Buang teh ${literTeks(ml)}? Sisa teh akan dikurangi ${literTeks(ml)}.`)) return;
+  catatTehSiap('buang', ml / 1000);
+}
+function buangTehKemarin(){
+  const d = tehSiapData || {};
+  const kem = Math.max(0, Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0));
+  if(kem > 0) buangTeh(Math.round(kem));
 }
 function aturSisaTeh(liter){
   if(liter === null){

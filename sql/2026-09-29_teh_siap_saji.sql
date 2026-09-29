@@ -5,3 +5,6 @@
 --   - pemakaian teh dari penjualan (resep 'Teh original' x qty) sesudahnya. Sisa TERBAWA ke hari berikutnya.
 -- catat_teh_siap(p_cabang, p_jenis, p_ml): kasir cabang / owner mencatat seduhan atau mengatur sisa.
 -- Versi lengkap: migration "teh_siap_saji", "teh_siap_mulai_dari_seduhan_pertama", "teh_siap_sisa_terbawa_hari_berikutnya".
+-- Tambahan: jenis 'buang' (kurangi ml, mis. teh kemarin basi). Fungsi saldo_teh_siap(p_cabang, p_sampai).
+-- status_teh_siap juga mengembalikan sisa_kemarin_ml (saldo saat ganti hari) & buang_hari_ini_ml.
+-- (migration "teh_siap_buang")
