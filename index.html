@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-29.2">
+<meta name="app-version" content="2026-09-29.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -519,6 +519,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
     <button class="side-btn hidden" id="navStokMenipisBtn" onclick="showDashPanel('stokmenipis')"><span class="side-icon">⚠️</span><span class="side-label">Stok Menipis</span></button>
+    <button class="side-btn hidden" id="navStokCupBtn" onclick="showDashPanel('stokcup')" style="position:relative;"><span class="side-icon">🥤</span><span class="side-label">Stok Cup</span><span id="stokCupDot" class="hidden" style="position:absolute;top:6px;right:10px;width:10px;height:10px;border-radius:50%;background:#e53935;"></span></button>
     <button class="side-btn hidden" id="navKaryawanBtn" onclick="showDashPanel('karyawan')"><span class="side-icon">👥</span><span class="side-label">Karyawan</span></button>
     <button class="side-btn hidden" id="navPembelianBtn" onclick="showDashPanel('pembelian')"><span class="side-icon">📥</span><span class="side-label">Pembelian</span></button>
     <button class="side-btn hidden" id="navBiayaBtn" onclick="showDashPanel('biaya')"><span class="side-icon">💸</span><span class="side-label">Biaya</span></button>
@@ -701,6 +702,15 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         </div>
         <div id="dashTxList"><div class="empty-msg">Memuat...</div></div>
       </div>
+      </div>
+    </div>
+
+    <!-- STOK CUP (ADMIN & OWNER) -->
+    <div class="dash-panel hidden" id="dashPanel-stokcup">
+      <div class="dash-section" style="margin-bottom:0;">
+        <h3>🥤 Stok Cup — Semua Cabang</h3>
+        <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:10px;">Berkurang otomatis setiap cup terjual. Peringatan merah kalau stok 100 atau kurang. Tambah stok lewat Pembelian.</p>
+        <div id="dashStokCupList"><div class="empty-msg">Memuat...</div></div>
       </div>
     </div>
 
@@ -1659,6 +1669,7 @@ async function loadProfileAndEnter(){
   document.getElementById('sopBtn').classList.remove('hidden');
   document.getElementById('menuOutletBtn').classList.add('hidden');
   document.getElementById('menuLaporanBtn').classList.add('hidden');
+  document.getElementById('navStokCupBtn').classList.add('hidden');
   document.getElementById('settingsBtn').classList.add('hidden');
   document.getElementById('ownerChartSection').classList.add('hidden');
   document.getElementById('cartToggleBtn').classList.remove('hidden');
@@ -1703,9 +1714,10 @@ async function loadProfileAndEnter(){
   }
 
   if(profile.role === 'owner' || profile.role === 'admin'){
-    ['navRingkasanBtn','navAktifBtn','navStokBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn'].forEach(id=>{
+    ['navRingkasanBtn','navAktifBtn','navStokBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navStokCupBtn'].forEach(id=>{
       document.getElementById(id).classList.remove('hidden');
     });
+    setTimeout(()=>cekStokCup(true), 2500);
   }
 
   const savedKey = 'activeCabang_' + currentUser.id;
@@ -3396,7 +3408,7 @@ function ambilUserTersimpan(){
 
 // ================== VIEW SWITCH ==================
 function setActiveNav(activeId){
-  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','settingsBtn','menuOutletBtn','menuLaporanBtn'].forEach(id=>{
+  ['kasirBtn','sopBtn','navRingkasanBtn','navStokBtn','navStokMenipisBtn','navKaryawanBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','settingsBtn','menuOutletBtn','menuLaporanBtn','navStokCupBtn'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
@@ -3429,6 +3441,7 @@ const DASH_NAV_MAP = {
   aktif: 'navAktifBtn',
   stok: 'navStokBtn',
   stokmenipis: 'navStokMenipisBtn',
+  stokcup: 'navStokCupBtn',
   karyawan: 'navKaryawanBtn',
   pembelian: 'navPembelianBtn',
   biaya: 'navBiayaBtn',
@@ -3457,6 +3470,10 @@ function showDashPanel(panelName){
 
   if(panelName === 'stokmenipis'){
     loadStokMenipis();
+  }
+
+  if(panelName === 'stokcup'){
+    loadStokCup();
   }
 
   if(panelName === 'brankas'){
@@ -6726,6 +6743,63 @@ async function loadPenjualanHariIni(){
         <div class="stock-row"><span>${escTG(nama)} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
   `;
+}
+
+// ================== STOK CUP (admin & owner) ==================
+const BATAS_CUP = 100;
+let stokCupSudahDiingatkan = false;
+async function ambilStokCup(){
+  const { data, error } = await sb.rpc('laporan_stok_cup');
+  if(error) throw error;
+  return data || [];
+}
+function hitungCup(r){
+  const perHari = Number(r.pakai_7hari || 0) / Math.max(1, Number(r.hari_data || 1));
+  const cukup = perHari > 0 ? Number(r.stok) / perHari : null;
+  return { perHari, cukup, menipis: Number(r.stok) <= BATAS_CUP };
+}
+// dipanggil saat login admin/owner: titik merah di tombol + satu peringatan
+async function cekStokCup(tampilkanPeringatan){
+  if(!navigator.onLine || !(currentProfile && (currentProfile.role === 'owner' || currentProfile.role === 'admin'))) return;
+  try{
+    const rows = await ambilStokCup();
+    const tipis = rows.filter(r => hitungCup(r).menipis);
+    document.getElementById('stokCupDot').classList.toggle('hidden', tipis.length === 0);
+    if(tampilkanPeringatan && tipis.length > 0 && !stokCupSudahDiingatkan){
+      stokCupSudahDiingatkan = true;
+      showSuccessToast('🥤', 'Stok cup menipis!', tipis.map(r => `${r.nama} tinggal ${Number(r.stok)}`).join(' · ') + ' — segera belanja cup.');
+    }
+  }catch(e){}
+}
+async function loadStokCup(){
+  const box = document.getElementById('dashStokCupList');
+  if(!box) return;
+  box.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  let rows;
+  try{ rows = await ambilStokCup(); }
+  catch(e){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(e.message || String(e))}</div>`; return; }
+  document.getElementById('stokCupDot').classList.toggle('hidden', !rows.some(r => hitungCup(r).menipis));
+  if(rows.length === 0){ box.innerHTML = '<div class="empty-msg">Belum ada bahan cup.</div>'; return; }
+  const perCabang = {};
+  rows.forEach(r => { (perCabang[r.cabang] = perCabang[r.cabang] || []).push(r); });
+  box.innerHTML = Object.entries(perCabang).map(([cabang, list]) => `
+    <div style="font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);margin:6px 0;">🏪 ${escTG(cabang)}</div>
+    ${list.map(r => {
+      const h = hitungCup(r);
+      const cukupTeks = h.cukup === null ? 'belum ada pemakaian' : (h.cukup < 1 ? 'habis hari ini' : `cukup ±${Math.floor(h.cukup)} hari`);
+      return `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:${h.menipis ? '#fdecea' : 'var(--page-bg)'};border:1px solid ${h.menipis ? '#c0392b' : 'transparent'};border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+        <div>
+          <div style="font-weight:800;font-size:15px;color:#000;">${escTG(r.nama)}</div>
+          <div style="font-size:12px;color:#333;">Pemakaian ±${Math.round(h.perHari)} cup/hari · ${cukupTeks}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:900;color:${h.menipis ? '#c0392b' : '#2e7d32'};">${Number(r.stok)}</div>
+          <div style="font-size:11px;font-weight:800;color:${h.menipis ? '#c0392b' : '#2e7d32'};">${h.menipis ? '⚠️ MENIPIS' : 'aman'}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  `).join('');
 }
 
 // ================== TEH SIAP SAJI (halaman kasir) ==================

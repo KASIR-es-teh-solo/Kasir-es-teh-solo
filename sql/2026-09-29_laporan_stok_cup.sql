@@ -1,0 +1,4 @@
+-- 2026-09-29 — sudah dijalankan di Supabase oleh Mey atas permintaan Owner.
+-- laporan_stok_cup(): khusus admin/owner. Per cabang x bahan 'Cup%': stok, pemakaian 7 hari (dari resep x penjualan),
+-- dan hari_data (maks 7) untuk rata-rata per hari. Dipakai panel "Stok Cup" (peringatan <= 100 pcs).
+-- (migration "laporan_stok_cup" & "laporan_stok_cup_hari_data")
