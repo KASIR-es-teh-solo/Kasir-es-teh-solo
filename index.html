@@ -1295,13 +1295,13 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(6)">6 L</button>
     </div>
     <div style="display:flex;gap:6px;margin-top:6px;">
-      <input type="text" inputmode="decimal" id="tehSeduhLain" placeholder="Liter lain, mis. 2,5" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
+      <input type="text" inputmode="numeric" id="tehSeduhLain" placeholder="Jumlah lain dalam ml, mis. 2500" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
       <button class="header-btn gold" onclick="catatSeduhTeh(null)">Simpan</button>
     </div>
     <div style="border-top:1px solid rgba(0,0,0,.12);margin:14px 0 8px;"></div>
     <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Cocokkan dengan isi wadah (cek tongkat takar)</div>
     <div style="display:flex;gap:6px;">
-      <input type="text" inputmode="decimal" id="tehSisaAsli" placeholder="Sisa di wadah (liter)" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
+      <input type="text" inputmode="numeric" id="tehSisaAsli" placeholder="Sisa di wadah dalam ml, mis. 600" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
       <button class="header-btn gold" onclick="aturSisaTeh(null)">Atur</button>
     </div>
     <button style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1px solid #c0392b;background:#fdecea;color:#c0392b;font-weight:800;font-size:13px;" onclick="aturSisaTeh(0)">🗑️ Teh habis / dibuang (sisa 0)</button>
@@ -6740,7 +6740,13 @@ async function loadPenjualanHariIni(){
 // Peringatan kalau sisa < 1 liter supaya seduh sebelum habis.
 let tehSiapTimer = null, tehSiapData = null, tehSiapSudahDiingatkan = false;
 function bolehLihatTehSiap(){ return currentProfile && (currentProfile.role === 'kasir' || currentProfile.role === 'owner'); }
-function literTeks(ml){ return (Math.max(0, ml) / 1000).toLocaleString('id-ID', { maximumFractionDigits:1 }) + ' L'; }
+// tanpa angka koma: 600 ml · 1 L · 2 L 600 ml (dibulatkan ke 10 ml)
+function literTeks(ml){
+  const v = Math.max(0, Math.round(Number(ml || 0) / 10) * 10);
+  const l = Math.floor(v / 1000), sisa = v % 1000;
+  if(l === 0) return sisa + ' ml';
+  return sisa === 0 ? l + ' L' : l + ' L ' + sisa + ' ml';
+}
 function mulaiTehSiap(){
   const bar = document.getElementById('tehSiapBar');
   if(!bar) return;
@@ -6802,8 +6808,8 @@ function bukaTehSiap(){
   refreshTehSiap();
 }
 function tutupTehSiap(){ document.getElementById('tehSiapOverlay').classList.remove('show'); }
-function bacaLiter(id){
-  const v = String(document.getElementById(id).value || '').replace(',', '.').trim();
+function bacaMl(id){
+  const v = String(document.getElementById(id).value || '').replace(/[^0-9]/g, '');
   return v === '' ? NaN : Number(v);
 }
 async function catatTehSiap(jenis, liter){
@@ -6814,13 +6820,19 @@ async function catatTehSiap(jenis, liter){
   showSuccessToast('🫖', jenis === 'seduh' ? `Seduh ${literTeks(liter*1000)} dicatat` : `Sisa teh diatur ${literTeks(liter*1000)}`, `Teh siap saji sekarang ${literTeks(data.sisa_ml)}`);
 }
 function catatSeduhTeh(liter){
-  if(liter === null){ liter = bacaLiter('tehSeduhLain'); }
-  if(!(liter > 0) || liter > 50){ alert('Isi jumlah liter yang benar, misal 2,5'); return; }
+  if(liter === null){
+    const ml = bacaMl('tehSeduhLain');
+    if(!(ml > 0) || ml > 50000){ alert('Isi jumlah teh yang diseduh dalam ml, misal 2500'); return; }
+    liter = ml / 1000;
+  }
   catatTehSiap('seduh', liter);
 }
 function aturSisaTeh(liter){
-  if(liter === null){ liter = bacaLiter('tehSisaAsli'); }
-  if(!(liter >= 0) || liter > 50){ alert('Isi sisa teh di wadah dalam liter, misal 1,5'); return; }
+  if(liter === null){
+    const ml = bacaMl('tehSisaAsli');
+    if(!(ml >= 0) || ml > 50000){ alert('Isi sisa teh di wadah dalam ml, misal 600'); return; }
+    liter = ml / 1000;
+  }
   if(liter === 0 && !confirm('Catat teh habis / dibuang (sisa 0)?')) return;
   catatTehSiap('set', liter);
 }
