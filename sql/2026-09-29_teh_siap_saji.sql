@@ -1,0 +1,7 @@
+-- 2026-09-29 — sudah dijalankan di Supabase oleh Mey atas permintaan Owner.
+-- Fitur Teh Siap Saji (halaman kasir).
+-- Tabel teh_siap_log(cabang_id, jenis 'seduh'|'set', ml, dicatat_oleh, created_at), RLS baca: is_pegawai(); tulis lewat fungsi.
+-- status_teh_siap(p_cabang): sisa = 'set' terakhir (atau 0 sebelum catatan pertama) + seduhan sesudahnya
+--   - pemakaian teh dari penjualan (resep 'Teh original' x qty) sesudahnya. Sisa TERBAWA ke hari berikutnya.
+-- catat_teh_siap(p_cabang, p_jenis, p_ml): kasir cabang / owner mencatat seduhan atau mengatur sisa.
+-- Versi lengkap: migration "teh_siap_saji", "teh_siap_mulai_dari_seduhan_pertama", "teh_siap_sisa_terbawa_hari_berikutnya".

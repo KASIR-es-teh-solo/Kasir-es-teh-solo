@@ -6774,7 +6774,7 @@ function renderTehSiap(){
   let warna = '#2e7d32', isi;
   if(!d.aktif){
     warna = '#a06000';
-    isi = '🫖 Teh siap saji belum dicatat hari ini — tekan untuk catat seduhan';
+    isi = '🫖 Teh siap saji belum pernah dicatat — tekan untuk catat seduhan';
   } else {
     const sisa = Number(d.sisa_ml || 0), laju = Number(d.pakai_1jam_ml || 0);
     let perkiraan = '';
@@ -6796,7 +6796,7 @@ function renderTehSiap(){
   teks.textContent = isi;
   const info = document.getElementById('tehSiapInfo');
   if(info){
-    info.innerHTML = !d.aktif ? 'Belum ada catatan seduh hari ini. Catat seduhan pertama (biasanya pagi 5 L).'
+    info.innerHTML = !d.aktif ? 'Belum ada catatan seduh. Catat seduhan pertama (biasanya pagi 5 L).'
       : `Sisa menurut catatan: <b>${literTeks(d.sisa_ml)}</b><br><span style="font-size:12px;">Terpakai 1 jam terakhir: ${literTeks(d.pakai_1jam_ml)}${d.seduh_terakhir ? ' · seduh terakhir jam ' + new Date(d.seduh_terakhir).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : ''}</span>`;
   }
 }
