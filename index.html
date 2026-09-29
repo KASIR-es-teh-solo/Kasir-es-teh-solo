@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-09-29.1">
+<meta name="app-version" content="2026-09-29.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -563,6 +563,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div id="kasirView" class="layout">
 
     <main class="catalog">
+      <div id="tehSiapBar" class="hidden" onclick="bukaTehSiap()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;margin-bottom:8px;font-weight:800;font-size:14px;background:#2e7d32;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);">
+        <span id="tehSiapTeks">🫖 Teh siap saji: memuat...</span>
+        <span style="background:rgba(255,255,255,.25);padding:5px 10px;border-radius:8px;font-size:12px;white-space:nowrap;">+ Seduh</span>
+      </div>
       <input type="text" id="menuSearchInput" oninput="filterMenuSearch()" placeholder="🔍 Cari menu (misal: matcha, taro)..." style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:#000;color:#fff;font-weight:700;font-size:14px;margin-bottom:8px;">
       <div id="catalogArea"><div class="loading-msg">Memuat menu...</div></div>
     </main>
@@ -1276,6 +1280,35 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
+<!-- Teh siap saji (halaman kasir) -->
+<div class="overlay" id="tehSiapOverlay" onclick="if(event.target===this) tutupTehSiap()">
+  <div class="modal" style="max-width:360px;">
+    <h3>🫖 Teh Siap Saji</h3>
+    <div id="tehSiapInfo" style="font-size:14px;margin-bottom:10px;">-</div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Baru selesai seduh berapa liter?</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(1)">1 L</button>
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(2)">2 L</button>
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(3)">3 L</button>
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(4)">4 L</button>
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(5)">5 L</button>
+      <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(6)">6 L</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <input type="text" inputmode="decimal" id="tehSeduhLain" placeholder="Liter lain, mis. 2,5" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
+      <button class="header-btn gold" onclick="catatSeduhTeh(null)">Simpan</button>
+    </div>
+    <div style="border-top:1px solid rgba(0,0,0,.12);margin:14px 0 8px;"></div>
+    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Cocokkan dengan isi wadah (cek tongkat takar)</div>
+    <div style="display:flex;gap:6px;">
+      <input type="text" inputmode="decimal" id="tehSisaAsli" placeholder="Sisa di wadah (liter)" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
+      <button class="header-btn gold" onclick="aturSisaTeh(null)">Atur</button>
+    </div>
+    <button style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1px solid #c0392b;background:#fdecea;color:#c0392b;font-weight:800;font-size:13px;" onclick="aturSisaTeh(0)">🗑️ Teh habis / dibuang (sisa 0)</button>
+    <button class="modal-close" onclick="tutupTehSiap()">Tutup</button>
+  </div>
+</div>
+
 <!-- Menu Outlet (owner): gabungan Kasir POS, SOP Menu, Kas, Belanja -->
 <div class="overlay" id="menuOutletOverlay" onclick="if(event.target===this) tutupMenuOutlet()">
   <div class="modal" style="max-width:360px;">
@@ -1731,6 +1764,7 @@ async function loadProfileAndEnter(){
   updateConnStatus();
   if(navigator.onLine){ trySyncPending(); }
   setTimeout(kirimCatatanError, 3000);
+  mulaiTehSiap();
 
   if(profile.role === 'kasir' || profile.role === 'admin'){
     mulaiPresenceHeartbeat();
@@ -3908,6 +3942,7 @@ async function konfirmasiBayar(){
         }
       } else {
         await loadProduk(); // refresh stok terbaru dari server
+        refreshTehSiap();
       }
     }catch(err){
       // gagal karena koneksi bermasalah -> simpan offline supaya tidak hilang (ID sama -> tidak mungkin dobel)
@@ -4117,6 +4152,7 @@ async function kirimAntrianPending(queue){
   }
   if(remaining.length === 0){
     await loadProduk(); // stok server sudah update, ambil ulang data asli
+    refreshTehSiap();
   }
 }
 
@@ -6697,6 +6733,96 @@ async function loadPenjualanHariIni(){
         <div class="stock-row"><span>${escTG(nama)} <span style="opacity:.55;font-size:11px;">· ${v.qty} cup</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
   `;
+}
+
+// ================== TEH SIAP SAJI (halaman kasir) ==================
+// Kasir catat tiap kali selesai seduh; sisa dihitung dari penjualan (resep teh per cup).
+// Peringatan kalau sisa < 1 liter supaya seduh sebelum habis.
+let tehSiapTimer = null, tehSiapData = null, tehSiapSudahDiingatkan = false;
+function bolehLihatTehSiap(){ return currentProfile && (currentProfile.role === 'kasir' || currentProfile.role === 'owner'); }
+function literTeks(ml){ return (Math.max(0, ml) / 1000).toLocaleString('id-ID', { maximumFractionDigits:1 }) + ' L'; }
+function mulaiTehSiap(){
+  const bar = document.getElementById('tehSiapBar');
+  if(!bar) return;
+  if(!bolehLihatTehSiap()){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  tehSiapSudahDiingatkan = false;
+  refreshTehSiap();
+  if(tehSiapTimer) clearInterval(tehSiapTimer);
+  tehSiapTimer = setInterval(refreshTehSiap, 60000);
+}
+async function refreshTehSiap(){
+  if(!bolehLihatTehSiap() || !getActiveCabangId()) return;
+  const teks = document.getElementById('tehSiapTeks');
+  if(!navigator.onLine){ if(teks && !tehSiapData) teks.textContent = '🫖 Teh siap saji: offline'; return; }
+  try{
+    const { data, error } = await sb.rpc('status_teh_siap', { p_cabang: getActiveCabangId() });
+    if(error || !data) return;
+    tehSiapData = data;
+    renderTehSiap();
+  }catch(e){}
+}
+function renderTehSiap(){
+  const d = tehSiapData; if(!d) return;
+  const bar = document.getElementById('tehSiapBar'), teks = document.getElementById('tehSiapTeks');
+  let warna = '#2e7d32', isi;
+  if(!d.aktif){
+    warna = '#a06000';
+    isi = '🫖 Teh siap saji belum dicatat hari ini — tekan untuk catat seduhan';
+  } else {
+    const sisa = Number(d.sisa_ml || 0), laju = Number(d.pakai_1jam_ml || 0);
+    let perkiraan = '';
+    if(sisa > 0 && laju > 0){
+      const menit = Math.round(sisa / laju * 60);
+      perkiraan = menit >= 60 ? ` · cukup ±${Math.floor(menit/60)} jam${menit%60>=30?' lebih':''}` : ` · cukup ±${menit} menit`;
+    }
+    if(sisa <= 0){ warna = '#c0392b'; isi = '🫖 Teh HABIS menurut catatan — seduh sekarang!'; }
+    else if(sisa < 1000){ warna = '#c0392b'; isi = `⚠️ Teh tinggal ${literTeks(sisa)}${perkiraan} — seduh sekarang!`; }
+    else if(sisa < 2000){ warna = '#c98a00'; isi = `🫖 Teh siap saji: ${literTeks(sisa)}${perkiraan}`; }
+    else { isi = `🫖 Teh siap saji: ${literTeks(sisa)}${perkiraan}`; }
+    if(sisa < 1000 && !tehSiapSudahDiingatkan && currentProfile && currentProfile.role === 'kasir'){
+      tehSiapSudahDiingatkan = true;
+      showSuccessToast('⚠️', sisa <= 0 ? 'Teh habis!' : `Teh tinggal ${literTeks(sisa)}`, 'Seduh teh sekarang supaya pesanan tidak ditolak.');
+    }
+    if(sisa >= 1000) tehSiapSudahDiingatkan = false;
+  }
+  bar.style.background = warna;
+  teks.textContent = isi;
+  const info = document.getElementById('tehSiapInfo');
+  if(info){
+    info.innerHTML = !d.aktif ? 'Belum ada catatan seduh hari ini. Catat seduhan pertama (biasanya pagi 5 L).'
+      : `Sisa menurut catatan: <b>${literTeks(d.sisa_ml)}</b><br><span style="font-size:12px;">Terpakai 1 jam terakhir: ${literTeks(d.pakai_1jam_ml)}${d.seduh_terakhir ? ' · seduh terakhir jam ' + new Date(d.seduh_terakhir).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : ''}</span>`;
+  }
+}
+function bukaTehSiap(){
+  document.getElementById('tehSeduhLain').value = '';
+  document.getElementById('tehSisaAsli').value = '';
+  renderTehSiap();
+  document.getElementById('tehSiapOverlay').classList.add('show');
+  refreshTehSiap();
+}
+function tutupTehSiap(){ document.getElementById('tehSiapOverlay').classList.remove('show'); }
+function bacaLiter(id){
+  const v = String(document.getElementById(id).value || '').replace(',', '.').trim();
+  return v === '' ? NaN : Number(v);
+}
+async function catatTehSiap(jenis, liter){
+  if(!navigator.onLine){ alert('Butuh internet untuk mencatat teh.'); return; }
+  const { data, error } = await sb.rpc('catat_teh_siap', { p_cabang: getActiveCabangId(), p_jenis: jenis, p_ml: Math.round(liter * 1000) });
+  if(error){ alert('Gagal mencatat: ' + error.message); return; }
+  tehSiapData = data; tehSiapSudahDiingatkan = false; renderTehSiap(); tutupTehSiap();
+  showSuccessToast('🫖', jenis === 'seduh' ? `Seduh ${literTeks(liter*1000)} dicatat` : `Sisa teh diatur ${literTeks(liter*1000)}`, `Teh siap saji sekarang ${literTeks(data.sisa_ml)}`);
+}
+function catatSeduhTeh(liter){
+  if(liter === null){ liter = bacaLiter('tehSeduhLain'); }
+  if(!(liter > 0) || liter > 50){ alert('Isi jumlah liter yang benar, misal 2,5'); return; }
+  catatTehSiap('seduh', liter);
+}
+function aturSisaTeh(liter){
+  if(liter === null){ liter = bacaLiter('tehSisaAsli'); }
+  if(!(liter >= 0) || liter > 50){ alert('Isi sisa teh di wadah dalam liter, misal 1,5'); return; }
+  if(liter === 0 && !confirm('Catat teh habis / dibuang (sisa 0)?')) return;
+  catatTehSiap('set', liter);
 }
 
 // ================== MENU OUTLET (owner) ==================
