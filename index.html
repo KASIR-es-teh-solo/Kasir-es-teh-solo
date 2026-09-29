@@ -1284,8 +1284,12 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <div class="overlay" id="tehSiapOverlay" onclick="if(event.target===this) tutupTehSiap()">
   <div class="modal" style="max-width:360px;">
     <h3>🫖 Teh Siap Saji</h3>
-    <div id="tehSiapInfo" style="font-size:14px;margin-bottom:10px;">-</div>
-    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Baru selesai seduh berapa liter?</div>
+    <div id="tehSiapInfo" style="font-size:14px;margin-bottom:12px;">-</div>
+    <div id="tehKemarinBox" class="hidden" style="background:#fff4e0;border:1px solid #e0a030;border-radius:10px;padding:10px;margin-bottom:12px;">
+      <div style="font-size:14px;margin-bottom:8px;">📦 Sisa teh kemarin: <b id="tehKemarinMl">-</b></div>
+      <button class="header-btn gold" style="width:100%;" onclick="ubahSisaKemarin()">✏️ Ubah sisa teh kemarin</button>
+    </div>
+    <div style="font-size:13px;font-weight:800;margin-bottom:6px;">Buat teh baru, pilih jumlahnya:</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
       <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(1)">1 L</button>
       <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(2)">2 L</button>
@@ -1294,26 +1298,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(5)">5 L</button>
       <button class="login-btn" style="margin:0;" onclick="catatSeduhTeh(6)">6 L</button>
     </div>
-    <div style="display:flex;gap:6px;margin-top:6px;">
-      <input type="text" inputmode="numeric" id="tehSeduhLain" placeholder="Jumlah lain dalam ml, mis. 2500" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
-      <button class="header-btn gold" onclick="catatSeduhTeh(null)">Simpan</button>
-    </div>
-    <div style="border-top:1px solid rgba(0,0,0,.12);margin:14px 0 8px;"></div>
-    <div id="tehKemarinBox" class="hidden" style="background:#fff4e0;border:1px solid #e0a030;border-radius:8px;padding:8px;margin-bottom:8px;">
-      <div style="font-size:13px;margin-bottom:6px;">📦 Sisa teh kemarin: <b id="tehKemarinMl">-</b> (masih dihitung)</div>
-      <button id="tehBuangKemarinBtn" style="width:100%;padding:9px;border-radius:8px;border:1px solid #c0392b;background:#fdecea;color:#c0392b;font-weight:800;font-size:13px;" onclick="buangTehKemarin()">🗑️ Teh kemarin basi / tidak dipakai — buang</button>
-    </div>
-    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Buang teh basi (ml)</div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
-      <input type="text" inputmode="numeric" id="tehBuangMl" placeholder="Jumlah dibuang dalam ml, mis. 600" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
-      <button class="header-btn gold" onclick="buangTeh(null)">Buang</button>
-    </div>
-    <div style="font-size:12px;font-weight:800;margin-bottom:6px;">Cocokkan dengan isi wadah (cek tongkat takar)</div>
-    <div style="display:flex;gap:6px;">
-      <input type="text" inputmode="numeric" id="tehSisaAsli" placeholder="Sisa di wadah dalam ml, mis. 600" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--line-soft);">
-      <button class="header-btn gold" onclick="aturSisaTeh(null)">Atur</button>
-    </div>
-    <button style="width:100%;margin-top:8px;padding:10px;border-radius:8px;border:1px solid #c0392b;background:#fdecea;color:#c0392b;font-weight:800;font-size:13px;" onclick="aturSisaTeh(0)">🗑️ Teh habis / dibuang (sisa 0)</button>
     <button class="modal-close" onclick="tutupTehSiap()">Tutup</button>
   </div>
 </div>
@@ -6808,18 +6792,14 @@ function renderTehSiap(){
   if(boxKem){
     boxKem.classList.toggle('hidden', !(d.aktif && kem > 0));
     document.getElementById('tehKemarinMl').textContent = literTeks(kem);
-    document.getElementById('tehBuangKemarinBtn').textContent = `🗑️ Teh kemarin basi / tidak dipakai — buang ${literTeks(kem)}`;
   }
   const info = document.getElementById('tehSiapInfo');
   if(info){
-    info.innerHTML = !d.aktif ? 'Belum ada catatan seduh. Catat seduhan pertama (biasanya pagi 5 L).'
-      : `Sisa menurut catatan: <b>${literTeks(d.sisa_ml)}</b><br><span style="font-size:12px;">Terpakai 1 jam terakhir: ${literTeks(d.pakai_1jam_ml)}${d.seduh_terakhir ? ' · seduh terakhir jam ' + new Date(d.seduh_terakhir).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : ''}</span>`;
+    info.innerHTML = !d.aktif ? 'Belum ada catatan teh. Pilih jumlah teh yang baru dibuat (biasanya pagi 5 L).'
+      : `Total teh sekarang: <b style="font-size:18px;">${literTeks(d.sisa_ml)}</b>`;
   }
 }
 function bukaTehSiap(){
-  document.getElementById('tehSeduhLain').value = '';
-  document.getElementById('tehSisaAsli').value = '';
-  document.getElementById('tehBuangMl').value = '';
   renderTehSiap();
   document.getElementById('tehSiapOverlay').classList.add('show');
   refreshTehSiap();
@@ -6829,44 +6809,31 @@ function bacaMl(id){
   const v = String(document.getElementById(id).value || '').replace(/[^0-9]/g, '');
   return v === '' ? NaN : Number(v);
 }
-async function catatTehSiap(jenis, liter){
+async function catatTehSiap(jenis, liter, judulKhusus){
   if(!navigator.onLine){ alert('Butuh internet untuk mencatat teh.'); return; }
   const { data, error } = await sb.rpc('catat_teh_siap', { p_cabang: getActiveCabangId(), p_jenis: jenis, p_ml: Math.round(liter * 1000) });
   if(error){ alert('Gagal mencatat: ' + error.message); return; }
   tehSiapData = data; tehSiapSudahDiingatkan = false; renderTehSiap(); tutupTehSiap();
-  const judul = jenis === 'seduh' ? `Seduh ${literTeks(liter*1000)} dicatat`
+  const judul = judulKhusus ? judulKhusus : jenis === 'seduh' ? `Teh baru ${literTeks(liter*1000)} dicatat`
     : jenis === 'buang' ? `Teh ${literTeks(liter*1000)} dibuang` : `Sisa teh diatur ${literTeks(liter*1000)}`;
   showSuccessToast('🫖', judul, `Teh siap saji sekarang ${literTeks(data.sisa_ml)}`);
 }
 function catatSeduhTeh(liter){
-  if(liter === null){
-    const ml = bacaMl('tehSeduhLain');
-    if(!(ml > 0) || ml > 50000){ alert('Isi jumlah teh yang diseduh dalam ml, misal 2500'); return; }
-    liter = ml / 1000;
-  }
+  if(!confirm(`Catat teh baru ${literTeks(liter*1000)}?`)) return;
   catatTehSiap('seduh', liter);
 }
-function buangTeh(ml){
-  if(ml === null){
-    ml = bacaMl('tehBuangMl');
-    if(!(ml > 0) || ml > 50000){ alert('Isi jumlah teh yang dibuang dalam ml, misal 600'); return; }
-  }
-  if(!confirm(`Buang teh ${literTeks(ml)}? Sisa teh akan dikurangi ${literTeks(ml)}.`)) return;
-  catatTehSiap('buang', ml / 1000);
-}
-function buangTehKemarin(){
+// Ubah sisa teh kemarin (mis. tercatat 600 ml, ternyata tinggal 400 ml, atau basi -> 0)
+function ubahSisaKemarin(){
   const d = tehSiapData || {};
-  const kem = Math.max(0, Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0));
-  if(kem > 0) buangTeh(Math.round(kem));
-}
-function aturSisaTeh(liter){
-  if(liter === null){
-    const ml = bacaMl('tehSisaAsli');
-    if(!(ml >= 0) || ml > 50000){ alert('Isi sisa teh di wadah dalam ml, misal 600'); return; }
-    liter = ml / 1000;
-  }
-  if(liter === 0 && !confirm('Catat teh habis / dibuang (sisa 0)?')) return;
-  catatTehSiap('set', liter);
+  const kem = Math.max(0, Math.round(Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0)));
+  const jawab = prompt(`Sisa teh kemarin tercatat ${literTeks(kem)}.\n\nBerapa ml sisa teh kemarin yang BENAR dan masih layak dipakai?\n(isi 0 kalau basi / dibuang semua)`, String(kem));
+  if(jawab === null) return;
+  const baru = Number(String(jawab).replace(/[^0-9]/g, ''));
+  if(String(jawab).replace(/[^0-9]/g, '') === '' || baru > 50000){ alert('Isi angka dalam ml, misal 400'); return; }
+  const selisih = baru - kem;
+  if(selisih === 0){ tutupTehSiap(); return; }
+  if(selisih < 0) catatTehSiap('buang', (-selisih) / 1000, `Sisa teh kemarin diubah jadi ${literTeks(baru)}`);
+  else catatTehSiap('seduh', selisih / 1000, `Sisa teh kemarin diubah jadi ${literTeks(baru)}`);
 }
 
 // ================== MENU OUTLET (owner) ==================
