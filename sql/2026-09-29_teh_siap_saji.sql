@@ -12,3 +12,5 @@
 --   Belum ada catatan sebelum hari ini -> 'set' p_ml tepat sebelum ganti hari; sudah ada -> selisihnya
 --   dicatat sebagai 'buang' (kalau berkurang) atau 'seduh' sebelum ganti hari (kalau bertambah).
 --   (migration "teh_siap_isi_sisa_kemarin")
+-- 2026-09-30: status_teh_siap juga mengembalikan rata_per_jam_ml (rata-rata pemakaian per jam buka, 7 hari).
+--   Aplikasi memakai laju = max(1 jam terakhir, rata-rata) untuk perkiraan "cukup berapa jam". (migration "teh_siap_rata_per_jam")
