@@ -8,3 +8,7 @@
 -- Tambahan: jenis 'buang' (kurangi ml, mis. teh kemarin basi). Fungsi saldo_teh_siap(p_cabang, p_sampai).
 -- status_teh_siap juga mengembalikan sisa_kemarin_ml (saldo saat ganti hari) & buang_hari_ini_ml.
 -- (migration "teh_siap_buang")
+-- 2026-09-30: catat_sisa_kemarin(p_cabang, p_ml) — isi/ubah sisa teh kemarin langsung dalam ml.
+--   Belum ada catatan sebelum hari ini -> 'set' p_ml tepat sebelum ganti hari; sudah ada -> selisihnya
+--   dicatat sebagai 'buang' (kalau berkurang) atau 'seduh' sebelum ganti hari (kalau bertambah).
+--   (migration "teh_siap_isi_sisa_kemarin")
