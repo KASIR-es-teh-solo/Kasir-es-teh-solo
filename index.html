@@ -275,11 +275,13 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   }
   .cat-banner-icon{font-size:18px;}
   /* Kasir: daftar kategori di bawah, berjajar ke samping, dipisah garis */
-  #kasirView .catalog{display:flex;flex-direction:column;min-height:calc(100dvh - var(--topbar-h,140px));padding-bottom:8px;}
+  #kasirView .catalog{display:flex;flex-direction:column;min-height:calc(100dvh - var(--topbar-h,140px));padding-bottom:8px;overflow-x:clip;min-width:0;} /* clip (bukan hidden) supaya bar kategori bisa menempel di bawah layar */
   .kat-bawah{position:sticky;bottom:8px;z-index:20;display:flex;flex:none;overflow-x:auto;background:#0c1f14;border-radius:12px;margin-top:auto;box-shadow:0 -4px 14px rgba(0,0,0,.35);scrollbar-width:none;}
   .kat-bawah::-webkit-scrollbar{display:none;}
   .kat-bawah:empty{display:none;}
   #catalogArea{margin-bottom:12px;}
+  .cat-block.kat-grup{margin-top:0;scroll-margin-top:calc(var(--topbar-h,0px) + 8px);}
+  .cat-block.kat-grup + .cat-block.kat-grup{border-top:3px solid rgba(255,255,255,.85);margin-top:14px;padding-top:14px;}
   .kat-btn{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 14px;min-width:84px;background:transparent;border:none;border-right:1px solid rgba(255,255,255,.35);color:#fff;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;border-top:4px solid transparent;}
   .kat-btn:last-child{border-right:none;}
   .kat-btn .kb-ikon{font-size:20px;line-height:1;}
@@ -3797,10 +3799,28 @@ let kategoriKasirAktif = null;
 function pilihKategoriKasir(cat){
   kategoriKasirAktif = cat;
   const cari = document.getElementById('menuSearchInput');
-  if(cari && cari.value){ cari.value = ''; }
-  renderCatalog();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(cari && cari.value){ cari.value = ''; renderCatalog(); }
+  tandaiKategoriBawah();
+  const el = document.getElementById('cat-' + cat.replace(/\s+/g,'-'));
+  if(el){ katLewatiPantau = Date.now() + 800; el.scrollIntoView({ behavior:'smooth', block:'start' }); }
 }
+function tandaiKategoriBawah(){
+  document.querySelectorAll('#katBawah .kat-btn').forEach(b=>{
+    const aktif = b.dataset.kat === kategoriKasirAktif;
+    b.classList.toggle('aktif', aktif);
+    if(aktif) b.scrollIntoView({ block:'nearest', inline:'nearest' });
+  });
+}
+// saat menu digulir, kategori di bar bawah ikut menyala sesuai menu yang sedang terlihat
+let katLewatiPantau = 0;
+document.addEventListener('scroll', ()=>{
+  if(Date.now() < katLewatiPantau) return;
+  const blok = document.querySelectorAll('#catalogArea .cat-block[data-kat]');
+  if(!blok.length) return;
+  let pilih = blok[0].dataset.kat;
+  blok.forEach(b=>{ if(b.getBoundingClientRect().top < window.innerHeight * 0.4) pilih = b.dataset.kat; });
+  if(pilih !== kategoriKasirAktif){ kategoriKasirAktif = pilih; tandaiKategoriBawah(); }
+}, true);
 function renderKategoriBawah(cats){
   const bar = document.getElementById('katBawah');
   if(!bar) return;
@@ -3810,7 +3830,7 @@ function renderKategoriBawah(cats){
   bar.innerHTML = cats.map(cat=>{
     const st = catStyle(cat);
     const catJs = cat.replace(ATTR_JS_RE, attrJsEsc);
-    return `<button class="kat-btn ${cat===kategoriKasirAktif?'aktif':''}" style="--kat-warna:${st.color};" onclick="pilihKategoriKasir('${catJs}')"><span class="kb-ikon">${st.icon}</span><span>${escTG(cat)}</span></button>`;
+    return `<button class="kat-btn ${cat===kategoriKasirAktif?'aktif':''}" data-kat="${escTG(cat)}" style="--kat-warna:${st.color};" onclick="pilihKategoriKasir('${catJs}')"><span class="kb-ikon">${st.icon}</span><span>${escTG(cat)}</span></button>`;
   }).join('');
 }
 
@@ -3819,15 +3839,12 @@ function renderCatalog(){
   const cats = sortedCategories();
   if(!cats.includes(kategoriKasirAktif)) kategoriKasirAktif = cats[0] || null;
   renderKategoriBawah(cats);
-  area.innerHTML = cats.filter(cat=>cat===kategoriKasirAktif).map(cat=>{
+  // semua menu tampil; judul kategori di atas sudah pindah ke bar bawah, antar kategori dipisah garis
+  area.innerHTML = cats.map(cat=>{
     const items = produkByKategori[cat];
     const st = catStyle(cat);
     return `
-    <section class="cat-block" id="cat-${escTG(cat.replace(/\s+/g,'-'))}">
-      <div class="cat-banner" style="background:${st.color};">
-        <span class="cat-banner-icon">${st.icon}</span>
-        <span class="cat-banner-title">${escTG(cat)}</span>
-      </div>
+    <section class="cat-block kat-grup" data-kat="${escTG(cat)}" id="cat-${escTG(cat.replace(/\s+/g,'-'))}">
       <div class="grid">
         ${items.map(it=>`
           <div class="item-card ${it.stok<=0?'out':''}" onclick='${it.stok<=0?'':`openSizeModal(${escTG(JSON.stringify(it))})`}'>
