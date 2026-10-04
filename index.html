@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-01.1">
+<meta name="app-version" content="2026-10-04.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -409,6 +409,13 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #penjualanHariIniOverlay .stock-row .low{color:#c0392b;}
   #penjualanHariIniOverlay .login-btn{color:#fff;}
   #penjualanHariIniOverlay .modal-close{color:#000;}
+  /* Pengaturan: tiap bagian bisa dibuka/tutup */
+  #settingsView .dash-section.lipat{padding:0;overflow:hidden;}
+  #settingsView .lipat-kepala{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;user-select:none;padding:16px 18px;background:rgba(12,31,20,.55);border-radius:14px;color:#fff;font-weight:800;font-size:18px;text-shadow:0 1px 2px rgba(0,0,0,.5);}
+  #settingsView .lipat-kepala .lipat-panah{font-size:16px;transition:transform .2s;}
+  #settingsView .dash-section.terbuka .lipat-kepala .lipat-panah{transform:rotate(90deg);}
+  #settingsView .lipat-isi{padding:14px 4px 4px;}
+  #settingsView .lipat-isi.hidden{display:none;}
   #transaksiJamOverlay .modal, #transaksiJamOverlay .modal *{color:#000;text-shadow:none;opacity:1 !important;}
   #transaksiJamOverlay .login-btn{color:#fff;}
   #transaksiJamOverlay .trx-batal-label{color:#c0392b !important;}
@@ -6912,6 +6919,47 @@ async function ubahSisaKemarin(){
   tehSiapData = data; tehSiapSudahDiingatkan = false; renderTehSiap(); tutupTehSiap();
   showSuccessToast('🫖', `Sisa teh kemarin: ${literTeks(baru)}`, `Total teh sekarang ${literTeks(data.sisa_ml)}`);
 }
+
+// ================== PENGATURAN: BAGIAN BISA DIBUKA/TUTUP ==================
+// Semua bagian di Pengaturan tertutup dulu; ketuk judulnya untuk membuka.
+function siapkanLipatPengaturan(){
+  document.querySelectorAll('#settingsView > .dash-section').forEach(sec => {
+    if(sec.classList.contains('lipat')) return;
+    const anak = Array.from(sec.children);
+    if(anak.length === 0) return;
+    const kepalaLama = anak[0];
+    const h3 = kepalaLama.tagName === 'H3' ? kepalaLama : kepalaLama.querySelector('h3');
+    if(!h3) return;
+    const kepala = document.createElement('div');
+    kepala.className = 'lipat-kepala';
+    kepala.innerHTML = `<span>${h3.innerHTML}</span><span class="lipat-panah">▶</span>`;
+    const isi = document.createElement('div');
+    isi.className = 'lipat-isi hidden';
+    // tombol-tombol yang tadinya di samping judul dipindah ke dalam isi
+    if(kepalaLama !== h3){
+      const tombol = Array.from(kepalaLama.children).filter(el => el !== h3);
+      if(tombol.length){
+        const baris = document.createElement('div');
+        baris.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;';
+        tombol.forEach(t => baris.appendChild(t));
+        isi.appendChild(baris);
+      }
+    }
+    anak.slice(1).forEach(el => isi.appendChild(el));
+    kepalaLama.remove();
+    sec.appendChild(kepala);
+    sec.appendChild(isi);
+    sec.classList.add('lipat');
+    sec.style.marginBottom = '12px';
+    kepala.addEventListener('click', () => {
+      const buka = isi.classList.contains('hidden');
+      isi.classList.toggle('hidden', !buka);
+      sec.classList.toggle('terbuka', buka);
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', siapkanLipatPengaturan);
+if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
 function bukaMenuOutlet(){ document.getElementById('menuOutletOverlay').classList.add('show'); }
