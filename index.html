@@ -551,6 +551,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
+    <button class="side-btn hidden" id="kasirPengaturanBtn" onclick="bukaPengaturanKasir()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
+    <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚶</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
     <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
@@ -565,8 +567,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="navBrankasBtn" onclick="showDashPanel('brankas')"><span class="side-icon">🔒</span><span class="side-label">Brankas</span></button>
     <button class="side-btn hidden" id="settingsBtn" onclick="showSettingsView()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <div class="side-spacer"></div>
-    <button class="side-btn hidden" id="kasirPengaturanBtn" onclick="bukaPengaturanKasir()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
-    <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚶</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn" id="sidebarPasswordBtn" onclick="openGantiPasswordModal()"><span class="side-icon">🔑</span><span class="side-label">Password</span></button>
     <button class="side-btn" onclick="doLogout()"><span class="side-icon">🚪</span><span class="side-label">Keluar</span></button>
   </aside>
