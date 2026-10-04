@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.5">
+<meta name="app-version" content="2026-10-04.6">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -712,8 +712,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
 
       <div class="dash-section hidden" id="dashLogAktivitasSection" style="margin-bottom:0;">
-        <h3>📋 Log Aktivitas</h3>
-        <div id="dashLogAktivitasList"><div class="empty-msg">Memuat...</div></div>
+        <div class="lipat-bar" id="logAktivitasBar" onclick="toggleLogAktivitas()"><span>📋 Log Aktivitas</span><span class="lipat-panah">▶</span></div>
+        <div id="dashLogAktivitasList" class="hidden"><div class="empty-msg">Memuat...</div></div>
       </div>
       </div>
 
@@ -2886,11 +2886,12 @@ async function loadLogAktivitas(){
   if(!box) return;
   box.innerHTML = '<div class="empty-msg">Memuat...</div>';
 
+  // log lebih dari 3 hari dipindah otomatis ke arsip tiap malam, jadi yang tampil cuma 3 hari terakhir
   const { data, error } = await sb
     .from('log_aktivitas')
     .select('id, aksi, keterangan, created_at, cabang:cabang_id(nama), pelaku:user_id(nama)')
     .order('created_at', { ascending:false })
-    .limit(50);
+    .limit(300);
 
   if(error){
     box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
@@ -2902,19 +2903,44 @@ async function loadLogAktivitas(){
   }
 
   const isOwnerLog = currentProfile && currentProfile.role === 'owner';
-  const tombolBersihkan = isOwnerLog ? `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-      <button class="remove-btn" style="font-size:12px;padding:6px 12px;" onclick="hapusLogLama(30)">🧹 Hapus log lebih dari 30 hari</button>
-    </div>` : '';
+  const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' });
+  const kartu = (r) => `
+      <div class="tx-row" style="flex-wrap:wrap;">
+        <span><b>${escTG(r.aksi)}</b> · ${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.pelaku ? r.pelaku.nama : '-')}</span>
+        <span class="time">${jam(r.created_at)}</span>
+        ${r.keterangan ? `<span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">${escTG(r.keterangan)}</span>` : ''}
+        ${isOwnerLog ? `<span style="width:100%;margin-top:6px;"><button class="remove-btn" onclick="hapusLogAktivitas('${r.id}')" style="font-size:12px;padding:5px 10px;">🗑️ Hapus</button></span>` : ''}
+      </div>`;
 
-  box.innerHTML = tombolBersihkan + data.map(r=>`
-    <div class="tx-row" style="flex-wrap:wrap;">
-      <span><b>${escTG(r.aksi)}</b> · ${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.pelaku ? r.pelaku.nama : '-')}</span>
-      <span class="time">${new Date(r.created_at).toLocaleString('id-ID')}</span>
-      ${r.keterangan ? `<span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">${escTG(r.keterangan)}</span>` : ''}
-      ${isOwnerLog ? `<span style="width:100%;display:flex;justify-content:flex-end;margin-top:4px;"><button class="remove-btn" style="font-size:11px;padding:4px 10px;" onclick="hapusLogAktivitas('${r.id}')">🗑️ Hapus</button></span>` : ''}
-    </div>
-  `).join('');
+  // kelompokkan per hari (WIB); data sudah urut terbaru dulu
+  const perHari = [];
+  data.forEach(r=>{
+    const kunci = new Date(r.created_at).toLocaleDateString('en-CA', { timeZone:'Asia/Jakarta' });
+    let g = perHari.find(x=>x.kunci === kunci);
+    if(!g){ g = { kunci, list:[] }; perHari.push(g); }
+    g.list.push(r);
+  });
+
+  box.innerHTML = '<div style="font-size:12px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:8px;">Log lebih dari 3 hari terhapus otomatis.</div>' +
+    perHari.map(g=>{
+      const tahunIni = g.kunci.slice(0,4) === new Date().toLocaleDateString('en-CA', { timeZone:'Asia/Jakarta' }).slice(0,4);
+      const tgl = new Date(g.list[0].created_at).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short', ...(tahunIni ? {} : { year:'numeric' }), timeZone:'Asia/Jakarta' });
+      const sub = `Terakhir ${jam(g.list[0].created_at)} · ${escTG(g.list[0].aksi)}`;
+      return `
+      <div class="rk-hari">
+        <div class="rk-kepala" onclick="this.parentNode.classList.toggle('terbuka')">
+          <div><div class="rk-tgl">${tgl}</div><div class="rk-sub">${sub}</div></div>
+          <div class="rk-kanan"><b>${g.list.length} aktivitas</b><span class="rk-panah">▶</span></div>
+        </div>
+        <div class="rk-isi">${g.list.map(kartu).join('')}</div>
+      </div>`;
+    }).join('');
+}
+function toggleLogAktivitas(){
+  const list = document.getElementById('dashLogAktivitasList');
+  const buka = list.classList.contains('hidden');
+  list.classList.toggle('hidden', !buka);
+  document.getElementById('logAktivitasBar').classList.toggle('terbuka', buka);
 }
 
 // ================== TRANSAKSI GAGAL ==================
