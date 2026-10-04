@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.1">
+<meta name="app-version" content="2026-10-04.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -132,6 +132,14 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .side-btn.gold{background:#dcf0e0;color:var(--forest-dark);}
   .side-btn:not(.gold):hover{background:rgba(12,31,20,.05);}
   .side-spacer{flex:1;min-height:10px;}
+  /* grup sidebar owner (Menu Outlet, Laporan & Keuangan) — buka/tutup seperti toggle Pengaturan */
+  .side-btn.side-grup-kepala .side-panah{display:inline-block;font-size:8px;transition:transform .2s;}
+  .side-btn.side-grup-kepala.terbuka{background:rgba(12,31,20,.55);}
+  .side-btn.side-grup-kepala.terbuka .side-panah{transform:rotate(90deg);}
+  .side-btn.side-anak{background:rgba(12,31,20,.35);padding:6px 2px;margin-top:2px;border-left:3px solid #9be7a8;border-radius:4px 10px 10px 4px;}
+  .side-btn.side-anak .side-icon{font-size:19px;}
+  .side-btn.side-anak.gold{background:#dcf0e0;}
+  .side-btn.side-anak.tertutup{display:none;}
 
   .app-main{margin-left:72px;min-height:100vh;width:calc(100vw - 72px);max-width:calc(100vw - 72px);overflow-x:clip;transition:margin-left .25s ease,width .25s ease,max-width .25s ease;}
   .app-main.full{margin-left:0;width:100vw;max-width:100vw;}
@@ -511,7 +519,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div class="side-nav-sub">Kasir Online</div>
       </div>
     </div>
-    <button class="side-btn hidden" id="menuOutletBtn" onclick="bukaMenuOutlet()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
+    <button class="side-btn hidden" id="menuOutletBtn" onclick="bukaMenuOutlet()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet <span class="side-panah">▶</span></span></button>
     <button class="side-btn" id="kasirBtn" onclick="showKasirView()"><span class="side-icon">🧾</span><span class="side-label">Kasir (POS)</span></button>
     <button class="side-btn" id="sopBtn" onclick="showSOPView()"><span class="side-icon">📋</span><span class="side-label">SOP Menu</span></button>
     <button class="side-btn cart-toggle" id="cartToggleBtn" onclick="toggleCart()"><span class="side-icon">🛒</span><span class="side-label">Keranjang (<span id="cartCountBadge">0</span>)</span></button>
@@ -521,7 +529,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
-    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan</span></button>
+    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan <span class="side-panah">▶</span></span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -1319,37 +1327,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
-<!-- Menu Outlet (owner): gabungan Kasir POS, SOP Menu, Kas, Belanja -->
-<div class="overlay" id="menuOutletOverlay" onclick="if(event.target===this) tutupMenuOutlet()">
-  <div class="modal" style="max-width:360px;">
-    <h3>🏪 Menu Outlet</h3>
-    <p style="font-size:12px;">Pekerjaan harian di outlet (cabang yang sedang dipilih).</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(showKasirView)">🧾 Kasir (POS)</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(showSOPView)">📋 SOP Menu</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(bukaKasModal)">💵 Kas</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuOutlet(bukaBelanjaKecil)">🧊 Belanja</button>
-    </div>
-    <button class="modal-close" onclick="tutupMenuOutlet()">Tutup</button>
-  </div>
-</div>
-
-<!-- Laporan & Keuangan (owner): gabungan Ringkasan, Stok, Pembelian, Biaya, Brankas -->
-<div class="overlay" id="menuLaporanOverlay" onclick="if(event.target===this) tutupMenuLaporan()">
-  <div class="modal" style="max-width:360px;">
-    <h3>📊 Laporan &amp; Keuangan</h3>
-    <p style="font-size:12px;">Laporan penjualan, stok, dan uang usaha.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('ringkasan')">📊 Ringkasan</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('stok')">📦 Stok</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('pembelian')">📥 Pembelian</button>
-      <button class="login-btn" style="margin:0;" onclick="pilihMenuLaporan('biaya')">💸 Biaya</button>
-      <button class="login-btn" style="margin:0;grid-column:1/-1;" onclick="pilihMenuLaporan('brankas')">🔒 Brankas</button>
-    </div>
-    <button class="modal-close" onclick="tutupMenuLaporan()">Tutup</button>
-  </div>
-</div>
-
 <!-- konfirmasi akhiri shift (kasir, setelah laporan penutupan kas tersimpan) -->
 <div class="overlay" id="akhiriShiftOverlay" style="z-index:10000;">
   <div class="modal" style="max-width:360px;">
@@ -1672,6 +1649,7 @@ async function loadProfileAndEnter(){
   document.getElementById('appView').classList.remove('hidden');
 
   // reset dulu semua elemen berbasis role, biar tidak kebawa dari sesi sebelumnya
+  lepasGrupSidebar();
   document.getElementById('kasirBtn').classList.remove('hidden');
   document.getElementById('sopBtn').classList.remove('hidden');
   document.getElementById('menuOutletBtn').classList.add('hidden');
@@ -1765,11 +1743,11 @@ async function loadProfileAndEnter(){
   }
   if(profile.role === 'owner'){
     // owner: Kasir POS, SOP Menu, Kas, Belanja digabung jadi satu tombol "Menu Outlet" (Transaksi tetap terpisah)
-    ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuOutletBtn').classList.remove('hidden');
     // owner: Ringkasan, Stok, Pembelian, Biaya, Brankas digabung jadi "Laporan & Keuangan"; Karyawan pindah ke Pengaturan
-    ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','navKaryawanBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    document.getElementById('navKaryawanBtn').classList.add('hidden');
     document.getElementById('menuLaporanBtn').classList.remove('hidden');
+    pasangGrupSidebar(); // isi tiap grup tampil di bawah judulnya, awalnya tertutup
   }
 
   await loadProduk();
@@ -3419,6 +3397,11 @@ function setActiveNav(activeId){
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
+  // menu yang aktif ada di dalam grup yang tertutup → buka grupnya
+  Object.keys(GRUP_SIDEBAR).forEach(k=>{
+    const kepala = document.getElementById(k);
+    if(kepala && kepala.classList.contains('side-grup-kepala') && GRUP_SIDEBAR[k].includes(activeId)) toggleGrupSidebar(k, true);
+  });
 }
 
 // ================== INGAT HALAMAN TERAKHIR (biar refresh tidak balik ke POS) ==================
@@ -3463,7 +3446,7 @@ function showDashPanel(panelName){
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
   const ownerNav = (currentProfile && currentProfile.role === 'owner')
-    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn' })[panelName]
+    ? ({ karyawan:'settingsBtn' })[panelName]
     : null;
   setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
   loadDashboard();
@@ -6962,14 +6945,43 @@ document.addEventListener('DOMContentLoaded', siapkanLipatPengaturan);
 if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
-function bukaMenuOutlet(){ document.getElementById('menuOutletOverlay').classList.add('show'); }
-function tutupMenuOutlet(){ document.getElementById('menuOutletOverlay').classList.remove('show'); }
-function pilihMenuOutlet(fn){ tutupMenuOutlet(); fn(); }
-
-// ================== LAPORAN & KEUANGAN (owner) ==================
-function bukaMenuLaporan(){ document.getElementById('menuLaporanOverlay').classList.add('show'); }
-function tutupMenuLaporan(){ document.getElementById('menuLaporanOverlay').classList.remove('show'); }
-function pilihMenuLaporan(panel){ tutupMenuLaporan(); showDashPanel(panel); }
+// Menu Outlet & Laporan Keuangan: judul di sidebar, isinya buka/tutup di bawahnya
+const GRUP_SIDEBAR = {
+  menuOutletBtn: ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'],
+  menuLaporanBtn: ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn']
+};
+function pasangGrupSidebar(){
+  Object.keys(GRUP_SIDEBAR).forEach(k=>{
+    const kepala = document.getElementById(k); if(!kepala) return;
+    kepala.classList.add('side-grup-kepala'); kepala.classList.remove('terbuka');
+    let sesudah = kepala;
+    GRUP_SIDEBAR[k].forEach(id=>{
+      const el = document.getElementById(id); if(!el) return;
+      if(!el._asal){ const c = document.createComment('asal-' + id); el.parentNode.insertBefore(c, el); el._asal = c; }
+      sesudah.insertAdjacentElement('afterend', el); sesudah = el;
+      el.classList.remove('hidden'); el.classList.add('side-anak','tertutup');
+    });
+  });
+}
+function lepasGrupSidebar(){
+  Object.keys(GRUP_SIDEBAR).forEach(k=>{
+    const kepala = document.getElementById(k);
+    if(kepala) kepala.classList.remove('side-grup-kepala','terbuka');
+    GRUP_SIDEBAR[k].forEach(id=>{
+      const el = document.getElementById(id); if(!el) return;
+      if(el._asal){ el._asal.parentNode.insertBefore(el, el._asal); el._asal.remove(); el._asal = null; }
+      el.classList.remove('side-anak','tertutup');
+    });
+  });
+}
+function toggleGrupSidebar(k, paksa){
+  const kepala = document.getElementById(k); if(!kepala) return;
+  const buka = (typeof paksa === 'boolean') ? paksa : !kepala.classList.contains('terbuka');
+  kepala.classList.toggle('terbuka', buka);
+  GRUP_SIDEBAR[k].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.toggle('tertutup', !buka); });
+}
+function bukaMenuOutlet(){ toggleGrupSidebar('menuOutletBtn'); }
+function bukaMenuLaporan(){ toggleGrupSidebar('menuLaporanBtn'); }
 
 // ================== TRANSAKSI HARI INI PER JAM ==================
 let tjData = [];
