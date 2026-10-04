@@ -161,6 +161,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     max-width:100%;
   }
   .topbar-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  /* tombol keranjang di kanan atas (owner) */
+  .topbar-cart{position:relative;width:52px;height:46px;border-radius:16px;background:#000;border:1px solid rgba(255,255,255,.15);font-size:24px;line-height:1;cursor:pointer;flex:none;}
+  .topbar-cart .tc-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#e53935;color:#fff;font-size:12px;font-weight:800;line-height:20px;text-align:center;}
+  .topbar-cart .tc-badge.kosong{display:none;}
   .status-chip{
     background:rgba(12,31,20,.06);color:var(--ink);border:1px solid var(--line-soft);
     padding:6px 12px;border-radius:16px;font-size:12px;font-weight:700;
@@ -456,6 +460,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   @media (max-width:880px){
     .layout{grid-template-columns:1fr;}
     .cart-toggle{display:flex !important;}
+    .side-btn.cart-toggle.hidden{display:none !important;} /* tombol yang disembunyikan (owner/admin) tetap tersembunyi */
     .cart{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:360px;transform:translateX(100%);transition:transform .25s ease;z-index:40;box-shadow:-8px 0 24px rgba(0,0,0,.4);max-height:100vh;}
     .cart.open{transform:translateX(0);}
     .cart-items{max-height:calc(100vh - 300px);}
@@ -577,6 +582,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
             <div class="topbar-clock-tanggal" id="topbarClockTanggal">—</div>
           </div>
         </div>
+        <button class="topbar-cart hidden" id="topbarCartBtn" onclick="bukaKeranjangAtas()" title="Keranjang">🛒<span class="tc-badge kosong" id="topbarCartBadge">0</span></button>
         <span class="status-chip" id="connStatus">🟢 Online</span>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
@@ -1671,6 +1677,7 @@ async function loadProfileAndEnter(){
   document.getElementById('settingsBtn').classList.add('hidden');
   document.getElementById('ownerChartSection').classList.add('hidden');
   document.getElementById('cartToggleBtn').classList.remove('hidden');
+  document.getElementById('topbarCartBtn').classList.add('hidden');
   document.getElementById('ownerCabangSelector').classList.add('hidden');
   document.getElementById('kasirCabangStatus').classList.add('hidden');
   document.getElementById('izinKeluarBtn').classList.add('hidden');
@@ -1757,6 +1764,9 @@ async function loadProfileAndEnter(){
   if(profile.role === 'owner'){
     // owner: Kasir (POS) tetap di sidebar paling atas; SOP Menu, Kas, Belanja, Hari Ini, Transaksi masuk ke "Laporan & Keuangan"
     ['sopBtn','kasBtn','belanjaKecilBtn','penjualanHariIniBtn','transaksiJamBtn','menuOutletBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    // owner: Keranjang pindah dari sidebar ke kanan atas (di samping jam)
+    document.getElementById('cartToggleBtn').classList.add('hidden');
+    document.getElementById('topbarCartBtn').classList.remove('hidden');
     // owner: Ringkasan, Stok, Pembelian, Biaya, Brankas digabung jadi "Laporan & Keuangan"; Karyawan pindah ke Pengaturan
     ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','navKaryawanBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuLaporanBtn').classList.remove('hidden');
@@ -3919,6 +3929,8 @@ function renderCart(){
   document.getElementById('sumDiskon').textContent = '- ' + fmt(diskon);
   document.getElementById('sumTotal').textContent = fmt(totalPrice);
   document.getElementById('cartCountBadge').textContent = totalCount;
+  const tcb = document.getElementById('topbarCartBadge');
+  if(tcb){ tcb.textContent = totalCount; tcb.classList.toggle('kosong', !totalCount); }
   document.getElementById('checkoutBtn').disabled = cart.length===0;
 }
 
@@ -4275,6 +4287,11 @@ function showSuccessToast(icon, msg, sub){
 }
 
 function toggleCart(){ document.getElementById('cartPanel').classList.toggle('open'); }
+// tombol keranjang kanan atas: kalau sedang di halaman lain, buka halaman Kasir dulu
+function bukaKeranjangAtas(){
+  if(document.getElementById('kasirView').classList.contains('hidden')){ showKasirView(); openCartMobile(); return; }
+  toggleCart();
+}
 function openCartMobile(){ document.getElementById('cartPanel').classList.add('open'); }
 function closeCartMobile(){ document.getElementById('cartPanel').classList.remove('open'); }
 
