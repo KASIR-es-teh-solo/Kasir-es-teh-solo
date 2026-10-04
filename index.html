@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.3">
+<meta name="app-version" content="2026-10-04.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -132,18 +132,15 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .side-btn.gold{background:#dcf0e0;color:var(--forest-dark);}
   .side-btn:not(.gold):hover{background:rgba(12,31,20,.05);}
   .side-spacer{flex:1;min-height:10px;}
-  /* grup sidebar owner (Menu Outlet, Laporan & Keuangan) — isinya muncul di samping sidebar */
-  .side-btn.side-grup-kepala .side-panah{display:inline-block;font-size:8px;}
-  .side-btn.side-grup-kepala.terbuka{background:rgba(12,31,20,.75);color:#fff;}
-  #sideFlyoutTutup{position:fixed;inset:0;z-index:58;}
-  #sideFlyout{position:fixed;left:78px;z-index:59;min-width:170px;padding:8px;border-radius:14px;
-    background:rgba(12,31,20,.94);box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:4px;}
-  #sideFlyout::before{content:"";position:absolute;left:-8px;top:var(--panah-top,22px);border:8px solid transparent;border-left:0;border-right-color:rgba(12,31,20,.94);}
-  #sideFlyout .fly-judul{color:#9be7a8;font-size:12px;font-weight:800;padding:4px 8px 6px;}
-  #sideFlyout button{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:none;color:#fff;
-    font-size:15px;font-weight:700;padding:11px 12px;border-radius:10px;cursor:pointer;text-align:left;}
-  #sideFlyout button.aktif{background:#dcf0e0;color:var(--forest-dark);}
-  #sideFlyout button .fly-ikon{font-size:20px;}
+  /* Menu Outlet & Laporan Keuangan (owner): daftar toggle penuh di area kanan, seperti Pengaturan */
+  #ownerView .lipat-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;user-select:none;
+    padding:16px 18px;margin-bottom:12px;background:rgba(12,31,20,.55);border-radius:14px;color:#fff;font-weight:800;font-size:18px;
+    text-shadow:0 1px 2px rgba(0,0,0,.5);}
+  #ownerView .lipat-bar .lipat-panah{font-size:16px;transition:transform .2s;}
+  #ownerView .lipat-bar.terbuka{background:rgba(12,31,20,.8);}
+  #ownerView .lipat-bar.terbuka .lipat-panah{transform:rotate(90deg);}
+  #ownerView .lipat-bar.ke-halaman .lipat-panah{transform:none;}
+  #ownerView .dash-panel.di-lipat{margin:-4px 0 16px;}
 
   .app-main{margin-left:72px;min-height:100vh;width:calc(100vw - 72px);max-width:calc(100vw - 72px);overflow-x:clip;transition:margin-left .25s ease,width .25s ease,max-width .25s ease;}
   .app-main.full{margin-left:0;width:100vw;max-width:100vw;}
@@ -523,7 +520,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div class="side-nav-sub">Kasir Online</div>
       </div>
     </div>
-    <button class="side-btn hidden" id="menuOutletBtn" onclick="bukaMenuOutlet()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet <span class="side-panah">▶</span></span></button>
+    <button class="side-btn hidden" id="menuOutletBtn" onclick="bukaMenuOutlet()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
     <button class="side-btn" id="kasirBtn" onclick="showKasirView()"><span class="side-icon">🧾</span><span class="side-label">Kasir (POS)</span></button>
     <button class="side-btn" id="sopBtn" onclick="showSOPView()"><span class="side-icon">📋</span><span class="side-label">SOP Menu</span></button>
     <button class="side-btn cart-toggle" id="cartToggleBtn" onclick="toggleCart()"><span class="side-icon">🛒</span><span class="side-label">Keranjang (<span id="cartCountBadge">0</span>)</span></button>
@@ -533,7 +530,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
-    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan <span class="side-panah">▶</span></span></button>
+    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -617,6 +614,14 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   <!-- OWNER DASHBOARD VIEW -->
   <div id="ownerView" class="dash hidden">
     <div id="lowStockBanner" class="hidden" style="background:rgba(255,245,244,.95);border:1px solid var(--danger);color:var(--danger);padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:13px;font-weight:700;"></div>
+
+    <!-- MENU OUTLET (owner): daftar toggle, Kasir & SOP membuka halamannya, Kas & Belanja membuka formnya -->
+    <div class="dash-panel hidden" id="dashPanel-menuoutlet">
+      <div class="lipat-bar ke-halaman" onclick="showKasirView()"><span>🧾 Kasir (POS)</span><span class="lipat-panah">▶</span></div>
+      <div class="lipat-bar ke-halaman" onclick="showSOPView()"><span>📋 SOP Menu</span><span class="lipat-panah">▶</span></div>
+      <div class="lipat-bar ke-halaman" onclick="bukaKasModal()"><span>💵 Kas</span><span class="lipat-panah">▶</span></div>
+      <div class="lipat-bar ke-halaman" onclick="bukaBelanjaKecil()"><span>🧊 Belanja</span><span class="lipat-panah">▶</span></div>
+    </div>
 
     <!-- RINGKASAN + TRANSAKSI (satu menu, dua folder) -->
     <div class="dash-panel" id="dashPanel-ringkasan">
@@ -1786,7 +1791,7 @@ async function loadProfileAndEnter(){
     }
     if(!viewDipulihkan) showDashPanel('ringkasan');
   } else if(profile.role === 'owner'){
-    if(savedView && savedView.type === 'dash' && DASH_NAV_MAP[savedView.panel]){
+    if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet'].includes(savedView.panel))){
       showDashPanel(savedView.panel);
       viewDipulihkan = true;
     } else if(savedView && savedView.type === 'settings'){
@@ -3437,6 +3442,7 @@ const DASH_NAV_MAP = {
 };
 
 function showDashPanel(panelName){
+  if(panelName === 'laporan'){ tampilkanLaporanTertutup(); return; }
   document.getElementById('kasirView').classList.add('hidden');
   document.getElementById('settingsView').classList.add('hidden');
   document.getElementById('sopView').classList.add('hidden');
@@ -3444,9 +3450,11 @@ function showDashPanel(panelName){
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
   const ownerNav = (currentProfile && currentProfile.role === 'owner')
-    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn' })[panelName]
+    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn', menuoutlet:'menuOutletBtn' })[panelName]
     : null;
   setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
+  aturBarLaporan(panelName);
+  if(panelName === 'menuoutlet'){ hentikanPollingAktif(); simpanViewState({ type:'dash', panel:'menuoutlet' }); return; }
   loadDashboard();
   loadKaryawan();
   loadPembelianData();
@@ -6943,61 +6951,47 @@ document.addEventListener('DOMContentLoaded', siapkanLipatPengaturan);
 if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
-// Menu Outlet & Laporan Keuangan: ketuk judul di sidebar → isinya muncul di samping sidebar
-const GRUP_SIDEBAR = {
-  menuOutletBtn: { judul:'🏪 Menu Outlet', isi:[
-    { ikon:'🧾', label:'Kasir (POS)', fn:()=>showKasirView(), aktif:()=>!document.getElementById('kasirView').classList.contains('hidden') },
-    { ikon:'📋', label:'SOP Menu', fn:()=>showSOPView(), aktif:()=>!document.getElementById('sopView').classList.contains('hidden') },
-    { ikon:'💵', label:'Kas', fn:()=>bukaKasModal() },
-    { ikon:'🧊', label:'Belanja', fn:()=>bukaBelanjaKecil() }
-  ]},
-  menuLaporanBtn: { judul:'📊 Laporan & Keuangan', isi:[
-    { ikon:'📊', label:'Ringkasan', panel:'ringkasan' },
-    { ikon:'📦', label:'Stok', panel:'stok' },
-    { ikon:'📥', label:'Pembelian', panel:'pembelian' },
-    { ikon:'💸', label:'Biaya', panel:'biaya' },
-    { ikon:'🔒', label:'Brankas', panel:'brankas' }
-  ]}
-};
-function panelDashTerbuka(nama){
-  const el = document.getElementById('dashPanel-' + nama);
-  return !!el && !el.classList.contains('hidden') && !document.getElementById('ownerView').classList.contains('hidden');
-}
-function tutupFlyoutSidebar(){
-  ['sideFlyout','sideFlyoutTutup'].forEach(id=>{ const el = document.getElementById(id); if(el) el.remove(); });
-  Object.keys(GRUP_SIDEBAR).forEach(k=>{ const el = document.getElementById(k); if(el) el.classList.remove('terbuka'); });
-}
-function bukaFlyoutSidebar(k){
-  const kepala = document.getElementById(k);
-  const sudahBuka = kepala.classList.contains('terbuka');
-  tutupFlyoutSidebar();
-  if(sudahBuka) return; // ketuk lagi = tutup
-  const grup = GRUP_SIDEBAR[k];
-  const tutup = document.createElement('div'); tutup.id = 'sideFlyoutTutup'; tutup.onclick = tutupFlyoutSidebar;
-  const fly = document.createElement('div'); fly.id = 'sideFlyout';
-  fly.innerHTML = `<div class="fly-judul">${grup.judul}</div>`;
-  grup.isi.forEach(it=>{
-    const b = document.createElement('button');
-    b.innerHTML = `<span class="fly-ikon">${it.ikon}</span><span>${it.label}</span>`;
-    if(it.panel ? panelDashTerbuka(it.panel) : (it.aktif && it.aktif())) b.classList.add('aktif');
-    b.onclick = ()=>{ tutupFlyoutSidebar(); it.panel ? showDashPanel(it.panel) : it.fn(); };
-    fly.appendChild(b);
+// Menu Outlet & Laporan Keuangan (owner): halaman berisi daftar toggle seperti Pengaturan
+const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['stok','📦 Stok'],['pembelian','📥 Pembelian'],['brankas','🔒 Brankas'],['biaya','💸 Biaya']];
+function siapkanBarLaporan(){
+  LAPORAN_LIPAT.forEach(([panel, judul])=>{
+    if(document.getElementById('lipatBar-' + panel)) return;
+    const el = document.getElementById('dashPanel-' + panel); if(!el) return;
+    const bar = document.createElement('div');
+    bar.className = 'lipat-bar hidden'; bar.id = 'lipatBar-' + panel;
+    bar.innerHTML = `<span>${judul}</span><span class="lipat-panah">▶</span>`;
+    bar.onclick = ()=>{
+      if(bar.classList.contains('terbuka')){ tampilkanLaporanTertutup(); return; } // ketuk lagi = tutup
+      showDashPanel(panel);
+      bar.scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+    el.parentNode.insertBefore(bar, el);
   });
-  document.body.appendChild(tutup); document.body.appendChild(fly);
-  kepala.classList.add('terbuka');
-  // sejajarkan dengan tombol yang ditekan, tapi jangan sampai keluar layar
-  const r = kepala.getBoundingClientRect();
-  const tinggi = fly.offsetHeight;
-  const atas = Math.max(8, Math.min(r.top, window.innerHeight - tinggi - 8));
-  fly.style.top = atas + 'px';
-  fly.style.setProperty('--panah-top', Math.max(10, Math.min(tinggi - 26, r.top + r.height/2 - atas - 8)) + 'px');
 }
-function bukaMenuOutlet(){ bukaFlyoutSidebar('menuOutletBtn'); }
-function bukaMenuLaporan(){ bukaFlyoutSidebar('menuLaporanBtn'); }
-function tandaiKepalaGrup(){ ['menuOutletBtn','menuLaporanBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('side-grup-kepala'); }); }
-document.addEventListener('DOMContentLoaded', tandaiKepalaGrup);
-if(document.readyState !== 'loading') tandaiKepalaGrup();
-window.addEventListener('resize', tutupFlyoutSidebar);
+function aturBarLaporan(panelAktif){
+  siapkanBarLaporan();
+  const modeLipat = !!(currentProfile && currentProfile.role === 'owner') &&
+    (panelAktif === null || LAPORAN_LIPAT.some(([p])=>p === panelAktif));
+  LAPORAN_LIPAT.forEach(([p])=>{
+    const bar = document.getElementById('lipatBar-' + p); if(!bar) return;
+    bar.classList.toggle('hidden', !modeLipat);
+    bar.classList.toggle('terbuka', modeLipat && p === panelAktif);
+    const el = document.getElementById('dashPanel-' + p); if(el) el.classList.toggle('di-lipat', modeLipat);
+  });
+}
+function tampilkanLaporanTertutup(){
+  document.getElementById('kasirView').classList.add('hidden');
+  document.getElementById('settingsView').classList.add('hidden');
+  document.getElementById('sopView').classList.add('hidden');
+  document.getElementById('ownerView').classList.remove('hidden');
+  document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
+  setActiveNav('menuLaporanBtn');
+  aturBarLaporan(null);
+  hentikanPollingAktif();
+  simpanViewState({ type:'dash', panel:'laporan' });
+}
+function bukaMenuOutlet(){ showDashPanel('menuoutlet'); }
+function bukaMenuLaporan(){ tampilkanLaporanTertutup(); }
 
 // ================== TRANSAKSI HARI INI PER JAM ==================
 let tjData = [];
