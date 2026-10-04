@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-05.1">
+<meta name="app-version" content="2026-10-05.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -274,6 +274,16 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     box-shadow:0 3px 10px rgba(12,31,20,.12);
   }
   .cat-banner-icon{font-size:18px;}
+  /* Kasir: daftar kategori di bawah, berjajar ke samping, dipisah garis */
+  #kasirView .catalog{display:flex;flex-direction:column;min-height:calc(100dvh - var(--topbar-h,140px));padding-bottom:8px;}
+  .kat-bawah{position:sticky;bottom:8px;z-index:20;display:flex;flex:none;overflow-x:auto;background:#0c1f14;border-radius:12px;margin-top:auto;box-shadow:0 -4px 14px rgba(0,0,0,.35);scrollbar-width:none;}
+  .kat-bawah::-webkit-scrollbar{display:none;}
+  .kat-bawah:empty{display:none;}
+  #catalogArea{margin-bottom:12px;}
+  .kat-btn{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 14px;min-width:84px;background:transparent;border:none;border-right:1px solid rgba(255,255,255,.35);color:#fff;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;border-top:4px solid transparent;}
+  .kat-btn:last-child{border-right:none;}
+  .kat-btn .kb-ikon{font-size:20px;line-height:1;}
+  .kat-btn.aktif{background:var(--kat-warna);border-top-color:#fff;}
   .cat-banner-title{color:#fff;font-weight:800;font-size:15px;letter-spacing:.3px;text-shadow:0 1px 2px rgba(0,0,0,.2);}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;width:100%;max-width:100%;}
   .item-card{background:rgba(255,255,255,.08);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.55);border-radius:8px;padding:8px;cursor:pointer;transition:transform .12s ease, border-color .12s ease;box-shadow:0 2px 8px rgba(12,31,20,.12);text-align:center;}
@@ -615,6 +625,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
       <input type="text" id="menuSearchInput" oninput="filterMenuSearch()" placeholder="🔍 Cari menu (misal: matcha, taro)..." style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:#000;color:#fff;font-weight:700;font-size:14px;margin-bottom:8px;">
       <div id="catalogArea"><div class="loading-msg">Memuat menu...</div></div>
+      <!-- kategori menu: pindah ke bawah, berjajar ke samping, ketuk untuk pilih (toggle) -->
+      <nav class="kat-bawah" id="katBawah"></nav>
     </main>
 
     <aside class="cart" id="cartPanel">
@@ -3780,10 +3792,34 @@ function renderTabs(){
   }).join('');
 }
 
+// kategori yang dipilih di bar bawah (diingat supaya tidak pindah sendiri tiap selesai transaksi / refresh stok)
+let kategoriKasirAktif = null;
+function pilihKategoriKasir(cat){
+  kategoriKasirAktif = cat;
+  const cari = document.getElementById('menuSearchInput');
+  if(cari && cari.value){ cari.value = ''; }
+  renderCatalog();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function renderKategoriBawah(cats){
+  const bar = document.getElementById('katBawah');
+  if(!bar) return;
+  // bar kategori selalu menempel di bawah layar: tinggi area menu = layar dikurangi topbar
+  const tb = document.getElementById('topbarUtama');
+  if(tb) document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
+  bar.innerHTML = cats.map(cat=>{
+    const st = catStyle(cat);
+    const catJs = cat.replace(ATTR_JS_RE, attrJsEsc);
+    return `<button class="kat-btn ${cat===kategoriKasirAktif?'aktif':''}" style="--kat-warna:${st.color};" onclick="pilihKategoriKasir('${catJs}')"><span class="kb-ikon">${st.icon}</span><span>${escTG(cat)}</span></button>`;
+  }).join('');
+}
+
 function renderCatalog(){
   const area = document.getElementById('catalogArea');
   const cats = sortedCategories();
-  area.innerHTML = cats.map(cat=>{
+  if(!cats.includes(kategoriKasirAktif)) kategoriKasirAktif = cats[0] || null;
+  renderKategoriBawah(cats);
+  area.innerHTML = cats.filter(cat=>cat===kategoriKasirAktif).map(cat=>{
     const items = produkByKategori[cat];
     const st = catStyle(cat);
     return `
