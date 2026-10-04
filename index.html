@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-05.3">
+<meta name="app-version" content="2026-10-05.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -320,6 +320,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 
   /* ===== CART ===== */
   .cart{background:#fff;border-left:3px solid var(--gold);min-height:100vh;padding:18px;display:flex;flex-direction:column;position:sticky;top:0;}
+  .cart.open{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 28px);}
+  .cart.open .clear-btn{padding:11px;font-size:14px;font-weight:700;color:#c0392b;border-color:rgba(192,57,43,.45);}
   .cart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .cart h2{font-size:16px;margin:0;display:flex;align-items:center;gap:8px;color:var(--forest-dark);}
   .cart-back{display:none;background:rgba(12,31,20,.06);border:1px solid var(--line-soft);color:var(--ink);padding:7px 12px;border-radius:16px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -386,6 +388,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     .cart{width:300px;transform:translateX(100%);transition:transform .22s ease;box-shadow:-10px 0 30px rgba(0,0,0,.45);z-index:31;}
     .cart.open{transform:translateX(0);}
     .cart .cart-back{display:block;}
+    /* tombol paling bawah jangan mepet tepi layar: di tablet Android tepi bawah dipakai gerakan navigasi (sentuhan tidak sampai ke tombol) */
+    .cart{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 28px);}
+    .cart .clear-btn{padding:11px;font-size:14px;font-weight:700;margin-top:8px;color:#c0392b;border-color:rgba(192,57,43,.45);}
     #kasirView:not(.hidden) .cart-strip{display:flex;}
     .cart-strip{position:fixed;top:0;right:0;bottom:0;width:78px;z-index:30;flex-direction:column;align-items:center;gap:10px;padding:24px 0;
       background:#0c1f14;border-left:3px solid var(--gold);color:#fff;font-weight:800;text-align:center;cursor:pointer;user-select:none;}
