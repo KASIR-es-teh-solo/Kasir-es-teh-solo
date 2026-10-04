@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.4">
+<meta name="app-version" content="2026-10-04.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -410,6 +410,16 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .dash-section h3{font-size:23px;letter-spacing:.2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65);margin-bottom:12px;font-weight:700;}
   .tx-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;}
   .tx-row .time{color:rgba(12,31,20,.5);font-size:11px;}
+  /* Riwayat Tutup Kas: dirangkum per hari, tiap hari bisa dibuka-tutup */
+  .rk-hari{background:#fff;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:8px;overflow:hidden;color:var(--ink);}
+  .rk-kepala{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;user-select:none;}
+  .rk-kepala .rk-tgl{font-weight:800;font-size:14px;}
+  .rk-kepala .rk-sub{font-size:12px;opacity:.75;margin-top:2px;}
+  .rk-kepala .rk-kanan{display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap;}
+  .rk-kepala .rk-panah{font-size:12px;transition:transform .2s;}
+  .rk-hari.terbuka .rk-panah{transform:rotate(90deg);}
+  .rk-isi{display:none;padding:0 10px 4px;background:#f4f8f5;border-top:1px solid var(--line-soft);}
+  .rk-hari.terbuka .rk-isi{display:block;padding-top:8px;}
   .stock-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.3);font-size:18px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);}
   .stock-row .low{color:#ffb3a7;font-weight:700;}
   /* Penjualan Hari Ini: modal latar putih -> semua teks hitam pekat */
@@ -697,8 +707,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
 
       <div class="dash-section" style="margin-bottom:0;">
-        <h3>💰 Riwayat Tutup Kas</h3>
-        <div id="dashRiwayatKasList"><div class="empty-msg">Memuat...</div></div>
+        <div class="lipat-bar" id="riwayatKasBar" onclick="toggleRiwayatKas()"><span>💰 Riwayat Tutup Kas</span><span class="lipat-panah">▶</span></div>
+        <div id="dashRiwayatKasList" class="hidden"><div class="empty-msg">Memuat...</div></div>
       </div>
 
       <div class="dash-section hidden" id="dashLogAktivitasSection" style="margin-bottom:0;">
@@ -2810,23 +2820,51 @@ async function loadRiwayatKas(){
 
   const isOwnerKas = currentProfile && currentProfile.role === 'owner';
 
-  box.innerHTML = data.map(r=>{
-    const selisihTxt = Number(r.selisih) === 0
-      ? '<span style="color:#2e7d32;font-weight:700;">Pas ✅</span>'
-      : `<span style="color:#c0392b;font-weight:700;">${Number(r.selisih) > 0 ? 'Lebih' : 'Kurang'} ${fmt(Math.abs(r.selisih))}</span>`;
-    return `
+  const teksSelisih = (n) => Number(n) === 0
+    ? '<span style="color:#2e7d32;font-weight:700;">Pas ✅</span>'
+    : `<span style="color:#c0392b;font-weight:700;">${Number(n) > 0 ? 'Lebih' : 'Kurang'} ${fmt(Math.abs(n))}</span>`;
+  const kartu = (r) => `
       <div class="tx-row" style="flex-wrap:wrap;">
         <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
-        <span class="time">${new Date(r.waktu_tutup).toLocaleString('id-ID')}</span>
+        <span class="time">${new Date(r.waktu_tutup).toLocaleTimeString('id-ID', { timeZone:'Asia/Jakarta' })}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
           Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}
         </span>
-        <span style="width:100%;font-size:12px;margin-top:2px;">${selisihTxt}</span>
+        <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
         ${isOwnerKas ? `<span style="width:100%;margin-top:6px;"><button class="remove-btn" onclick="hapusRiwayatKas('${r.id}')" style="font-size:12px;padding:5px 10px;">🗑️ Hapus</button></span>` : ''}
-      </div>
-    `;
+      </div>`;
+
+  // kelompokkan per hari (WIB); data sudah urut terbaru dulu
+  const perHari = [];
+  data.forEach(r=>{
+    const kunci = new Date(r.waktu_tutup).toLocaleDateString('en-CA', { timeZone:'Asia/Jakarta' });
+    let g = perHari.find(x=>x.kunci === kunci);
+    if(!g){ g = { kunci, list:[] }; perHari.push(g); }
+    g.list.push(r);
+  });
+
+  box.innerHTML = perHari.map(g=>{
+    const tahunIni = g.kunci.slice(0,4) === new Date().toLocaleDateString('en-CA', { timeZone:'Asia/Jakarta' }).slice(0,4);
+    const tgl = new Date(g.list[0].waktu_tutup).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short', ...(tahunIni ? {} : { year:'numeric' }), timeZone:'Asia/Jakarta' });
+    const totalSelisih = g.list.reduce((a,r)=>a + Number(r.selisih || 0), 0);
+    const akhir = g.list[0]; // tutup kas terakhir hari itu
+    const sub = `Uang di laci: ${fmt(akhir.kas_fisik)}${g.list.length > 1 ? ' · ' + g.list.length + 'x tutup kas' : ''}`;
+    return `
+      <div class="rk-hari">
+        <div class="rk-kepala" onclick="this.parentNode.classList.toggle('terbuka')">
+          <div><div class="rk-tgl">${tgl}</div><div class="rk-sub">${sub}</div></div>
+          <div class="rk-kanan">${teksSelisih(totalSelisih)}<span class="rk-panah">▶</span></div>
+        </div>
+        <div class="rk-isi">${g.list.map(kartu).join('')}</div>
+      </div>`;
   }).join('');
+}
+function toggleRiwayatKas(){
+  const list = document.getElementById('dashRiwayatKasList');
+  const buka = list.classList.contains('hidden');
+  list.classList.toggle('hidden', !buka);
+  document.getElementById('riwayatKasBar').classList.toggle('terbuka', buka);
 }
 
 // ================== LOG AKTIVITAS (audit trail) ==================
