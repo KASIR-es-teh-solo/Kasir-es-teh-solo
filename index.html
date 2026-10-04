@@ -161,6 +161,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     max-width:100%;
   }
   .topbar-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .status-chip.chip-aktif{background:#000;color:#fff;border-color:rgba(255,255,255,.25);cursor:pointer;}
+  .status-chip.chip-aktif.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);}
   /* tombol keranjang di kanan atas (owner) */
   .topbar-cart{position:relative;width:52px;height:46px;border-radius:16px;background:#000;border:1px solid rgba(255,255,255,.15);font-size:24px;line-height:1;cursor:pointer;flex:none;}
   .topbar-cart .tc-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#e53935;color:#fff;font-size:12px;font-weight:800;line-height:20px;text-align:center;}
@@ -545,7 +547,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
-    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">📊</span><span class="side-label">Laporan &amp; Keuangan</span></button>
+    <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
     <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
     <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
@@ -584,6 +586,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         </div>
         <button class="topbar-cart hidden" id="topbarCartBtn" onclick="bukaKeranjangAtas()" title="Keranjang">🛒<span class="tc-badge kosong" id="topbarCartBadge">0</span></button>
         <span class="status-chip" id="connStatus">🟢 Online</span>
+        <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
           <div class="ts-label">🏦 Saldo Kas</div>
@@ -1678,6 +1681,7 @@ async function loadProfileAndEnter(){
   document.getElementById('ownerChartSection').classList.add('hidden');
   document.getElementById('cartToggleBtn').classList.remove('hidden');
   document.getElementById('topbarCartBtn').classList.add('hidden');
+  document.getElementById('topbarAktifBtn').classList.add('hidden');
   document.getElementById('ownerCabangSelector').classList.add('hidden');
   document.getElementById('kasirCabangStatus').classList.add('hidden');
   document.getElementById('izinKeluarBtn').classList.add('hidden');
@@ -1767,6 +1771,9 @@ async function loadProfileAndEnter(){
     // owner: Keranjang pindah dari sidebar ke kanan atas (di samping jam)
     document.getElementById('cartToggleBtn').classList.add('hidden');
     document.getElementById('topbarCartBtn').classList.remove('hidden');
+    // owner: Aktif Sekarang pindah ke samping status Online (bawah jam)
+    document.getElementById('navAktifBtn').classList.add('hidden');
+    document.getElementById('topbarAktifBtn').classList.remove('hidden');
     // owner: Ringkasan, Stok, Pembelian, Biaya, Brankas digabung jadi "Laporan & Keuangan"; Karyawan pindah ke Pengaturan
     ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','navKaryawanBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuLaporanBtn').classList.remove('hidden');
@@ -3473,6 +3480,8 @@ function setActiveNav(activeId){
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
+  const chipAktif = document.getElementById('topbarAktifBtn');
+  if(chipAktif) chipAktif.classList.toggle('gold', activeId==='navAktifBtn');
 }
 
 // ================== INGAT HALAMAN TERAKHIR (biar refresh tidak balik ke POS) ==================
