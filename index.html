@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.2">
+<meta name="app-version" content="2026-10-04.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -132,14 +132,18 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .side-btn.gold{background:#dcf0e0;color:var(--forest-dark);}
   .side-btn:not(.gold):hover{background:rgba(12,31,20,.05);}
   .side-spacer{flex:1;min-height:10px;}
-  /* grup sidebar owner (Menu Outlet, Laporan & Keuangan) — buka/tutup seperti toggle Pengaturan */
-  .side-btn.side-grup-kepala .side-panah{display:inline-block;font-size:8px;transition:transform .2s;}
-  .side-btn.side-grup-kepala.terbuka{background:rgba(12,31,20,.55);}
-  .side-btn.side-grup-kepala.terbuka .side-panah{transform:rotate(90deg);}
-  .side-btn.side-anak{background:rgba(12,31,20,.35);padding:6px 2px;margin-top:2px;border-left:3px solid #9be7a8;border-radius:4px 10px 10px 4px;}
-  .side-btn.side-anak .side-icon{font-size:19px;}
-  .side-btn.side-anak.gold{background:#dcf0e0;}
-  .side-btn.side-anak.tertutup{display:none;}
+  /* grup sidebar owner (Menu Outlet, Laporan & Keuangan) — isinya muncul di samping sidebar */
+  .side-btn.side-grup-kepala .side-panah{display:inline-block;font-size:8px;}
+  .side-btn.side-grup-kepala.terbuka{background:rgba(12,31,20,.75);color:#fff;}
+  #sideFlyoutTutup{position:fixed;inset:0;z-index:58;}
+  #sideFlyout{position:fixed;left:78px;z-index:59;min-width:170px;padding:8px;border-radius:14px;
+    background:rgba(12,31,20,.94);box-shadow:0 8px 24px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:4px;}
+  #sideFlyout::before{content:"";position:absolute;left:-8px;top:var(--panah-top,22px);border:8px solid transparent;border-left:0;border-right-color:rgba(12,31,20,.94);}
+  #sideFlyout .fly-judul{color:#9be7a8;font-size:12px;font-weight:800;padding:4px 8px 6px;}
+  #sideFlyout button{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:none;color:#fff;
+    font-size:15px;font-weight:700;padding:11px 12px;border-radius:10px;cursor:pointer;text-align:left;}
+  #sideFlyout button.aktif{background:#dcf0e0;color:var(--forest-dark);}
+  #sideFlyout button .fly-ikon{font-size:20px;}
 
   .app-main{margin-left:72px;min-height:100vh;width:calc(100vw - 72px);max-width:calc(100vw - 72px);overflow-x:clip;transition:margin-left .25s ease,width .25s ease,max-width .25s ease;}
   .app-main.full{margin-left:0;width:100vw;max-width:100vw;}
@@ -1649,7 +1653,6 @@ async function loadProfileAndEnter(){
   document.getElementById('appView').classList.remove('hidden');
 
   // reset dulu semua elemen berbasis role, biar tidak kebawa dari sesi sebelumnya
-  lepasGrupSidebar();
   document.getElementById('kasirBtn').classList.remove('hidden');
   document.getElementById('sopBtn').classList.remove('hidden');
   document.getElementById('menuOutletBtn').classList.add('hidden');
@@ -1743,11 +1746,11 @@ async function loadProfileAndEnter(){
   }
   if(profile.role === 'owner'){
     // owner: Kasir POS, SOP Menu, Kas, Belanja digabung jadi satu tombol "Menu Outlet" (Transaksi tetap terpisah)
+    ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuOutletBtn').classList.remove('hidden');
     // owner: Ringkasan, Stok, Pembelian, Biaya, Brankas digabung jadi "Laporan & Keuangan"; Karyawan pindah ke Pengaturan
-    document.getElementById('navKaryawanBtn').classList.add('hidden');
+    ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn','navKaryawanBtn'].forEach(id=>document.getElementById(id).classList.add('hidden'));
     document.getElementById('menuLaporanBtn').classList.remove('hidden');
-    pasangGrupSidebar(); // isi tiap grup tampil di bawah judulnya, awalnya tertutup
   }
 
   await loadProduk();
@@ -3397,11 +3400,6 @@ function setActiveNav(activeId){
     const el = document.getElementById(id);
     if(el) el.classList.toggle('gold', id===activeId);
   });
-  // menu yang aktif ada di dalam grup yang tertutup → buka grupnya
-  Object.keys(GRUP_SIDEBAR).forEach(k=>{
-    const kepala = document.getElementById(k);
-    if(kepala && kepala.classList.contains('side-grup-kepala') && GRUP_SIDEBAR[k].includes(activeId)) toggleGrupSidebar(k, true);
-  });
 }
 
 // ================== INGAT HALAMAN TERAKHIR (biar refresh tidak balik ke POS) ==================
@@ -3446,7 +3444,7 @@ function showDashPanel(panelName){
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
   const ownerNav = (currentProfile && currentProfile.role === 'owner')
-    ? ({ karyawan:'settingsBtn' })[panelName]
+    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn' })[panelName]
     : null;
   setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
   loadDashboard();
@@ -6945,43 +6943,61 @@ document.addEventListener('DOMContentLoaded', siapkanLipatPengaturan);
 if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
-// Menu Outlet & Laporan Keuangan: judul di sidebar, isinya buka/tutup di bawahnya
+// Menu Outlet & Laporan Keuangan: ketuk judul di sidebar → isinya muncul di samping sidebar
 const GRUP_SIDEBAR = {
-  menuOutletBtn: ['kasirBtn','sopBtn','kasBtn','belanjaKecilBtn'],
-  menuLaporanBtn: ['navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navBrankasBtn']
+  menuOutletBtn: { judul:'🏪 Menu Outlet', isi:[
+    { ikon:'🧾', label:'Kasir (POS)', fn:()=>showKasirView(), aktif:()=>!document.getElementById('kasirView').classList.contains('hidden') },
+    { ikon:'📋', label:'SOP Menu', fn:()=>showSOPView(), aktif:()=>!document.getElementById('sopView').classList.contains('hidden') },
+    { ikon:'💵', label:'Kas', fn:()=>bukaKasModal() },
+    { ikon:'🧊', label:'Belanja', fn:()=>bukaBelanjaKecil() }
+  ]},
+  menuLaporanBtn: { judul:'📊 Laporan & Keuangan', isi:[
+    { ikon:'📊', label:'Ringkasan', panel:'ringkasan' },
+    { ikon:'📦', label:'Stok', panel:'stok' },
+    { ikon:'📥', label:'Pembelian', panel:'pembelian' },
+    { ikon:'💸', label:'Biaya', panel:'biaya' },
+    { ikon:'🔒', label:'Brankas', panel:'brankas' }
+  ]}
 };
-function pasangGrupSidebar(){
-  Object.keys(GRUP_SIDEBAR).forEach(k=>{
-    const kepala = document.getElementById(k); if(!kepala) return;
-    kepala.classList.add('side-grup-kepala'); kepala.classList.remove('terbuka');
-    let sesudah = kepala;
-    GRUP_SIDEBAR[k].forEach(id=>{
-      const el = document.getElementById(id); if(!el) return;
-      if(!el._asal){ const c = document.createComment('asal-' + id); el.parentNode.insertBefore(c, el); el._asal = c; }
-      sesudah.insertAdjacentElement('afterend', el); sesudah = el;
-      el.classList.remove('hidden'); el.classList.add('side-anak','tertutup');
-    });
+function panelDashTerbuka(nama){
+  const el = document.getElementById('dashPanel-' + nama);
+  return !!el && !el.classList.contains('hidden') && !document.getElementById('ownerView').classList.contains('hidden');
+}
+function tutupFlyoutSidebar(){
+  ['sideFlyout','sideFlyoutTutup'].forEach(id=>{ const el = document.getElementById(id); if(el) el.remove(); });
+  Object.keys(GRUP_SIDEBAR).forEach(k=>{ const el = document.getElementById(k); if(el) el.classList.remove('terbuka'); });
+}
+function bukaFlyoutSidebar(k){
+  const kepala = document.getElementById(k);
+  const sudahBuka = kepala.classList.contains('terbuka');
+  tutupFlyoutSidebar();
+  if(sudahBuka) return; // ketuk lagi = tutup
+  const grup = GRUP_SIDEBAR[k];
+  const tutup = document.createElement('div'); tutup.id = 'sideFlyoutTutup'; tutup.onclick = tutupFlyoutSidebar;
+  const fly = document.createElement('div'); fly.id = 'sideFlyout';
+  fly.innerHTML = `<div class="fly-judul">${grup.judul}</div>`;
+  grup.isi.forEach(it=>{
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="fly-ikon">${it.ikon}</span><span>${it.label}</span>`;
+    if(it.panel ? panelDashTerbuka(it.panel) : (it.aktif && it.aktif())) b.classList.add('aktif');
+    b.onclick = ()=>{ tutupFlyoutSidebar(); it.panel ? showDashPanel(it.panel) : it.fn(); };
+    fly.appendChild(b);
   });
+  document.body.appendChild(tutup); document.body.appendChild(fly);
+  kepala.classList.add('terbuka');
+  // sejajarkan dengan tombol yang ditekan, tapi jangan sampai keluar layar
+  const r = kepala.getBoundingClientRect();
+  const tinggi = fly.offsetHeight;
+  const atas = Math.max(8, Math.min(r.top, window.innerHeight - tinggi - 8));
+  fly.style.top = atas + 'px';
+  fly.style.setProperty('--panah-top', Math.max(10, Math.min(tinggi - 26, r.top + r.height/2 - atas - 8)) + 'px');
 }
-function lepasGrupSidebar(){
-  Object.keys(GRUP_SIDEBAR).forEach(k=>{
-    const kepala = document.getElementById(k);
-    if(kepala) kepala.classList.remove('side-grup-kepala','terbuka');
-    GRUP_SIDEBAR[k].forEach(id=>{
-      const el = document.getElementById(id); if(!el) return;
-      if(el._asal){ el._asal.parentNode.insertBefore(el, el._asal); el._asal.remove(); el._asal = null; }
-      el.classList.remove('side-anak','tertutup');
-    });
-  });
-}
-function toggleGrupSidebar(k, paksa){
-  const kepala = document.getElementById(k); if(!kepala) return;
-  const buka = (typeof paksa === 'boolean') ? paksa : !kepala.classList.contains('terbuka');
-  kepala.classList.toggle('terbuka', buka);
-  GRUP_SIDEBAR[k].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.toggle('tertutup', !buka); });
-}
-function bukaMenuOutlet(){ toggleGrupSidebar('menuOutletBtn'); }
-function bukaMenuLaporan(){ toggleGrupSidebar('menuLaporanBtn'); }
+function bukaMenuOutlet(){ bukaFlyoutSidebar('menuOutletBtn'); }
+function bukaMenuLaporan(){ bukaFlyoutSidebar('menuLaporanBtn'); }
+function tandaiKepalaGrup(){ ['menuOutletBtn','menuLaporanBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('side-grup-kepala'); }); }
+document.addEventListener('DOMContentLoaded', tandaiKepalaGrup);
+if(document.readyState !== 'loading') tandaiKepalaGrup();
+window.addEventListener('resize', tutupFlyoutSidebar);
 
 // ================== TRANSAKSI HARI INI PER JAM ==================
 let tjData = [];
