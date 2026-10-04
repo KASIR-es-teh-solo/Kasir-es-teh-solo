@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-04.8">
+<meta name="app-version" content="2026-10-05.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -441,9 +441,15 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #settingsView .dash-section.terbuka .lipat-kepala .lipat-panah{transform:rotate(90deg);}
   #settingsView .lipat-isi{padding:14px 4px 4px;}
   #settingsView .lipat-isi.hidden{display:none;}
-  #transaksiJamOverlay .modal, #transaksiJamOverlay .modal *{color:#000;text-shadow:none;opacity:1 !important;}
-  #transaksiJamOverlay .login-btn{color:#fff;}
-  #transaksiJamOverlay .trx-batal-label{color:#c0392b !important;}
+  #penjualanHariIniOverlay .trx-batal-label{color:#c0392b !important;}
+  /* Hari Ini: Penjualan + Transaksi dalam satu tampilan, dipisah sekat */
+  #penjualanHariIniOverlay .hari-ini-modal{max-width:760px;}
+  .hari-ini-judul{font-weight:800;font-size:15px;margin:4px 0 8px;}
+  .hari-ini-sekat{height:0;border-top:3px solid #0c1f14;margin:14px 0;opacity:.85 !important;}
+  @media (min-width:640px){
+    .hari-ini-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;}
+    .hari-ini-sekat{width:0;height:auto;align-self:stretch;border-top:none;border-left:3px solid #0c1f14;margin:0;}
+  }
   .empty-msg{color:rgba(255,255,255,.85);font-size:13px;padding:14px;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.5);}
 
   /* ===== PRINT REPORT ===== */
@@ -1173,27 +1179,27 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
-<!-- informasi penjualan hari ini (kasir & owner, cabang aktif) -->
+<!-- Hari Ini (kasir & owner, cabang aktif): Penjualan Hari Ini + Transaksi Hari Ini jadi satu, dipisah sekat -->
 <div class="overlay" id="penjualanHariIniOverlay">
-  <div class="modal">
-    <h3>📈 Penjualan Hari Ini</h3>
+  <div class="modal hari-ini-modal">
+    <h3>📈 Hari Ini</h3>
     <p id="phiSubjudul" style="font-size:12px;opacity:.75;">-</p>
-    <div id="phiIsi"><div class="empty-msg">Memuat...</div></div>
-    <button class="login-btn" style="margin-top:12px;" onclick="loadPenjualanHariIni()">🔄 Perbarui</button>
+    <span id="tjSubjudul" class="hidden"></span>
+    <div class="hari-ini-grid">
+      <div class="hari-ini-bagian">
+        <div class="hari-ini-judul">💰 Penjualan</div>
+        <div id="phiIsi"><div class="empty-msg">Memuat...</div></div>
+      </div>
+      <div class="hari-ini-sekat"></div>
+      <div class="hari-ini-bagian" id="hariIniBagianTransaksi">
+        <div class="hari-ini-judul">🧾 Transaksi</div>
+        <select id="tjFilterJam" onchange="renderTransaksiJam()" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:#000;font-size:14px;margin-bottom:6px;"></select>
+        <div id="tjRingkas" style="font-size:12px;margin-bottom:6px;"></div>
+        <div id="tjList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
+    <button class="login-btn" style="margin-top:12px;" onclick="loadHariIniGabung()">🔄 Perbarui</button>
     <button class="modal-close" onclick="tutupPenjualanHariIni()">Tutup</button>
-  </div>
-</div>
-
-<!-- daftar transaksi hari ini per jam (kasir & owner, cabang aktif) -->
-<div class="overlay" id="transaksiJamOverlay">
-  <div class="modal">
-    <h3>🧾 Transaksi Hari Ini</h3>
-    <p id="tjSubjudul" style="font-size:12px;">-</p>
-    <select id="tjFilterJam" onchange="renderTransaksiJam()" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:#000;font-size:14px;margin-bottom:6px;"></select>
-    <div id="tjRingkas" style="font-size:12px;margin-bottom:6px;"></div>
-    <div id="tjList" style="max-height:55vh;overflow:auto;"><div class="empty-msg">Memuat...</div></div>
-    <button class="login-btn" style="margin-top:12px;" onclick="loadTransaksiJam()">🔄 Perbarui</button>
-    <button class="modal-close" onclick="tutupTransaksiJam()">Tutup</button>
   </div>
 </div>
 
@@ -1765,7 +1771,6 @@ async function loadProfileAndEnter(){
     document.getElementById('kasBtn').classList.remove('hidden');
     document.getElementById('belanjaKecilBtn').classList.remove('hidden');
     document.getElementById('penjualanHariIniBtn').classList.remove('hidden');
-    document.getElementById('transaksiJamBtn').classList.remove('hidden');
   }
   if(profile.role === 'owner'){
     // owner: Kasir (POS) tetap di sidebar paling atas; SOP Menu, Kas, Belanja, Hari Ini, Transaksi masuk ke "Laporan & Keuangan"
@@ -6711,7 +6716,11 @@ async function submitBelanjaKecil(){
 async function bukaPenjualanHariIni(){
   if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
   document.getElementById('penjualanHariIniOverlay').classList.add('show');
-  await loadPenjualanHariIni();
+  await loadHariIniGabung();
+}
+// Penjualan & Transaksi hari ini dimuat bersamaan (satu tampilan)
+async function loadHariIniGabung(){
+  await Promise.all([loadPenjualanHariIni(), loadTransaksiJam()]);
 }
 
 function tutupPenjualanHariIni(){
@@ -7020,7 +7029,7 @@ const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['stok','📦 Stok'],['pem
 // Cek Stok (owner): Stok Menipis & Stok Cup dalam satu halaman toggle
 const STOK_LIPAT = [['stokmenipis','⚠️ Stok Menipis'],['stokcup','🥤 Stok Cup']];
 const grupLipat = p => LAPORAN_LIPAT.some(([x])=>x===p) ? 'laporan' : (STOK_LIPAT.some(([x])=>x===p) ? 'stok' : null);
-const OUTLET_DI_LAPORAN = [['📋 SOP Menu', ()=>showSOPView()],['💵 Kas', ()=>bukaKasModal()],['🧊 Belanja', ()=>bukaBelanjaKecil()],['📈 Hari Ini', ()=>bukaPenjualanHariIni()],['🧾 Transaksi', ()=>bukaTransaksiJam()]];
+const OUTLET_DI_LAPORAN = [['📋 SOP Menu', ()=>showSOPView()],['💵 Kas', ()=>bukaKasModal()],['🧊 Belanja', ()=>bukaBelanjaKecil()],['📈 Hari Ini', ()=>bukaPenjualanHariIni()]];
 function siapkanBarLaporan(){
   if(!document.getElementById('laporanOutletBars')){
     const pertama = document.getElementById('dashPanel-' + LAPORAN_LIPAT[0][0]);
@@ -7094,14 +7103,9 @@ function bukaMenuLaporan(){ tampilkanLaporanTertutup(); }
 
 // ================== TRANSAKSI HARI INI PER JAM ==================
 let tjData = [];
-async function bukaTransaksiJam(){
-  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
-  document.getElementById('transaksiJamOverlay').classList.add('show');
-  await loadTransaksiJam();
-}
-function tutupTransaksiJam(){
-  document.getElementById('transaksiJamOverlay').classList.remove('show');
-}
+// Transaksi sekarang satu tampilan dengan Hari Ini
+async function bukaTransaksiJam(){ await bukaPenjualanHariIni(); }
+function tutupTransaksiJam(){ tutupPenjualanHariIni(); }
 async function loadTransaksiJam(){
   const list = document.getElementById('tjList');
   const cabang = (userAllowedCabang || []).find(c=>c.id===activeCabangId);
