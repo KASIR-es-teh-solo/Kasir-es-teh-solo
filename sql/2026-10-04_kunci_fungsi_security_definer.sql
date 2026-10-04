@@ -21,3 +21,7 @@ alter default privileges in schema public revoke execute on functions from publi
 
 -- Juga sudah jalan: sql/2026-10-04_riwayat_kas_hapus_otomatis_3_hari.sql (versi Mey: tabel kas_shift_arsip,
 -- fungsi arsipkan_riwayat_kas_lama, pg_cron 'arsip-riwayat-kas' jam 18:00 UTC = 01:00 WIB)
+
+-- 3) Fungsi internal hitung ulang modal & sinkron stok: cuma dipanggil trigger/fungsi lain, bukan oleh user
+revoke execute on function public.hitung_ulang_modal_bahan(uuid) from authenticated;
+revoke execute on function public.sinkron_stok_produk(uuid, uuid) from authenticated;
