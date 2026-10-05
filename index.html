@@ -86,9 +86,23 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     max-width:100vw;
   }
   .hidden{display:none !important;}
-  /* Khusus ADMIN: latar polos warna natural (tanpa foto) supaya tulisan lebih jelas dibaca. Kasir & Owner tetap pakai foto. */
-  body.role-admin{background:linear-gradient(180deg,#3f4d43 0%,#34403a 55%,#2b342f 100%) fixed !important;}
-  body.role-admin .side-nav{background:rgba(0,0,0,.18);}
+  /* Khusus ADMIN: latar polos warna natural terang (krem) tanpa foto, teks gelap supaya jelas dibaca. Kasir & Owner tetap pakai foto. */
+  body.role-admin{background:linear-gradient(180deg,#f6f3e8 0%,#ece7d6 100%) fixed !important;}
+  body.role-admin .side-nav{background:#e3ddc8;border-right:1px solid rgba(12,31,20,.15);}
+  body.role-admin .side-btn{color:#0c1f14;text-shadow:none;}
+  body.role-admin .side-btn.gold{background:#1f4a2e;color:#fff;}
+  body.role-admin .topbar{background:rgba(255,255,255,.55);border-bottom:1px solid rgba(12,31,20,.15);}
+  body.role-admin .topbar-brand h1, body.role-admin .topbar-brand span{color:#0c1f14;text-shadow:none;}
+  body.role-admin .sidebar-toggle{background:#1f4a2e;border-color:#1f4a2e;}
+  body.role-admin .status-chip:not(.chip-aktif):not(.chip-cabang){background:#fff;color:#0c1f14;border-color:rgba(12,31,20,.2);}
+  body.role-admin #ownerView .lipat-bar{background:#1f4a2e;color:#fff;box-shadow:0 2px 8px rgba(12,31,20,.18);}
+  body.role-admin #ownerView .lipat-bar.terbuka{background:#0c1f14;}
+  body.role-admin .dash-section h3{color:#0c1f14;text-shadow:none;}
+  body.role-admin .empty-msg{color:rgba(12,31,20,.65);text-shadow:none;}
+  body.role-admin .stock-row{color:#0c1f14;text-shadow:none;border-bottom-color:rgba(12,31,20,.15);}
+  body.role-admin .stock-row .low{color:#c0392b;}
+  body.role-admin #ownerView label[style*="color:#fff"], body.role-admin #ownerView p[style*="color:#fff"],
+  body.role-admin #ownerView div[style*="color:#fff"]:not([style*="background"]), body.role-admin #ownerView span[style*="color:#fff"]:not([style*="background"]){color:#0c1f14 !important;text-shadow:none !important;}
 
   /* ===== SIDE NAV ===== */
   .side-nav{
