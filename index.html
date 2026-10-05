@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-05.4">
+<meta name="app-version" content="2026-10-05.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1831,7 +1831,15 @@ async function loadProfileAndEnter(){
 
   if(profile.role === 'admin'){
     document.getElementById('kasirBtn').classList.add('hidden');
-    document.getElementById('navStokMenipisBtn').classList.remove('hidden'); // admin juga pantau stok menipis
+    // admin: tampilan disamakan dengan owner — menu dikelompokkan jadi "Menu Outlet" & "Cek Stok",
+    // Aktif Sekarang di samping Online, Ganti Password di dalam Pengaturan (tanpa Brankas, Kas, Belanja, transaksi kasir)
+    ['sopBtn','navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navKaryawanBtn','navAktifBtn','navStokMenipisBtn','navStokCupBtn','sidebarPasswordBtn']
+      .forEach(id=>document.getElementById(id).classList.add('hidden'));
+    ['menuLaporanBtn','navCekStokBtn','topbarAktifBtn','kasirPengaturanBtn'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+    // urutan sidebar admin: Menu Outlet, Cek Stok, lalu Pengaturan
+    const pengaturanAdmin = document.getElementById('kasirPengaturanBtn');
+    const spacer = document.querySelector('#sideNav .side-spacer');
+    if(spacer) spacer.parentNode.insertBefore(pengaturanAdmin, spacer);
   }
   if(profile.role === 'kasir'){
     const cabangAktifSekarang = userAllowedCabang.find(c=>c.id===activeCabangId);
@@ -1896,14 +1904,14 @@ async function loadProfileAndEnter(){
   if(profile.role === 'admin'){
     // admin tidak boleh transaksi kasir di cabang manapun, tapi tetap boleh lihat semua Dashboard
     document.getElementById('cartToggleBtn').classList.add('hidden');
-    if(savedView && savedView.type === 'dash' && DASH_NAV_MAP[savedView.panel]){
+    if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel)) && savedView.panel !== 'brankas'){
       showDashPanel(savedView.panel);
       viewDipulihkan = true;
     } else if(savedView && savedView.type === 'sop'){
       showSOPView();
       viewDipulihkan = true;
     }
-    if(!viewDipulihkan) showDashPanel('ringkasan');
+    if(!viewDipulihkan) tampilkanLaporanTertutup();
   } else if(profile.role === 'owner'){
     if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel))){
       showDashPanel(savedView.panel);
@@ -3620,8 +3628,8 @@ function showDashPanel(panelName){
   document.getElementById('ownerView').classList.remove('hidden');
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
-  const ownerNav = (currentProfile && currentProfile.role === 'owner')
-    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:'settingsBtn', menuoutlet:'menuOutletBtn', stokmenipis:'navCekStokBtn', stokcup:'navCekStokBtn' })[panelName]
+  const ownerNav = pakaiMenuToggle()
+    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', karyawan:(currentProfile.role === 'owner' ? 'settingsBtn' : 'menuLaporanBtn'), menuoutlet:'menuOutletBtn', stokmenipis:'navCekStokBtn', stokcup:'navCekStokBtn' })[panelName]
     : null;
   setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
   aturBarLaporan(panelName);
@@ -7157,20 +7165,26 @@ if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
 // Menu Outlet & Laporan Keuangan (owner): halaman berisi daftar toggle seperti Pengaturan
-const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['stok','📦 Stok'],['pembelian','📥 Pembelian'],['brankas','🔒 Brankas'],['biaya','💸 Biaya']];
+const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['stok','📦 Stok'],['pembelian','📥 Pembelian'],['brankas','🔒 Brankas'],['biaya','💸 Biaya'],['karyawan','👥 Karyawan']];
+// bagian yang TIDAK tampil per role: Brankas khusus Owner; Karyawan owner ada di Pengaturan
+const LIPAT_DISEMBUNYIKAN = { owner:['karyawan'], admin:['brankas'] };
+// pakai tampilan menu toggle (Menu Outlet / Cek Stok): owner & admin
+function pakaiMenuToggle(){ const r = currentProfile && currentProfile.role; return r === 'owner' || r === 'admin'; }
 // Cek Stok (owner): Stok Menipis & Stok Cup dalam satu halaman toggle
 const STOK_LIPAT = [['stokmenipis','⚠️ Stok Menipis'],['stokcup','🥤 Stok Cup']];
 const grupLipat = p => LAPORAN_LIPAT.some(([x])=>x===p) ? 'laporan' : (STOK_LIPAT.some(([x])=>x===p) ? 'stok' : null);
-const OUTLET_DI_LAPORAN = [['📋 SOP Menu', ()=>showSOPView()],['💵 Kas', ()=>bukaKasModal()],['🧊 Belanja', ()=>bukaBelanjaKecil()],['📈 Hari Ini', ()=>bukaPenjualanHariIni()]];
+// [judul, aksi, khusus owner?] — admin tidak boleh kas/belanja/transaksi kasir
+const OUTLET_DI_LAPORAN = [['📋 SOP Menu', ()=>showSOPView(), false],['💵 Kas', ()=>bukaKasModal(), true],['🧊 Belanja', ()=>bukaBelanjaKecil(), true],['📈 Hari Ini', ()=>bukaPenjualanHariIni(), true]];
 function siapkanBarLaporan(){
   if(!document.getElementById('laporanOutletBars')){
     const pertama = document.getElementById('dashPanel-' + LAPORAN_LIPAT[0][0]);
     if(pertama){
       const wadah = document.createElement('div');
       wadah.id = 'laporanOutletBars'; wadah.className = 'hidden';
-      OUTLET_DI_LAPORAN.forEach(([judul, aksi])=>{
+      OUTLET_DI_LAPORAN.forEach(([judul, aksi, khususOwner])=>{
         const bar = document.createElement('div');
         bar.className = 'lipat-bar ke-halaman';
+        if(khususOwner) bar.dataset.khususOwner = '1';
         bar.innerHTML = `<span>${judul}</span><span class="lipat-panah">▶</span>`;
         bar.onclick = aksi;
         wadah.appendChild(bar);
@@ -7194,15 +7208,19 @@ function siapkanBarLaporan(){
 }
 function aturBarLaporan(panelAktif, grup){
   siapkanBarLaporan();
-  const isOwner = !!(currentProfile && currentProfile.role === 'owner');
-  const grupAktif = isOwner ? (grup || grupLipat(panelAktif)) : null;
+  const role = currentProfile && currentProfile.role;
+  const grupAktif = pakaiMenuToggle() ? (grup || grupLipat(panelAktif)) : null;
+  const disembunyikan = LIPAT_DISEMBUNYIKAN[role] || [];
   const outletBars = document.getElementById('laporanOutletBars');
-  if(outletBars) outletBars.classList.toggle('hidden', grupAktif !== 'laporan');
+  if(outletBars){
+    outletBars.classList.toggle('hidden', grupAktif !== 'laporan');
+    outletBars.querySelectorAll('[data-khusus-owner]').forEach(b=>b.classList.toggle('hidden', role !== 'owner'));
+  }
   [['laporan', LAPORAN_LIPAT], ['stok', STOK_LIPAT]].forEach(([g, daftar])=>{
     const modeLipat = grupAktif === g;
     daftar.forEach(([p])=>{
       const bar = document.getElementById('lipatBar-' + p); if(!bar) return;
-      bar.classList.toggle('hidden', !modeLipat);
+      bar.classList.toggle('hidden', !modeLipat || disembunyikan.includes(p));
       bar.classList.toggle('terbuka', modeLipat && p === panelAktif);
       const el = document.getElementById('dashPanel-' + p); if(el) el.classList.toggle('di-lipat', modeLipat);
     });
