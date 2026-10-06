@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-06.1">
+<meta name="app-version" content="2026-10-06.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1427,8 +1427,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <h3>🫖 Teh Siap Saji</h3>
     <div id="tehSiapInfo" style="font-size:14px;margin-bottom:12px;">-</div>
     <div id="tehKemarinBox" style="background:#fff4e0;border:1px solid #e0a030;border-radius:10px;padding:10px;margin-bottom:12px;">
-      <div id="tehKemarinTeks" style="font-size:14px;margin-bottom:8px;">📦 Ada sisa teh kemarin?</div>
-      <button id="tehKemarinBtn" class="header-btn gold" style="width:100%;" onclick="ubahSisaKemarin()">✏️ Isi sisa teh kemarin</button>
+      <div style="font-size:14px;margin-bottom:8px;">🔄 Angka tidak cocok? Ukur teh di wadah, lalu samakan.</div>
+      <button id="tehSamakanBtn" class="header-btn gold" style="width:100%;" onclick="samakanTehWadah()">🔄 Samakan dengan isi wadah</button>
     </div>
     <div style="font-size:13px;font-weight:800;margin-bottom:6px;">Buat teh baru, pilih jumlahnya:</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
@@ -7083,17 +7083,10 @@ function renderTehSiap(){
   }
   bar.style.background = warna;
   teks.textContent = isi;
-  const kem = Math.max(0, Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0));
-  const teksKem = document.getElementById('tehKemarinTeks');
-  if(teksKem){
-    // kotak selalu tampil: kalau sudah ada sisa kemarin -> "Ubah", kalau belum -> "Isi"
-    teksKem.innerHTML = kem > 0 ? `📦 Sisa teh kemarin: <b>${literTeks(kem)}</b>` : '📦 Ada sisa teh kemarin?';
-    document.getElementById('tehKemarinBtn').textContent = kem > 0 ? '✏️ Ubah sisa teh kemarin' : '✏️ Isi sisa teh kemarin';
-  }
   const info = document.getElementById('tehSiapInfo');
   if(info){
-    info.innerHTML = !d.aktif ? 'Belum ada catatan teh. Pilih jumlah teh yang baru dibuat (biasanya pagi 5 L).'
-      : `Total teh sekarang: <b style="font-size:18px;">${literTeks(d.sisa_ml)}</b>`;
+    info.innerHTML = !d.aktif ? 'Belum ada catatan teh. Kalau masih ada teh di wadah, tekan Samakan dulu, lalu pilih teh baru.'
+      : `Total teh menurut aplikasi: <b style="font-size:18px;">${literTeks(d.sisa_ml)}</b>`;
   }
 }
 function bukaTehSiap(){
@@ -7119,24 +7112,17 @@ function catatSeduhTeh(liter){
   if(!confirm(`Catat teh baru ${literTeks(liter*1000)}?`)) return;
   catatTehSiap('seduh', liter);
 }
-// Isi / ubah sisa teh kemarin (mis. 600 ml, ternyata tinggal 400 ml, atau basi -> 0)
-async function ubahSisaKemarin(){
+// Reset: kasir ukur teh yang benar-benar ada di wadah -> angka di aplikasi disamakan (catatan 'set')
+async function samakanTehWadah(){
   const d = tehSiapData || {};
-  const kem = Math.max(0, Math.round(Number(d.sisa_kemarin_ml || 0) - Number(d.buang_hari_ini_ml || 0)));
-  const pesan = kem > 0
-    ? `Sisa teh kemarin tercatat ${literTeks(kem)}.\n\nBerapa ml sisa teh kemarin yang BENAR dan masih layak dipakai?\n(isi 0 kalau basi / dibuang semua)`
-    : `Berapa ml sisa teh kemarin yang masih layak dipakai?\n(contoh: 600)`;
-  const jawab = prompt(pesan, kem > 0 ? String(kem) : '');
+  const skr = Math.max(0, Math.round(Number(d.sisa_ml || 0)));
+  const jawab = prompt(`Di aplikasi tercatat ${literTeks(skr)}.\n\nBerapa ml teh yang BENAR-BENAR ada di wadah sekarang?\n(contoh: 2500 untuk 2,5 L — isi 0 kalau habis/basi)`, '');
   if(jawab === null) return;
   const angka = String(jawab).replace(/[^0-9]/g, '');
-  if(angka === '' || Number(angka) > 50000){ alert('Isi angka dalam ml, misal 600'); return; }
-  const baru = Number(angka);
-  if(baru === kem){ tutupTehSiap(); return; }
-  if(!navigator.onLine){ alert('Butuh internet untuk mencatat teh.'); return; }
-  const { data, error } = await sb.rpc('catat_sisa_kemarin', { p_cabang: getActiveCabangId(), p_ml: baru });
-  if(error){ alert('Gagal mencatat: ' + error.message); return; }
-  tehSiapData = data; tehSiapSudahDiingatkan = false; renderTehSiap(); tutupTehSiap();
-  showSuccessToast('🫖', `Sisa teh kemarin: ${literTeks(baru)}`, `Total teh sekarang ${literTeks(data.sisa_ml)}`);
+  if(angka === '' || Number(angka) > 50000){ alert('Isi angka dalam ml, misal 2500'); return; }
+  const ml = Number(angka);
+  if(!confirm(`Samakan teh jadi ${literTeks(ml)}?`)) return;
+  catatTehSiap('set', ml / 1000, `Teh disamakan: ${literTeks(ml)}`);
 }
 
 // ================== PENGATURAN: BAGIAN BISA DIBUKA/TUTUP ==================
