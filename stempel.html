@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1f14">
+<title>Stempel Es Teh S.O.L.O</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230c1f14'/%3E%3Ccircle cx='100' cy='100' r='80' fill='%23f7f4ea'/%3E%3Ctext x='100' y='135' font-size='100' text-anchor='middle'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
+<style>
+:root{--hijau:#0c1f14;--h2:#2e7d32;--krem:#f7f4ea;--emas:#e8b923;--teks:#1d2a21;--abu:#5b6b60;--garis:#cfd8c9}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--krem);color:var(--teks);font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.atas{background:var(--hijau);color:#fff;text-align:center;padding:26px 16px 20px}
+.atas.emas{background:var(--emas);color:var(--hijau)}
+.atas .ik{font-size:34px;line-height:1}
+.atas h1{font-family:Fraunces,serif;font-size:22px;margin:6px 0 0}
+.isi{max-width:440px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.kecil{font-size:14px;color:var(--abu);line-height:1.5}
+.btn{background:var(--h2);color:#fff;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:17px;width:100%;font-family:inherit;cursor:pointer}
+.btn:disabled{opacity:.6}
+.btn.emas{background:var(--emas);color:var(--hijau)}
+.link{background:none;border:none;color:var(--h2);text-decoration:underline;font-size:15px;font-family:inherit;padding:6px;cursor:pointer}
+input{border:2px solid var(--garis);border-radius:12px;padding:14px;font-size:17px;font-family:inherit;width:100%;background:#fff}
+input:focus{outline:none;border-color:var(--h2)}
+.kartu{background:#fff;border-radius:18px;padding:16px;border:2px solid var(--garis)}
+.pesanan b{display:block;font-size:26px;margin:4px 0}
+.big{font-family:Fraunces,serif;font-size:38px;color:var(--h2);margin:0}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:4px 0}
+.c{aspect-ratio:1;border-radius:50%;border:2px dashed #9bb3a0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.c.on{border:none;background:var(--h2)}
+.c.baru{border:none;background:var(--emas);animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.jumlah{font-size:24px;font-weight:800}
+.err{border-color:#f0c9c4}.err.kuning{border-color:#f1dfa6}
+.err .ik{font-size:32px}
+.kode{border:2px dashed var(--emas)}
+.kode .angka{font-size:46px;font-weight:900;letter-spacing:8px;color:var(--hijau)}
+.salah{color:#c0392b;font-size:14px;min-height:1em}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="atas" id="atas"><div class="ik" id="atasIkon">🌲</div><h1 id="atasJudul">Stempel Es Teh S.O.L.O</h1></div>
+<div class="isi" id="isi"><p class="kecil">Memuat…</p></div>
+
+<script>
+const SUPABASE_URL = "https://ywoytgapbshpzrdwdtel.supabase.co";
+const SUPABASE_KEY = "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+const CABANG = new URLSearchParams(location.search).get('c') || '199e77b5-f52e-4534-9656-3a0d8fceddfd';
+const KUNCI = 'stempel_es_teh_solo_token';
+
+function bacaToken(){ try{ return localStorage.getItem(KUNCI); }catch(e){ return null; } }
+function simpanToken(t){ try{ localStorage.setItem(KUNCI, t); }catch(e){} }
+function hapusToken(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const isi = () => document.getElementById('isi');
+function atas(judul, ikon='🌲', emas=false){
+  document.getElementById('atasJudul').textContent = judul;
+  document.getElementById('atasIkon').textContent = ikon;
+  document.getElementById('atas').classList.toggle('emas', emas);
+}
+function pesanError(e){
+  const m = (e && (e.message || e.details)) || String(e || '');
+  return m.replace(/^.*?ERROR:\s*/,'') || 'Gagal, coba lagi ya.';
+}
+function gridStempel(n, baru=0){
+  const penuh = Math.min(n, 10);
+  let h = '<div class="grid">';
+  for(let i=0;i<10;i++){
+    const on = i < penuh, b = on && i >= penuh - baru;
+    h += `<div class="c ${on ? (b ? 'baru' : 'on') : ''}">${on ? '🧋' : (i === 9 ? '🎁' : '')}</div>`;
+  }
+  return h + '</div>';
+}
+function kartuStatus(st, baru=0){
+  const n = st.stempel || 0;
+  let h = gridStempel(n, baru) + `<div class="jumlah">${Math.min(n,10)} / 10${n >= 10 ? ' 🎉' : ''}</div>`;
+  if(n < 10) h += `<div class="kecil">Tinggal <b>${10 - n} lagi</b> dapat 1 Es Teh Original besar GRATIS!</div>`;
+  if(st.hadiah_kode){
+    h += `<div class="kartu kode"><div class="kecil">Tunjukkan kode ini ke kasir</div><div class="angka">${esc(st.hadiah_kode)}</div><div class="kecil">Berlaku sampai hari ini 23.59 · tukar dengan 1 Es Teh Original besar GRATIS</div></div>`;
+  }
+  return h;
+}
+
+// ---------- daftar & pulihkan ----------
+function tampilDaftar(){
+  atas('Stempel Es Teh S.O.L.O');
+  isi().innerHTML = `
+    <div style="font-size:44px;margin-top:4px">👋</div>
+    <b style="font-size:21px">Daftar dulu, cukup sekali</b>
+    <div class="kecil">Beli Es Teh Original <b>besar</b> → scan → dapat stempel.<br>10 stempel = <b>GRATIS 1 Original besar</b>.</div>
+    <input id="fNama" placeholder="Nama kamu" autocomplete="given-name" maxlength="30">
+    <input id="fWa" placeholder="Nomor WA, mis. 0812 3456 7890" inputmode="tel" autocomplete="tel" maxlength="18">
+    <div class="salah" id="fSalah"></div>
+    <button class="btn" id="fBtn" onclick="kirimDaftar()">Daftar & lanjut ✅</button>
+    <div class="kecil">Nomor WA dipakai untuk memulihkan stempel kalau ganti HP. Tidak dikirimi spam.</div>
+    <button class="link" onclick="tampilPulihkan()">Sudah pernah daftar? Pulihkan stempel</button>`;
+}
+function tampilPulihkan(){
+  atas('Pulihkan Stempel', '📲');
+  isi().innerHTML = `
+    <b style="font-size:21px">Sudah pernah daftar?</b>
+    <div class="kecil">Masukkan nama & nomor WA yang dulu dipakai</div>
+    <input id="fNama" placeholder="Nama (sama seperti saat daftar)" maxlength="30">
+    <input id="fWa" placeholder="Nomor WA" inputmode="tel" maxlength="18">
+    <div class="salah" id="fSalah"></div>
+    <button class="btn" id="fBtn" onclick="kirimPulihkan()">Pulihkan stempel</button>
+    <button class="link" onclick="tampilDaftar()">← Daftar baru</button>`;
+}
+async function kirimForm(fungsi, args){
+  const btn = document.getElementById('fBtn'), salah = document.getElementById('fSalah');
+  salah.textContent = ''; btn.disabled = true;
+  const { data, error } = await sb.rpc(fungsi, args);
+  btn.disabled = false;
+  if(error){ salah.textContent = pesanError(error); return; }
+  simpanToken(data.token);
+  mulai();
+}
+function kirimDaftar(){
+  kirimForm('stempel_daftar', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value, p_cabang: CABANG });
+}
+function kirimPulihkan(){
+  kirimForm('stempel_pulihkan', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value });
+}
+
+// ---------- alur utama ----------
+let pesananSiap = null, statusSaya = null;
+async function mulai(){
+  const token = bacaToken();
+  if(!token){ tampilDaftar(); return; }
+  isi().innerHTML = '<p class="kecil">Memuat…</p>';
+  const [st, ck] = await Promise.all([
+    sb.rpc('stempel_status', { p_token: token }),
+    sb.rpc('stempel_cek', { p_token: token, p_cabang: CABANG })
+  ]);
+  if(st.error || ck.error){ tampilGagal(pesanError(st.error || ck.error)); return; }
+  if(!st.data.terdaftar){ hapusToken(); tampilDaftar(); return; }
+  statusSaya = st.data;
+  const c = ck.data;
+  if(c.ada){ pesananSiap = c; tampilPesanan(); return; }
+  tampilAlasan(c);
+}
+function tampilGagal(msg){
+  atas('Stempel Es Teh S.O.L.O');
+  isi().innerHTML = `<div class="kartu err"><div class="ik">📶</div><b>Gagal memuat</b><div class="kecil">${esc(msg)}</div></div><button class="btn" onclick="mulai()">Coba lagi</button>`;
+}
+function tampilPesanan(){
+  const p = pesananSiap;
+  atas('Hai, ' + statusSaya.nama + '!', '🧋');
+  isi().innerHTML = `
+    <div class="kecil">Pesananmu barusan:</div>
+    <div class="kartu pesanan"><b>🧋 ${p.jumlah} Original besar</b><div class="kecil">dibayar ${esc(p.jam)} · = ${p.jumlah} stempel</div></div>
+    <button class="btn" id="ambilBtn" onclick="ambilStempel()">Ambil ${p.jumlah} stempel ✅</button>
+    <div class="salah" id="ambilSalah"></div>
+    <div class="kecil">Bukan pesananmu? Jangan diambil ya, nanti dibatalkan kasir 🙏</div>
+    <div class="kecil" style="margin-top:8px">Stempelmu sekarang: <b>${Math.min(statusSaya.stempel,10)} / 10</b></div>`;
+}
+async function ambilStempel(){
+  const btn = document.getElementById('ambilBtn'); btn.disabled = true; btn.textContent = 'Mengambil…';
+  const { data, error } = await sb.rpc('stempel_klaim', { p_token: bacaToken(), p_transaksi: pesananSiap.transaksi_id });
+  if(error){
+    btn.disabled = false; btn.textContent = `Ambil ${pesananSiap.jumlah} stempel ✅`;
+    document.getElementById('ambilSalah').textContent = pesanError(error);
+    return;
+  }
+  statusSaya = data;
+  const penuh = data.stempel >= 10;
+  atas(penuh ? 'Selamat, ' + data.nama + '!' : 'Hai, ' + data.nama + '!', penuh ? '🎁' : '🎉', penuh);
+  isi().innerHTML = `<p class="big">+${data.tambah} stempel</p><div class="kecil">dari ${data.tambah} Es Teh Original besar</div>` +
+    kartuStatus(data, Math.min(data.tambah, data.stempel)) +
+    `<div class="kecil" style="margin-top:8px">💡 Simpan halaman ini di layar utama HP biar gampang cek stempel.</div>`;
+}
+function tampilAlasan(c){
+  const st = statusSaya, penuh = st.stempel >= 10;
+  atas(penuh ? 'Selamat, ' + st.nama + '!' : 'Hai, ' + st.nama + '!', penuh ? '🎁' : '🌲', penuh);
+  let kotak = '';
+  if(c.alasan === 'tunggu'){
+    const m = Math.max(1, Math.ceil((c.tunggu_detik || 60) / 60));
+    kotak = `<div class="kartu err kuning"><div class="ik">⏳</div><b>Stempel sudah masuk 👍</b><div class="kecil">Scan berikutnya bisa ${m} menit lagi.</div></div>`;
+  } else if(c.alasan === 'sudah_diambil'){
+    kotak = `<div class="kartu err"><div class="ik">🔒</div><b>Stempel pesanan ini sudah diambil</b><div class="kecil">Kalau itu pesananmu, bilang ke kasir ya.</div></div>`;
+  } else if(c.alasan === 'bukan_ori_besar'){
+    kotak = `<div class="kartu err"><div class="ik">🧋</div><b>Pesanan terakhir bukan Original besar</b><div class="kecil">Stempel khusus Es Teh Original <b>besar</b>.</div></div>`;
+  } else if(c.alasan === 'diblokir'){
+    kotak = `<div class="kartu err"><div class="ik">⛔</div><b>Akun stempel diblokir</b><div class="kecil">Hubungi kasir ya.</div></div>`;
+  } else if(st.hadiah_kode){
+    kotak = '';
+  } else {
+    kotak = `<div class="kartu err"><div class="ik">🙏</div><b>Tidak ada pesanan yang bisa diambil</b><div class="kecil">Scan <b>langsung</b> setelah bayar, sebelum kasir melayani pembeli berikutnya.</div></div>`;
+  }
+  isi().innerHTML = kotak + `<div class="kartu">${kartuStatus(st)}</div><button class="link" onclick="mulai()">🔄 Muat ulang</button>`;
+}
+mulai();
+</script>
+</body>
+</html>

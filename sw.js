@@ -53,7 +53,10 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  if (req.mode === 'navigate' && url.origin === self.location.origin) {
+  // hanya halaman aplikasi kasir (index.html) yang disimpan; halaman lain (mis. stempel.html untuk pembeli) langsung ke internet
+  const scopePath = new URL(self.registration.scope).pathname;
+  const halamanKasir = url.pathname === scopePath || url.pathname === scopePath + 'index.html';
+  if (req.mode === 'navigate' && url.origin === self.location.origin && halamanKasir) {
     event.respondWith(ambilHalaman(req));
     return;
   }

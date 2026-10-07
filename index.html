@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-07.2">
+<meta name="app-version" content="2026-10-07.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -420,6 +420,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   }
 
   /* ===== MODALS ===== */
+  .mini-stempel{border:none;border-radius:8px;padding:7px 10px;font-weight:800;font-size:13px;cursor:pointer;color:#0c1f14;}
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
   .overlay.show{display:flex;}
   .modal{background:#fff;border:1px solid var(--line-soft);border-radius:14px;padding:20px;width:100%;max-width:320px;max-height:85vh;overflow-y:auto;color:var(--ink);box-shadow:0 10px 30px rgba(12,31,20,.15);}
@@ -604,6 +605,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
     <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
     <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
+    <button class="side-btn hidden" id="stempelBtn" onclick="bukaStempel()"><span class="side-icon">🎟️</span><span class="side-label">Stempel</span></button>
     <button class="side-btn hidden" id="kasirPengaturanBtn" onclick="bukaPengaturanKasir()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚶</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
@@ -1314,6 +1316,21 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 </div>
 
 <!-- Pengaturan (kasir) -->
+<!-- Stempel pelanggan (Es Teh Original besar, 10 = gratis 1) -->
+<div class="overlay" id="stempelOverlay" onclick="if(event.target===this) tutupStempel()">
+  <div class="modal" style="max-width:420px;">
+    <h3>🎟️ Stempel Pelanggan</h3>
+    <p style="font-size:13px;margin:0 0 10px;">Khusus Es Teh Original <b>besar</b> · 10 stempel = gratis 1. Pembeli scan QR sendiri setelah bayar.</p>
+    <input id="stempelCari" placeholder="Cari nama / no. WA / kode hadiah" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:10px;font-size:15px;margin-bottom:8px;" oninput="cariStempelNanti()" onkeydown="if(event.key==='Enter') cariStempel()">
+    <div id="stempelKodeBox"></div>
+    <div id="stempelDaftar" style="font-size:14px;">Memuat…</div>
+    <div style="font-weight:800;margin:14px 0 6px;font-size:14px;">Klaim scan hari ini</div>
+    <div id="stempelKlaimDaftar" style="font-size:13px;">-</div>
+    <button class="modal-close" onclick="tutupStempel()">Tutup</button>
+  </div>
+</div>
+<div id="stempelNotifWadah" style="position:fixed;top:70px;right:12px;z-index:60;display:flex;flex-direction:column;gap:8px;max-width:340px;"></div>
+
 <div class="overlay" id="pengaturanKasirOverlay">
   <div class="modal">
     <h3>⚙️ Pengaturan</h3>
@@ -1774,6 +1791,7 @@ async function loadProfileAndEnter(){
   document.getElementById('ownerCabangSelector').classList.add('hidden');
   document.getElementById('kasirCabangStatus').classList.add('hidden');
   document.getElementById('kasirPengaturanBtn').classList.add('hidden');
+  document.getElementById('stempelBtn').classList.add('hidden');
   document.getElementById('uangLaciBtn').classList.add('hidden');
   document.getElementById('izinKeluarBtn').classList.add('hidden');
   tampilkanBannerIzin(null);
@@ -1859,6 +1877,7 @@ async function loadProfileAndEnter(){
     document.getElementById('kasirPengaturanBtn').classList.remove('hidden');
     document.getElementById('sidebarPasswordBtn').classList.add('hidden');
     document.getElementById('izinKeluarBtn').classList.remove('hidden');
+    document.getElementById('stempelBtn').classList.remove('hidden');
     await refreshIzinKeluarBtnState();
   }
   if(profile.role === 'kasir' || profile.role === 'owner'){
@@ -1895,6 +1914,7 @@ async function loadProfileAndEnter(){
   if(navigator.onLine){ trySyncPending(); }
   setTimeout(kirimCatatanError, 3000);
   mulaiTehSiap();
+  mulaiPantauStempel();
 
   if(profile.role === 'kasir' || profile.role === 'admin'){
     mulaiPresenceHeartbeat();
@@ -3438,6 +3458,7 @@ async function loadCabangList(){
 let sedangLogout = false;
 
 async function doLogout(){
+  if(typeof stempelPantauTimer !== 'undefined' && stempelPantauTimer){ clearInterval(stempelPantauTimer); stempelPantauTimer = null; }
   if(!confirm("Yakin mau logout? Pastikan sudah tidak ada transaksi/pesanan yang belum selesai.")) return;
   sedangLogout = true;
   document.body.classList.remove('role-admin');
@@ -7105,6 +7126,117 @@ async function samakanTehWadah(){
   catatTehSiap('set', ml / 1000, `Teh disamakan: ${literTeks(ml)}`);
 }
 
+// ================== STEMPEL PELANGGAN (Es Teh Original besar, 10 = gratis 1) ==================
+// Pembeli scan QR di meja (stempel.html) setelah bayar -> stempel otomatis. Kasir: lihat notifikasi klaim
+// (bisa Batalkan kalau salah orang), tambah stempel manual, tukar kode hadiah -> transaksi gratis otomatis.
+let stempelPantauTimer = null, stempelSejak = null, stempelSudahTampil = new Set(), stempelCariTimer = null;
+const escS = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jamWIB = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' }).replace(':','.');
+function bolehTukarHadiah(){ const r = currentProfile && currentProfile.role; return r === 'kasir' || r === 'owner'; }
+function mulaiPantauStempel(){
+  if(stempelPantauTimer) clearInterval(stempelPantauTimer);
+  const r = currentProfile && currentProfile.role;
+  if(r !== 'kasir' && r !== 'owner') return;
+  stempelSejak = new Date(Date.now() - 60000).toISOString();
+  stempelPantauTimer = setInterval(pantauStempel, 10000);
+}
+async function pantauStempel(){
+  if(!navigator.onLine || !getActiveCabangId() || document.hidden) return;
+  try{
+    const { data, error } = await sb.rpc('stempel_klaim_terbaru', { p_cabang: getActiveCabangId(), p_sejak: stempelSejak });
+    if(error || !Array.isArray(data)) return;
+    data.forEach(k => {
+      if(stempelSudahTampil.has(k.id) || k.dibatalkan_at) return;
+      stempelSudahTampil.add(k.id);
+      tampilNotifStempel(k);
+    });
+  }catch(e){}
+}
+function tampilNotifStempel(k){
+  const wadah = document.getElementById('stempelNotifWadah'); if(!wadah) return;
+  const el = document.createElement('div');
+  el.style.cssText = 'background:#0c1f14;color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.3);font-size:14px;';
+  el.innerHTML = `<span style="flex:1">✅ <b>${escS(k.nama)}</b> klaim ${k.jumlah} Original besar (+${k.jumlah}) · ${jamWIB(k.created_at)}</span>
+    <button style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px 10px;font-weight:800;">✖ Batalkan</button>
+    <button style="background:none;border:none;color:#fff;font-size:18px;padding:0 2px;" title="Tutup">×</button>`;
+  const [btnBatal, btnTutup] = el.querySelectorAll('button');
+  btnBatal.onclick = async () => { if(await batalkanKlaimStempel(k.id, k.nama, k.jumlah)) el.remove(); };
+  btnTutup.onclick = () => el.remove();
+  wadah.appendChild(el);
+  while(wadah.children.length > 3) wadah.firstChild.remove();
+  setTimeout(() => el.remove(), 90000);
+}
+async function batalkanKlaimStempel(id, nama, jumlah){
+  if(!confirm(`Batalkan ${jumlah} stempel milik ${nama}?\n\nStempel dicabut dan pesanan bisa diklaim ulang pemilik aslinya.`)) return false;
+  const { error } = await sb.rpc('stempel_batalkan', { p_klaim: id });
+  if(error){ alert('Gagal: ' + error.message); return false; }
+  showSuccessToast('↩️', 'Stempel dibatalkan', `${jumlah} stempel ${nama} dicabut`);
+  if(document.getElementById('stempelOverlay').classList.contains('show')) muatStempel();
+  return true;
+}
+function bukaStempel(){
+  document.getElementById('stempelOverlay').classList.add('show');
+  document.getElementById('stempelCari').value = '';
+  muatStempel();
+}
+function tutupStempel(){ document.getElementById('stempelOverlay').classList.remove('show'); }
+function cariStempelNanti(){ clearTimeout(stempelCariTimer); stempelCariTimer = setTimeout(cariStempel, 400); }
+async function muatStempel(){ await Promise.all([cariStempel(), muatKlaimStempel()]); }
+async function cariStempel(){
+  const box = document.getElementById('stempelDaftar');
+  const q = document.getElementById('stempelCari').value.trim();
+  const { data, error } = await sb.rpc('stempel_cari', { p_cari: q });
+  if(error){ box.textContent = 'Gagal memuat: ' + error.message; return; }
+  const kodeBox = document.getElementById('stempelKodeBox');
+  kodeBox.innerHTML = '';
+  if(!data.length){ box.innerHTML = q ? 'Tidak ketemu.' : 'Belum ada pelanggan yang daftar.'; return; }
+  const role = currentProfile && currentProfile.role;
+  box.innerHTML = data.map(p => {
+    const hadiah = p.kode ? `<div style="font-size:12px;color:#a06000;">🎁 kode ${escS(p.kode)}</div>` : '';
+    const btnGratis = p.kode && bolehTukarHadiah() ? `<button class="mini-stempel" style="background:#e8b923;" onclick="tukarHadiahStempel('${escS(p.kode)}','${escS(p.nama)}')">🎁 Gratis</button>` : '';
+    const btnBlokir = (role === 'owner' || role === 'admin') ? `<button class="mini-stempel" style="background:#eee;" onclick="blokirStempel('${p.id}', ${!p.diblokir}, '${escS(p.nama)}')">${p.diblokir ? 'Buka blokir' : '⛔'}</button>` : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #eee;padding:8px 0;${p.diblokir ? 'opacity:.5;' : ''}">
+      <div><b>${escS(p.nama)}</b> · ${escS(p.wa)}<div style="font-size:12px;color:#666;">${Math.min(p.stempel,10)}/10 · total ${p.total_cup} cup${p.terakhir_klaim ? ' · terakhir ' + new Date(p.terakhir_klaim).toLocaleDateString('id-ID',{day:'numeric',month:'short',timeZone:'Asia/Jakarta'}) + ' ' + jamWIB(p.terakhir_klaim) : ''}${p.diblokir ? ' · DIBLOKIR' : ''}</div>${hadiah}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${btnGratis}<button class="mini-stempel" style="background:#e8f2e9;" onclick="tambahStempelManual('${p.id}','${escS(p.nama)}')">+1</button>${btnBlokir}</div>
+    </div>`;
+  }).join('');
+}
+async function muatKlaimStempel(){
+  const box = document.getElementById('stempelKlaimDaftar');
+  const awal = new Date(); awal.setHours(0,0,0,0);
+  const { data, error } = await sb.rpc('stempel_klaim_terbaru', { p_cabang: getActiveCabangId(), p_sejak: awal.toISOString() });
+  if(error){ box.textContent = 'Gagal memuat: ' + error.message; return; }
+  if(!data.length){ box.textContent = 'Belum ada klaim hari ini.'; return; }
+  box.innerHTML = data.slice().reverse().map(k => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;${k.dibatalkan_at ? 'opacity:.5;text-decoration:line-through;' : ''}">
+      <span>${jamWIB(k.created_at)} · <b>${escS(k.nama)}</b> +${k.jumlah}</span>
+      ${k.dibatalkan_at ? '<span>dibatalkan</span>' : `<button class="mini-stempel" style="background:#c0392b;color:#fff;" onclick="batalkanKlaimStempel('${k.id}','${escS(k.nama)}',${k.jumlah})">✖ Batalkan</button>`}
+    </div>`).join('');
+}
+async function tambahStempelManual(id, nama){
+  const j = prompt(`Tambah berapa stempel untuk ${nama}?\n(1 Es Teh Original besar = 1 stempel, maks. 5)`, '1');
+  if(j === null) return;
+  const n = parseInt(j, 10);
+  if(!(n >= 1 && n <= 5)){ alert('Isi angka 1–5'); return; }
+  const { data, error } = await sb.rpc('stempel_tambah', { p_pelanggan: id, p_jumlah: n, p_cabang: getActiveCabangId() });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('🎟️', `+${n} stempel untuk ${nama}`, `Sekarang ${Math.min(data.stempel,10)}/10${data.hadiah_kode ? ' · 🎁 dapat hadiah!' : ''}`);
+  muatStempel();
+}
+async function tukarHadiahStempel(kode, nama){
+  if(!confirm(`Tukar hadiah ${nama} (kode ${kode})?\n\nOtomatis tercatat 1 Es Teh Original besar GRATIS (Rp0) dan stempelnya dikurangi 10.`)) return;
+  const { data, error } = await sb.rpc('stempel_tukar', { p_kode: kode, p_cabang: getActiveCabangId() });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('🎁', `${nama} dapat 1 Original besar GRATIS`, `Silakan buatkan. Sisa stempel ${data.stempel}/10`);
+  muatStempel();
+  if(typeof refreshTehSiap === 'function') refreshTehSiap();
+}
+async function blokirStempel(id, blokir, nama){
+  if(!confirm(`${blokir ? 'Blokir' : 'Buka blokir'} ${nama}?${blokir ? '\n\nPelanggan yang diblokir tidak bisa ambil stempel.' : ''}`)) return;
+  const { error } = await sb.rpc('stempel_blokir', { p_pelanggan: id, p_blokir: blokir });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  muatStempel();
+}
+
 // ================== PENGATURAN: BAGIAN BISA DIBUKA/TUTUP ==================
 // Semua bagian di Pengaturan tertutup dulu; ketuk judulnya untuk membuka.
 function siapkanLipatPengaturan(){
@@ -7157,7 +7289,7 @@ function pakaiMenuToggle(){ const r = currentProfile && currentProfile.role; ret
 const STOK_LIPAT = [['stokmenipis','⚠️ Stok Menipis'],['stokcup','🥤 Stok Cup']];
 const grupLipat = p => LAPORAN_LIPAT.some(([x])=>x===p) ? 'laporan' : (STOK_LIPAT.some(([x])=>x===p) ? 'stok' : null);
 // [judul, aksi, khusus owner?] — admin tidak boleh kas/belanja/transaksi kasir
-const OUTLET_DI_LAPORAN = [['📋 SOP Menu', ()=>showSOPView(), false],['💵 Kas', ()=>bukaKasModal(), true],['🧊 Belanja', ()=>bukaBelanjaKecil(), true],['📈 Hari Ini', ()=>bukaPenjualanHariIni(), true]];
+const OUTLET_DI_LAPORAN = [['🎟️ Stempel Pelanggan', ()=>bukaStempel(), false],['📋 SOP Menu', ()=>showSOPView(), false],['💵 Kas', ()=>bukaKasModal(), true],['🧊 Belanja', ()=>bukaBelanjaKecil(), true],['📈 Hari Ini', ()=>bukaPenjualanHariIni(), true]];
 function siapkanBarLaporan(){
   if(!document.getElementById('laporanOutletBars')){
     const pertama = document.getElementById('dashPanel-' + LAPORAN_LIPAT[0][0]);
