@@ -49,7 +49,33 @@ input:focus{outline:none;border-color:var(--h2)}
 const SUPABASE_URL = "https://ywoytgapbshpzrdwdtel.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
-const CABANG = new URLSearchParams(location.search).get('c') || '199e77b5-f52e-4534-9656-3a0d8fceddfd';
+let CABANG = new URLSearchParams(location.search).get('c') || '199e77b5-f52e-4534-9656-3a0d8fceddfd';
+// QR di meja kasir berisi kode rahasia (?k=...). Kode disimpan 10 menit lalu dihapus dari alamat halaman,
+// jadi pintasan di layar HP / halaman tanpa scan hanya bisa MELIHAT kartu, tidak bisa ambil stempel.
+(function(){
+  const k = new URLSearchParams(location.search).get('k');
+  if(k){
+    try{ sessionStorage.setItem('stempel_kode', JSON.stringify({ k, t: Date.now() })); }catch(e){}
+    try{ history.replaceState(null, '', location.pathname); }catch(e){}
+  }
+})();
+function kodeQR(){
+  try{ const o = JSON.parse(sessionStorage.getItem('stempel_kode') || 'null'); if(o && Date.now() - o.t < 10*60*1000) return o.k; }catch(e){}
+  return null;
+}
+let cabangSudahDicek = false;
+async function cabangDariQR(){
+  if(cabangSudahDicek || !kodeQR()) return;
+  const { data } = await sb.rpc('stempel_cabang_dari_kode', { p_kode: kodeQR() });
+  if(data) CABANG = data;
+  cabangSudahDicek = true;
+}
+function ambilLokasi(){
+  return new Promise((res, rej) => {
+    if(!navigator.geolocation) return rej({ code: 2 });
+    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  });
+}
 const KUNCI = 'stempel_es_teh_solo_token';
 
 function bacaToken(){ try{ return localStorage.getItem(KUNCI); }catch(e){ return null; } }
@@ -132,6 +158,7 @@ async function mulai(){
   const token = bacaToken();
   if(!token){ tampilDaftar(); return; }
   isi().innerHTML = '<p class="kecil">Memuat…</p>';
+  await cabangDariQR();
   const [st, ck] = await Promise.all([
     sb.rpc('stempel_status', { p_token: token }),
     sb.rpc('stempel_cek', { p_token: token, p_cabang: CABANG })
@@ -140,8 +167,15 @@ async function mulai(){
   if(!st.data.terdaftar){ hapusToken(); tampilDaftar(); return; }
   statusSaya = st.data;
   const c = ck.data;
+  if(!kodeQR()){ tampilKartuSaja(); return; }
   if(c.ada){ pesananSiap = c; tampilPesanan(); return; }
   tampilAlasan(c);
+}
+function tampilKartuSaja(){
+  const st = statusSaya, penuh = st.stempel >= 10;
+  atas(penuh ? 'Selamat, ' + st.nama + '!' : 'Hai, ' + st.nama + '!', penuh ? '🎁' : '🌲', penuh);
+  isi().innerHTML = `<div class="kartu">${kartuStatus(st)}</div>
+    <div class="kartu err kuning"><div class="ik">📷</div><b>Mau ambil stempel?</b><div class="kecil">Setelah bayar Es Teh Original besar, <b>scan QR di meja kasir</b> pakai kamera HP.</div></div>`;
 }
 function tampilGagal(msg){
   atas('Stempel Es Teh S.O.L.O');
@@ -154,13 +188,26 @@ function tampilPesanan(){
     <div class="kecil">Pesananmu barusan:</div>
     <div class="kartu pesanan"><b>🧋 ${p.jumlah} Original besar</b><div class="kecil">dibayar ${esc(p.jam)} · = ${p.jumlah} stempel</div></div>
     <button class="btn" id="ambilBtn" onclick="ambilStempel()">Ambil ${p.jumlah} stempel ✅</button>
+    <div class="kecil">📍 Butuh izin lokasi untuk memastikan kamu ada di outlet.</div>
     <div class="salah" id="ambilSalah"></div>
     <div class="kecil">Bukan pesananmu? Jangan diambil ya, nanti dibatalkan kasir 🙏</div>
     <div class="kecil" style="margin-top:8px">Stempelmu sekarang: <b>${Math.min(statusSaya.stempel,10)} / 10</b></div>`;
 }
 async function ambilStempel(){
-  const btn = document.getElementById('ambilBtn'); btn.disabled = true; btn.textContent = 'Mengambil…';
-  const { data, error } = await sb.rpc('stempel_klaim', { p_token: bacaToken(), p_transaksi: pesananSiap.transaksi_id });
+  const btn = document.getElementById('ambilBtn'), salah = document.getElementById('ambilSalah');
+  btn.disabled = true; btn.textContent = 'Cek lokasi…'; salah.textContent = '';
+  let pos;
+  try{ pos = await ambilLokasi(); }
+  catch(e){
+    btn.disabled = false; btn.textContent = `Ambil ${pesananSiap.jumlah} stempel ✅`;
+    salah.textContent = e && e.code === 1
+      ? 'Izin lokasi ditolak. Izinkan Lokasi untuk halaman ini (ikon gembok di atas → Izin → Lokasi), lalu coba lagi.'
+      : 'Lokasi belum terbaca. Nyalakan GPS/Lokasi HP, lalu coba lagi.';
+    return;
+  }
+  btn.textContent = 'Mengambil…';
+  const { data, error } = await sb.rpc('stempel_klaim', { p_token: bacaToken(), p_transaksi: pesananSiap.transaksi_id,
+    p_kode: kodeQR(), p_lat: pos.coords.latitude, p_lng: pos.coords.longitude, p_akurasi: pos.coords.accuracy });
   if(error){
     btn.disabled = false; btn.textContent = `Ambil ${pesananSiap.jumlah} stempel ✅`;
     document.getElementById('ambilSalah').textContent = pesanError(error);

@@ -1,0 +1,8 @@
+-- 2026-10-07 23.2x (SUDAH DIJALANKAN oleh Mey, dites mode uji) — ambil stempel wajib scan QR (kode rahasia) + GPS <= 75 m dari outlet
+-- tabel stempel_pengaturan (kode QR per cabang, radius_m 75), kolom stempel_klaim.jarak_m,
+-- fungsi stempel_jarak_m, stempel_cabang_dari_kode, stempel_klaim(token, transaksi, kode, lat, lng, akurasi);
+-- versi lama stempel_klaim(token, transaksi) dicabut dari pembeli.
+-- Ganti kode QR (kalau ada yang curang pakai foto poster):
+--   update stempel_pengaturan set kode = substr(md5(random()::text),1,8), diubah_at = now() where cabang_id = '<id cabang>';
+--   lalu cetak poster dengan QR baru: https://kasir-es-teh-solo.github.io/Kasir-es-teh-solo/stempel.html?k=<kode>
+-- (isi lengkap fungsi: lihat migration "stempel_wajib_qr_gps" di Supabase)
