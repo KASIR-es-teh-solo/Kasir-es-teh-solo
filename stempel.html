@@ -18,7 +18,7 @@ body{margin:0;min-height:100vh;background:#0c1f14 url('latar.jpg') center/cover 
 .atas.emas{background:rgba(232,185,35,.95);color:var(--hijau)}
 .atas .ik{font-size:34px;line-height:1}
 .atas h1{font-family:Fraunces,serif;font-size:22px;margin:6px 0 0}
-.isi{max-width:440px;margin:16px auto 30px;width:calc(100% - 32px);background:rgba(247,244,234,.94);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:18px 16px 24px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.isi{max-width:440px;margin:16px auto 30px;width:calc(100% - 32px);background:rgba(247,244,234,.42);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.35);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:18px 16px 24px;display:flex;flex-direction:column;gap:14px;text-align:center}
 .kecil{font-size:14px;color:var(--abu);line-height:1.5}
 .btn{background:var(--h2);color:#fff;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:17px;width:100%;font-family:inherit;cursor:pointer}
 .btn:disabled{opacity:.6}
@@ -26,7 +26,12 @@ body{margin:0;min-height:100vh;background:#0c1f14 url('latar.jpg') center/cover 
 .link{background:none;border:none;color:var(--h2);text-decoration:underline;font-size:15px;font-family:inherit;padding:6px;cursor:pointer}
 input{border:2px solid var(--garis);border-radius:12px;padding:14px;font-size:17px;font-family:inherit;width:100%;background:#fff}
 input:focus{outline:none;border-color:var(--h2)}
-.kartu{background:#fff;border-radius:18px;padding:16px;border:2px solid var(--garis)}
+.kartu{background:rgba(255,255,255,.78);border-radius:18px;padding:16px;border:1px solid rgba(255,255,255,.6)}
+.isi>.kecil,.isi>b,.isi>.big,.isi>.jumlah{text-shadow:0 1px 2px rgba(255,255,255,.6)}
+.scan-ov{position:fixed;inset:0;background:#000;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;text-align:center;padding:16px}
+.scan-ov video{width:100%;max-width:420px;border-radius:18px;background:#111}
+.scan-kotak{position:relative;width:100%;max-width:420px}
+.scan-kotak::after{content:'';position:absolute;inset:18%;border:3px solid var(--emas);border-radius:16px}
 .pesanan b{display:block;font-size:26px;margin:4px 0}
 .big{font-family:Fraunces,serif;font-size:38px;color:var(--h2);margin:0}
 .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:4px 0}
@@ -177,7 +182,67 @@ function tampilKartuSaja(){
   const st = statusSaya, penuh = st.stempel >= 10;
   atas(penuh ? 'Selamat, ' + st.nama + '!' : 'Hai, ' + st.nama + '!', penuh ? '🎁' : '🌲', penuh);
   isi().innerHTML = `<div class="kartu">${kartuStatus(st)}</div>
-    <div class="kartu err kuning"><div class="ik">📷</div><b>Mau ambil stempel?</b><div class="kecil">Setelah bayar Es Teh Original besar, <b>scan QR di meja kasir</b> pakai kamera HP.</div></div>`;
+    <div class="kartu err kuning"><b>Mau ambil stempel?</b><div class="kecil" style="margin:4px 0 10px">Setelah bayar Es Teh Original besar, scan QR di meja kasir.</div>
+    <button class="btn" onclick="bukaScanner()">📷 Scan QR di meja kasir</button></div>`;
+}
+// ---------- scanner QR di dalam halaman ----------
+let scanStream = null, scanJalan = false;
+function muatJsQR(){
+  return new Promise((res, rej) => {
+    if(window.jsQR) return res();
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'; sc.onload = res; sc.onerror = rej;
+    document.head.appendChild(sc);
+  });
+}
+async function bukaScanner(){
+  const ov = document.createElement('div'); ov.className = 'scan-ov'; ov.id = 'scanOv';
+  ov.innerHTML = `<b style="font-size:19px">Arahkan kamera ke QR di meja kasir</b>
+    <div class="scan-kotak"><video id="scanVideo" playsinline muted></video></div>
+    <div class="kecil" id="scanInfo" style="color:#ddd">Membuka kamera…</div>
+    <button class="btn emas" style="max-width:420px" onclick="tutupScanner()">Batal</button>`;
+  document.body.appendChild(ov);
+  try{
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+  }catch(e){
+    document.getElementById('scanInfo').textContent = 'Kamera tidak bisa dibuka. Izinkan Kamera untuk halaman ini, atau scan pakai aplikasi kamera HP.';
+    return;
+  }
+  const v = document.getElementById('scanVideo'); v.srcObject = scanStream; await v.play();
+  document.getElementById('scanInfo').textContent = 'Mencari QR…';
+  let det = null;
+  try{ if('BarcodeDetector' in window) det = new BarcodeDetector({ formats: ['qr_code'] }); }catch(e){ det = null; }
+  if(!det){ try{ await muatJsQR(); }catch(e){} }
+  const kanvas = document.createElement('canvas'), ctx = kanvas.getContext('2d', { willReadFrequently: true });
+  scanJalan = true;
+  const cari = async () => {
+    if(!scanJalan) return;
+    let teks = null;
+    try{
+      if(det){ const h = await det.detect(v); if(h.length) teks = h[0].rawValue; }
+      else if(window.jsQR && v.videoWidth){
+        kanvas.width = v.videoWidth; kanvas.height = v.videoHeight; ctx.drawImage(v, 0, 0);
+        const r = jsQR(ctx.getImageData(0, 0, kanvas.width, kanvas.height).data, kanvas.width, kanvas.height);
+        if(r) teks = r.data;
+      }
+    }catch(e){}
+    if(teks){
+      let k = null;
+      try{ k = new URL(teks).searchParams.get('k'); }catch(e){}
+      if(k){
+        try{ sessionStorage.setItem('stempel_kode', JSON.stringify({ k, t: Date.now() })); }catch(e){}
+        cabangSudahDicek = false; tutupScanner(); mulai(); return;
+      }
+      document.getElementById('scanInfo').textContent = 'Itu bukan QR stempel Es Teh S.O.L.O 🙏';
+    }
+    setTimeout(cari, 250);
+  };
+  cari();
+}
+function tutupScanner(){
+  scanJalan = false;
+  if(scanStream){ scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const ov = document.getElementById('scanOv'); if(ov) ov.remove();
 }
 function tampilGagal(msg){
   atas('Stempel Es Teh S.O.L.O');
