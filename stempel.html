@@ -140,7 +140,8 @@ function tampilPulihkan(){
   atas('Pulihkan Stempel', '📲');
   isi().innerHTML = `
     <b style="font-size:21px">Sudah pernah daftar?</b>
-    <div class="kecil">Masukkan nomor WA & PIN yang dulu dibuat</div>
+    <div class="kecil">Masukkan nama, nomor WA & PIN yang dulu dibuat</div>
+    <input id="fNama" placeholder="Nama (sama seperti saat daftar)" maxlength="30">
     <input id="fWa" placeholder="Nomor WA" inputmode="tel" maxlength="18">
     <input id="fPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN 4 angka" autocomplete="off" style="letter-spacing:8px;text-align:center">
     <div class="kecil" style="margin-top:-6px">Lupa PIN? Minta kasir buatkan PIN baru.</div>
@@ -162,7 +163,7 @@ function kirimDaftar(){
   kirimForm('stempel_daftar_pin', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value, p_pin: document.getElementById('fPin').value, p_cabang: CABANG });
 }
 function kirimPulihkan(){
-  kirimForm('stempel_pulihkan_pin', { p_wa: document.getElementById('fWa').value, p_pin: document.getElementById('fPin').value });
+  kirimForm('stempel_pulihkan_pin', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value, p_pin: document.getElementById('fPin').value });
 }
 
 // ---------- alur utama ----------

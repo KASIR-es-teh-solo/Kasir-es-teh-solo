@@ -6,3 +6,7 @@
 --   update stempel_pengaturan set kode = substr(md5(random()::text),1,8), diubah_at = now() where cabang_id = '<id cabang>';
 --   lalu cetak poster dengan QR baru: https://kasir-es-teh-solo.github.io/Kasir-es-teh-solo/stempel.html?k=<kode>
 -- (isi lengkap fungsi: lihat migration "stempel_wajib_qr_gps" di Supabase)
+
+-- 2026-10-08 00.1x (SUDAH DIJALANKAN) — PIN 4 angka: migration "stempel_pin", "stempel_pin_fix", "stempel_pulihkan_nama_wa_pin"
+-- daftar = nama + WA + PIN (stempel_daftar_pin); pulihkan = nama + WA + PIN (stempel_pulihkan_pin), salah 5x kunci 1 jam;
+-- pelanggan lama buat PIN (stempel_set_pin); kasir atur PIN baru (stempel_reset_pin). Fungsi lama stempel_daftar & stempel_pulihkan (tanpa PIN) dicabut dari pembeli.
