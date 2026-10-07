@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c1f14">
+<meta name="color-scheme" content="only light">
 <title>Stempel Es Teh S.O.L.O</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230c1f14'/%3E%3Ccircle cx='100' cy='100' r='80' fill='%23f7f4ea'/%3E%3Ctext x='100' y='135' font-size='100' text-anchor='middle'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -11,12 +12,13 @@
 <style>
 :root{--hijau:#0c1f14;--h2:#2e7d32;--krem:#f7f4ea;--emas:#e8b923;--teks:#1d2a21;--abu:#5b6b60;--garis:#cfd8c9}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--krem);color:var(--teks);font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
-.atas{background:var(--hijau);color:#fff;text-align:center;padding:26px 16px 20px}
-.atas.emas{background:var(--emas);color:var(--hijau)}
+html{background:#0c1f14}
+body{margin:0;min-height:100vh;background:#0c1f14 url('latar.jpg') center/cover fixed no-repeat;color:var(--teks);font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.atas{background:rgba(12,31,20,.82);color:#fff;text-align:center;padding:26px 16px 20px;backdrop-filter:blur(3px)}
+.atas.emas{background:rgba(232,185,35,.95);color:var(--hijau)}
 .atas .ik{font-size:34px;line-height:1}
 .atas h1{font-family:Fraunces,serif;font-size:22px;margin:6px 0 0}
-.isi{max-width:440px;margin:0 auto;padding:18px 16px 40px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.isi{max-width:440px;margin:16px auto 30px;width:calc(100% - 32px);background:rgba(247,244,234,.94);border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:18px 16px 24px;display:flex;flex-direction:column;gap:14px;text-align:center}
 .kecil{font-size:14px;color:var(--abu);line-height:1.5}
 .btn{background:var(--h2);color:#fff;border:none;border-radius:14px;padding:15px;font-weight:800;font-size:17px;width:100%;font-family:inherit;cursor:pointer}
 .btn:disabled{opacity:.6}
