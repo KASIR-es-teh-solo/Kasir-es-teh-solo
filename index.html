@@ -1324,7 +1324,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <div class="overlay" id="beliStokOverlay">
   <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
     <h3>📦 Beli Stok Bahan</h3>
-    <p style="margin-bottom:10px;">Pilih bahan yang dibeli. Uangnya dari laci.</p>
+    <p style="margin-bottom:10px;">Pilih bahan yang dibeli.</p>
     <div class="login-error" id="beliStokError"></div>
     <div id="beliStokPilihan" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
     <div id="beliStokIsi" style="display:none;background:#fbf3ec;border:2px solid #6d3b1f;border-radius:12px;padding:12px;margin-bottom:12px;">
@@ -1338,6 +1338,12 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <input type="text" inputmode="decimal" class="input-rupiah" id="beliStokTotal" placeholder="0" oninput="hitungBeliStok()" style="font-size:18px;">
       </div>
       <div id="beliStokInfo" style="font-size:13px;min-height:16px;color:var(--ink);"></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink);margin:10px 0 6px;">Pakai uang apa?</div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="beliStokDanaLaci" onclick="pilihDanaBeliStok('tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #2e7d32;font-weight:800;font-size:14px;cursor:pointer;">💵 Uang Laci</button>
+        <button type="button" id="beliStokDanaLain" onclick="pilihDanaBeliStok('non_tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #1565c0;font-weight:800;font-size:14px;cursor:pointer;">💳 Uang Lainnya</button>
+      </div>
+      <div id="beliStokDanaInfo" style="font-size:11px;opacity:.75;margin-top:6px;color:var(--ink);"></div>
     </div>
     <button class="login-btn" id="beliStokSimpanBtn" onclick="simpanBeliStok()">Simpan</button>
     <button class="modal-close" onclick="tutupBeliStok()">Batal</button>
@@ -6849,7 +6855,18 @@ function pilihKategoriBelanja(btn){
 // ================== BELI STOK BAHAN (ADMIN & OWNER) ==================
 // Hanya bahan yang stoknya berkurang otomatis saat transaksi. Disimpan lewat fungsi database kasir_beli_stok
 // (uang dari laci, stok bertambah lewat trigger pembelian, harga modal ikut harga terbaru).
-let beliStokDaftar = [], beliStokDipilih = null;
+let beliStokDaftar = [], beliStokDipilih = null, beliStokDana = 'tunai';
+
+function pilihDanaBeliStok(d){
+  beliStokDana = d;
+  const laci = document.getElementById('beliStokDanaLaci'), lain = document.getElementById('beliStokDanaLain');
+  if(!laci) return;
+  laci.style.background = d === 'tunai' ? '#2e7d32' : '#fff'; laci.style.color = d === 'tunai' ? '#fff' : '#2e7d32';
+  lain.style.background = d === 'non_tunai' ? '#1565c0' : '#fff'; lain.style.color = d === 'non_tunai' ? '#fff' : '#1565c0';
+  document.getElementById('beliStokDanaInfo').textContent = d === 'tunai'
+    ? 'Uang diambil dari laci kasir. Saldo kas ikut berkurang.'
+    : 'Uang pribadi / transfer. Saldo laci tidak berubah.';
+}
 const BELI_STOK_URUT = ['cup 18 oz','cup 22 oz','cup 16 oz','sedotan','kopi ice roast','milo','teh original'];
 
 function satuanBeliStok(b){
@@ -6866,6 +6883,7 @@ async function bukaBeliStok(){
   const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
   beliStokDaftar = (data||[]).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
   beliStokDipilih = null;
+  pilihDanaBeliStok('tunai');
   document.getElementById('beliStokError').classList.remove('show');
   document.getElementById('beliStokJumlah').value = '';
   document.getElementById('beliStokTotal').value = '';
@@ -6913,11 +6931,11 @@ async function simpanBeliStok(){
   if(j <= 0) return gagal(`Isi berapa ${satuanBeliStok(b)} yang dibeli.`);
   if(t <= 0) return gagal('Isi total bayar.');
   const btn = document.getElementById('beliStokSimpanBtn'); btn.disabled = true; btn.textContent = 'Menyimpan...';
-  const { error } = await sb.rpc('kasir_beli_stok', { p_cabang: activeCabangId, p_bahan: b.id, p_jumlah: j, p_total: t });
+  const { error } = await sb.rpc('beli_stok_bahan', { p_cabang: activeCabangId, p_bahan: b.id, p_jumlah: j, p_total: t, p_sumber_dana: beliStokDana });
   btn.disabled = false; btn.textContent = 'Simpan';
   if(error) return gagal('Gagal menyimpan: ' + error.message);
   tutupBeliStok();
-  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan. Stok sudah bertambah.`);
+  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : 'uang lainnya'}). Stok sudah bertambah.`);
   try{ await loadPembelianData(); }catch(_){}
 }
 

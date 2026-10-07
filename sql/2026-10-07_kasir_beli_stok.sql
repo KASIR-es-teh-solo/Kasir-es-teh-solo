@@ -37,3 +37,7 @@ $$;
 
 revoke all on function public.kasir_beli_stok(uuid, uuid, numeric, numeric) from public, anon;
 grant execute on function public.kasir_beli_stok(uuid, uuid, numeric, numeric) to authenticated;
+
+-- 2026-10-07 19.0x: Boss minta pilihan sumber uang (Uang Laci / Uang Lainnya) -> fungsi baru beli_stok_bahan(..., p_sumber_dana)
+-- (isi sama dengan kasir_beli_stok + parameter p_sumber_dana 'tunai'|'non_tunai'); kasir_beli_stok dicabut dari authenticated.
+-- Lihat migrasi Supabase "beli_stok_pilih_sumber_dana".
