@@ -961,7 +961,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;">🧾 Riwayat Pembelian Bahan Baku</h3>
-          <button class="header-btn gold" onclick="openPembelianModal()">+ Catat Pembelian</button>
+          <button class="header-btn gold" id="catatPembelianBtn" onclick="openPembelianModal()">+ Catat Pembelian</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;">
           <div>
@@ -1315,13 +1315,12 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <h3>💰 Uang Laci</h3>
     <p>Catat uang yang keluar dari laci, atau hitung kas saat tutup.</p>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaBelanjaKecil();">🧊 Catat Belanja</button>
-    <button class="login-btn" style="margin-bottom:8px;background:#6d3b1f;" onclick="tutupUangLaci(); bukaBeliStok();">📦 Beli Stok Bahan</button>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaKasModal();">💵 Hitung / Tutup Kas</button>
     <button class="modal-close" onclick="tutupUangLaci()">Tutup</button>
   </div>
 </div>
 
-<!-- Beli stok bahan (kasir): bahan yang berkurang otomatis saat transaksi -->
+<!-- Beli stok bahan (admin, pengganti Catat Pembelian): bahan yang berkurang otomatis saat transaksi -->
 <div class="overlay" id="beliStokOverlay">
   <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
     <h3>📦 Beli Stok Bahan</h3>
@@ -3679,6 +3678,7 @@ function showDashPanel(panelName){
   if(panelName === 'menuoutlet'){ hentikanPollingAktif(); simpanViewState({ type:'dash', panel:'menuoutlet' }); return; }
   loadDashboard();
   loadKaryawan();
+  { const cb = document.getElementById('catatPembelianBtn'); if(cb) cb.textContent = (currentProfile && currentProfile.role === 'admin') ? '📦 Beli Stok Bahan' : '+ Catat Pembelian'; }
   loadPembelianData();
   loadBiayaData();
 
@@ -6580,6 +6580,8 @@ async function pastikanBahanBakuTermuat(){
 }
 
 async function openPembelianModal(){
+  // admin: pakai form simpel "Beli Stok Bahan" sebagai pengganti form lama
+  if(currentProfile && currentProfile.role === 'admin'){ return bukaBeliStok(); }
   await pastikanBahanBakuTermuat();
   editingPembelianId = null;
   document.getElementById('pembelianModalTitle').textContent = 'Catat Pembelian';
@@ -6844,7 +6846,7 @@ function pilihKategoriBelanja(btn){
   if(infoTab) infoTab.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_TABUNGAN);
 }
 
-// ================== BELI STOK BAHAN (KASIR) ==================
+// ================== BELI STOK BAHAN (ADMIN) ==================
 // Hanya bahan yang stoknya berkurang otomatis saat transaksi. Disimpan lewat fungsi database kasir_beli_stok
 // (uang dari laci, stok bertambah lewat trigger pembelian, harga modal ikut harga terbaru).
 let beliStokDaftar = [], beliStokDipilih = null;
@@ -6916,6 +6918,7 @@ async function simpanBeliStok(){
   if(error) return gagal('Gagal menyimpan: ' + error.message);
   tutupBeliStok();
   alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan. Stok sudah bertambah.`);
+  try{ await loadPembelianData(); }catch(_){}
 }
 
 async function bukaBelanjaKecil(){

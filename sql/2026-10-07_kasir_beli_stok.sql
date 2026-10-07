@@ -1,5 +1,5 @@
--- Kasir bisa catat pembelian bahan yang stoknya berkurang saat transaksi (cup, kopi, milo, sedotan, bubuk rasa, teh)
--- langsung dari menu Uang Laci. Uang selalu dari laci (tunai). Stok bertambah lewat trigger pembelian seperti biasa.
+-- Admin (form simpel pengganti Catat Pembelian) bisa catat pembelian bahan yang stoknya berkurang saat transaksi (cup, kopi, milo, sedotan, bubuk rasa, teh)
+-- lewat tombol Beli Stok Bahan di menu Pembelian. Uang selalu dari laci (tunai). Stok bertambah lewat trigger pembelian seperti biasa.
 create or replace function public.kasir_beli_stok(p_cabang uuid, p_bahan uuid, p_jumlah numeric, p_total numeric)
 returns json
 language plpgsql
@@ -24,7 +24,7 @@ begin
   if p_total is null or p_total <= 0 then raise exception 'Total bayar harus diisi'; end if;
 
   insert into pembelian (cabang_id, bahan_baku_id, jumlah, harga_satuan, total, catatan, sumber_dana, dibeli_oleh)
-  values (p_cabang, p_bahan, p_jumlah, round(p_total / p_jumlah, 4), p_total, 'dicatat di kasir', 'tunai', auth.uid())
+  values (p_cabang, p_bahan, p_jumlah, round(p_total / p_jumlah, 4), p_total, 'dicatat lewat Beli Stok Bahan', 'tunai', auth.uid())
   returning id into v_id;
 
   insert into log_aktivitas (cabang_id, user_id, aksi, keterangan)
