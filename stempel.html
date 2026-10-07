@@ -44,6 +44,8 @@ input:focus{outline:none;border-color:var(--h2)}
 .err .ik{font-size:32px}
 .kode{border:2px dashed var(--emas)}
 .kode .angka{font-size:46px;font-weight:900;letter-spacing:8px;color:var(--hijau)}
+input::placeholder{letter-spacing:normal}
+.isi .kecil{color:#24312a;font-weight:600}
 .salah{color:#c0392b;font-size:14px;min-height:1em}
 .hidden{display:none!important}
 </style>
@@ -127,6 +129,8 @@ function tampilDaftar(){
     <div class="kecil">Beli Es Teh Original <b>besar</b> → scan → dapat stempel.<br>10 stempel = <b>GRATIS 1 Original besar</b>.</div>
     <input id="fNama" placeholder="Nama kamu" autocomplete="given-name" maxlength="30">
     <input id="fWa" placeholder="Nomor WA, mis. 0812 3456 7890" inputmode="tel" autocomplete="tel" maxlength="18">
+    <input id="fPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Buat PIN 4 angka" autocomplete="off" style="letter-spacing:8px;text-align:center">
+    <div class="kecil" style="margin-top:-6px">🔑 PIN dipakai kalau pindah HP. Jangan kasih tahu orang lain.</div>
     <div class="salah" id="fSalah"></div>
     <button class="btn" id="fBtn" onclick="kirimDaftar()">Daftar & lanjut ✅</button>
     <div class="kecil">Nomor WA dipakai untuk memulihkan stempel kalau ganti HP. Tidak dikirimi spam.</div>
@@ -136,9 +140,10 @@ function tampilPulihkan(){
   atas('Pulihkan Stempel', '📲');
   isi().innerHTML = `
     <b style="font-size:21px">Sudah pernah daftar?</b>
-    <div class="kecil">Masukkan nama & nomor WA yang dulu dipakai</div>
-    <input id="fNama" placeholder="Nama (sama seperti saat daftar)" maxlength="30">
+    <div class="kecil">Masukkan nomor WA & PIN yang dulu dibuat</div>
     <input id="fWa" placeholder="Nomor WA" inputmode="tel" maxlength="18">
+    <input id="fPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN 4 angka" autocomplete="off" style="letter-spacing:8px;text-align:center">
+    <div class="kecil" style="margin-top:-6px">Lupa PIN? Minta kasir buatkan PIN baru.</div>
     <div class="salah" id="fSalah"></div>
     <button class="btn" id="fBtn" onclick="kirimPulihkan()">Pulihkan stempel</button>
     <button class="link" onclick="tampilDaftar()">← Daftar baru</button>`;
@@ -149,14 +154,15 @@ async function kirimForm(fungsi, args){
   const { data, error } = await sb.rpc(fungsi, args);
   btn.disabled = false;
   if(error){ salah.textContent = pesanError(error); return; }
+  if(data && data.error){ salah.textContent = data.error; return; }
   simpanToken(data.token);
   mulai();
 }
 function kirimDaftar(){
-  kirimForm('stempel_daftar', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value, p_cabang: CABANG });
+  kirimForm('stempel_daftar_pin', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value, p_pin: document.getElementById('fPin').value, p_cabang: CABANG });
 }
 function kirimPulihkan(){
-  kirimForm('stempel_pulihkan', { p_nama: document.getElementById('fNama').value, p_wa: document.getElementById('fWa').value });
+  kirimForm('stempel_pulihkan_pin', { p_wa: document.getElementById('fWa').value, p_pin: document.getElementById('fPin').value });
 }
 
 // ---------- alur utama ----------
@@ -173,10 +179,30 @@ async function mulai(){
   if(st.error || ck.error){ tampilGagal(pesanError(st.error || ck.error)); return; }
   if(!st.data.terdaftar){ hapusToken(); tampilDaftar(); return; }
   statusSaya = st.data;
+  if(st.data.punya_pin === false){ tampilBuatPin(); return; }
   const c = ck.data;
   if(!kodeQR()){ tampilKartuSaja(); return; }
   if(c.ada){ pesananSiap = c; tampilPesanan(); return; }
   tampilAlasan(c);
+}
+function tampilBuatPin(){
+  atas('Hai, ' + statusSaya.nama + '!', '🔑');
+  isi().innerHTML = `
+    <b style="font-size:21px">Buat PIN dulu ya</b>
+    <div class="kecil">Supaya stempelmu aman. PIN dipakai kalau kamu pindah HP.</div>
+    <input id="fPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN 4 angka" autocomplete="off" style="letter-spacing:8px;text-align:center">
+    <input id="fPin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ulangi PIN" autocomplete="off" style="letter-spacing:8px;text-align:center">
+    <div class="salah" id="fSalah"></div>
+    <button class="btn" id="fBtn" onclick="simpanPinBaru()">Simpan PIN 🔑</button>`;
+}
+async function simpanPinBaru(){
+  const a = document.getElementById('fPin').value, b = document.getElementById('fPin2').value, salah = document.getElementById('fSalah');
+  if(a !== b){ salah.textContent = 'PIN tidak sama, ulangi ya.'; return; }
+  const btn = document.getElementById('fBtn'); btn.disabled = true;
+  const { error } = await sb.rpc('stempel_set_pin', { p_token: bacaToken(), p_pin: a });
+  btn.disabled = false;
+  if(error){ salah.textContent = pesanError(error); return; }
+  mulai();
 }
 function tampilKartuSaja(){
   const st = statusSaya, penuh = st.stempel >= 10;

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-07.3">
+<meta name="app-version" content="2026-10-08.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -7197,7 +7197,7 @@ async function cariStempel(){
     const btnBlokir = (role === 'owner' || role === 'admin') ? `<button class="mini-stempel" style="background:#eee;" onclick="blokirStempel('${p.id}', ${!p.diblokir}, '${escS(p.nama)}')">${p.diblokir ? 'Buka blokir' : '⛔'}</button>` : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #eee;padding:8px 0;${p.diblokir ? 'opacity:.5;' : ''}">
       <div><b>${escS(p.nama)}</b> · ${escS(p.wa)}<div style="font-size:12px;color:#666;">${Math.min(p.stempel,10)}/10 · total ${p.total_cup} cup${p.terakhir_klaim ? ' · terakhir ' + new Date(p.terakhir_klaim).toLocaleDateString('id-ID',{day:'numeric',month:'short',timeZone:'Asia/Jakarta'}) + ' ' + jamWIB(p.terakhir_klaim) : ''}${p.diblokir ? ' · DIBLOKIR' : ''}</div>${hadiah}</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${btnGratis}<button class="mini-stempel" style="background:#e8f2e9;" onclick="tambahStempelManual('${p.id}','${escS(p.nama)}')">+1</button>${btnBlokir}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">${btnGratis}<button class="mini-stempel" style="background:#e8f2e9;" onclick="tambahStempelManual('${p.id}','${escS(p.nama)}')">+1</button><button class="mini-stempel" style="background:#eee;" title="Atur PIN baru (pelanggan lupa PIN)" onclick="resetPinStempel('${p.id}','${escS(p.nama)}')">🔑</button>${btnBlokir}</div>
     </div>`;
   }).join('');
 }
@@ -7221,6 +7221,13 @@ async function tambahStempelManual(id, nama){
   if(error){ alert('Gagal: ' + error.message); return; }
   showSuccessToast('🎟️', `+${n} stempel untuk ${nama}`, `Sekarang ${Math.min(data.stempel,10)}/10${data.hadiah_kode ? ' · 🎁 dapat hadiah!' : ''}`);
   muatStempel();
+}
+async function resetPinStempel(id, nama){
+  const pin = prompt(`PIN baru untuk ${nama}?\n\nPastikan orangnya ada di depan kasir. Minta dia ketik / sebutkan 4 angka PIN baru (jangan 1234 / 1111).`, '');
+  if(pin === null) return;
+  const { error } = await sb.rpc('stempel_reset_pin', { p_pelanggan: id, p_pin: pin.trim() });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('🔑', `PIN ${nama} sudah diganti`, 'Sekarang bisa pulihkan stempel pakai nomor WA + PIN baru');
 }
 async function tukarHadiahStempel(kode, nama){
   if(!confirm(`Tukar hadiah ${nama} (kode ${kode})?\n\nOtomatis tercatat 1 Es Teh Original besar GRATIS (Rp0) dan stempelnya dikurangi 10.`)) return;
