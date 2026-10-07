@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-06.4">
+<meta name="app-version" content="2026-10-07.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -961,7 +961,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;">🧾 Riwayat Pembelian Bahan Baku</h3>
-          <button class="header-btn gold" onclick="openPembelianModal()">+ Catat Pembelian</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="header-btn gold" onclick="openBeliNescafe()" style="background:#6d3b1f;color:#fff;border-color:#6d3b1f;">☕ Beli Bahan Nescafe</button>
+            <button class="header-btn gold" onclick="openPembelianModal()">+ Catat Pembelian</button>
+          </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;">
           <div>
@@ -1199,6 +1202,25 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </label>
     <button class="login-btn" id="pembelianSubmitBtn" onclick="submitPembelian()">Simpan</button>
     <button class="modal-close" onclick="closePembelianModal()">Batal</button>
+  </div>
+</div>
+
+<!-- beli bahan nescafe (cepat) -->
+<div class="overlay" id="beliNescafeOverlay">
+  <div class="modal" style="max-width:460px;max-height:92vh;overflow-y:auto;">
+    <h3>☕ Beli Bahan Nescafe</h3>
+    <p style="margin-bottom:10px;">Isi yang dibeli saja. Ketuk tombol ukuran, lalu ketik <b>total bayar</b> sesuai nota. Harga per sachet/gram dihitung otomatis.</p>
+    <div class="login-error" id="beliNescafeError"></div>
+    <div id="beliNescafeList"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#6d3b1f;color:#fff;border-radius:10px;padding:11px 14px;margin:6px 0 12px;font-size:14px;">
+      <span>Total semua</span><b id="beliNescafeTotal" style="font-size:19px;">Rp 0</b>
+    </div>
+    <label for="beliNescafeDariLaci" style="display:flex;gap:10px;align-items:center;background:#fff8e1;border:1px solid #e0a030;border-radius:10px;padding:10px 12px;margin:0 0 12px;cursor:pointer;">
+      <input type="checkbox" id="beliNescafeDariLaci" checked style="width:22px;height:22px;margin:0;flex:none;accent-color:#2e7d32;">
+      <span style="font-size:13px;color:var(--ink);"><b>💵 Uangnya dari laci</b></span>
+    </label>
+    <button class="login-btn" id="beliNescafeSimpanBtn" onclick="simpanBeliNescafe()">Simpan</button>
+    <button class="modal-close" onclick="tutupBeliNescafe()">Batal</button>
   </div>
 </div>
 
@@ -6544,6 +6566,132 @@ async function hapusBahanRusak(id){
   await loadBahanRusak();
   await loadBahanBakuStock();
   if(typeof loadProduk === 'function') loadProduk();
+}
+
+// ================== BELI BAHAN NESCAFE (FORM CEPAT) ==================
+// Tinggal ketuk ukuran kemasan + ketik total di nota. Satuan & harga per satuan diurus otomatis,
+// lalu disimpan ke tabel pembelian seperti biasa (stok bertambah lewat trigger, harga modal ikut harga terbaru).
+const BELI_NESCAFE_ITEM = [
+  { cari:'kopi ice roast',  ikon:'☕', nama:'Kopi Ice Roast',          sat:'sachet', ukuran:[[1,'+1 sachet'],[10,'+1 renteng (10)']] },
+  { cari:'milo',            ikon:'🍫', nama:'Milo',                    sat:'gr',     ukuran:[[300,'+300 gr'],[800,'+800 gr'],[1000,'+1 kg']] },
+  { cari:'susu',            ikon:'🥛', nama:'Susu Kental Manis (SKM)', sat:'gr',     ukuran:[[370,'+370 gr'],[490,'+490 gr'],[1000,'+1 kg']] },
+  { cari:'susu full cream', ikon:'🥛', nama:'Susu Full Cream',         sat:'ml',     ukuran:[[1000,'+1 liter']] },
+  { cari:'cup 16 oz',       ikon:'🥤', nama:'Cup 16 Oz',               sat:'pcs',    ukuran:[[50,'+50 pcs'],[100,'+100 pcs']] },
+];
+let beliNescafeData = [];
+
+async function openBeliNescafe(){
+  await pastikanBahanBakuTermuat();
+  beliNescafeData = BELI_NESCAFE_ITEM.map(it => {
+    const b = (bahanBakuList||[]).find(x => String(x.nama).trim().toLowerCase() === it.cari);
+    return b ? { ...it, bahan:b, jumlah:0, hargaLalu:null } : null;
+  }).filter(Boolean);
+  // harga terakhir sebagai patokan supaya kelihatan kalau salah ketik
+  try{
+    const ids = beliNescafeData.map(r=>r.bahan.id);
+    const { data } = await sb.from('pembelian').select('bahan_baku_id, harga_satuan, created_at').in('bahan_baku_id', ids).gt('harga_satuan', 0).order('created_at', { ascending:false }).limit(200);
+    (data||[]).forEach(p => { const r = beliNescafeData.find(x=>x.bahan.id===p.bahan_baku_id); if(r && r.hargaLalu==null) r.hargaLalu = Number(p.harga_satuan); });
+  }catch(_){}
+  document.getElementById('beliNescafeDariLaci').checked = true;
+  document.getElementById('beliNescafeError').classList.remove('show');
+  renderBeliNescafe();
+  document.getElementById('beliNescafeOverlay').classList.add('show');
+}
+
+function fmtHargaKecil(n){ return 'Rp ' + Number(n).toLocaleString('id-ID', { maximumFractionDigits: n < 100 ? 1 : 0 }); }
+
+function renderBeliNescafe(){
+  const box = document.getElementById('beliNescafeList');
+  if(beliNescafeData.length === 0){ box.innerHTML = '<div class="empty-msg">Bahan Nescafe belum ada di daftar bahan baku.</div>'; return; }
+  box.innerHTML = beliNescafeData.map((r,i) => `
+    <div style="border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:#fff;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <b style="font-size:15px;color:var(--ink);">${r.ikon} ${escTG(r.nama)}</b>
+        <span style="font-size:11px;opacity:.65;color:var(--ink);">${r.hargaLalu!=null ? 'terakhir '+fmtHargaKecil(r.hargaLalu)+'/'+r.sat : ''}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;">
+        ${r.ukuran.map(([n,l]) => `<button type="button" onclick="tambahBeliNescafe(${i},${n})" style="padding:8px 10px;border-radius:8px;border:1px solid #6d3b1f;background:#fbf3ec;color:#6d3b1f;font-weight:700;font-size:13px;cursor:pointer;">${l}</button>`).join('')}
+        ${r.jumlah>0 ? `<button type="button" onclick="tambahBeliNescafe(${i},0)" style="padding:8px 10px;border-radius:8px;border:1px solid #c62828;background:#fff;color:#c62828;font-weight:700;font-size:13px;cursor:pointer;">✖ Hapus</button>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;opacity:.7;color:var(--ink);">Jumlah (${r.sat})</div>
+          <input type="number" inputmode="decimal" id="bnJml${i}" value="${r.jumlah||''}" placeholder="0" oninput="ubahJumlahBeliNescafe(${i})" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line-soft);font-size:15px;">
+        </div>
+        <div style="flex:1.3;min-width:0;">
+          <div style="font-size:11px;opacity:.7;color:var(--ink);">Total bayar (Rp)</div>
+          <input type="text" inputmode="decimal" class="input-rupiah" id="bnTot${i}" placeholder="0" oninput="hitungBeliNescafe()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line-soft);font-size:15px;">
+        </div>
+      </div>
+      <div id="bnInfo${i}" style="font-size:12px;margin-top:6px;min-height:15px;color:var(--ink);"></div>
+    </div>`).join('');
+  hitungBeliNescafe();
+}
+
+function tambahBeliNescafe(i, n){
+  // simpan isian semua baris dulu, karena daftar digambar ulang
+  const tot = beliNescafeData.map((_,k) => (document.getElementById('bnTot'+k)||{}).value || '');
+  beliNescafeData.forEach((r,k) => { r.jumlah = Number((document.getElementById('bnJml'+k)||{}).value)||0; });
+  const r = beliNescafeData[i];
+  r.jumlah = n === 0 ? 0 : r.jumlah + n;
+  if(n === 0) tot[i] = '';
+  renderBeliNescafe();
+  tot.forEach((v,k) => { const el = document.getElementById('bnTot'+k); if(el) el.value = v; });
+  hitungBeliNescafe();
+}
+function ubahJumlahBeliNescafe(i){ beliNescafeData[i].jumlah = Number(document.getElementById('bnJml'+i).value)||0; hitungBeliNescafe(); }
+
+function hitungBeliNescafe(){
+  let semua = 0;
+  beliNescafeData.forEach((r,i) => {
+    const j = Number((document.getElementById('bnJml'+i)||{}).value)||0;
+    const t = angkaRupiah('bnTot'+i) || 0;
+    const info = document.getElementById('bnInfo'+i);
+    semua += t;
+    if(!info) return;
+    if(j>0 && t>0){
+      const per = t / j;
+      let warn = '';
+      if(r.hargaLalu && (per > r.hargaLalu*1.5 || per < r.hargaLalu*0.5)) warn = ' <b style="color:#c62828;">⚠️ beda jauh dari biasanya, cek lagi</b>';
+      info.innerHTML = `= <b>${fmtHargaKecil(per)}</b> per ${r.sat}` + warn;
+    } else if(j>0){ info.innerHTML = '<span style="color:#b26a00;">Isi total bayar</span>'; }
+    else if(t>0){ info.innerHTML = '<span style="color:#b26a00;">Ketuk ukuran / isi jumlah</span>'; }
+    else info.innerHTML = '';
+  });
+  document.getElementById('beliNescafeTotal').textContent = fmt(semua);
+}
+
+function tutupBeliNescafe(){ document.getElementById('beliNescafeOverlay').classList.remove('show'); }
+
+async function simpanBeliNescafe(){
+  const err = document.getElementById('beliNescafeError'); err.classList.remove('show');
+  const dariLaci = document.getElementById('beliNescafeDariLaci').checked;
+  const baris = []; let kurang = '';
+  beliNescafeData.forEach((r,i) => {
+    const j = Number(document.getElementById('bnJml'+i).value)||0;
+    const t = angkaRupiah('bnTot'+i) || 0;
+    if(j>0 && t>0) baris.push({ r, j, t });
+    else if(j>0 || t>0) kurang = r.nama;
+  });
+  if(kurang){ err.textContent = `${kurang}: jumlah dan total bayar harus diisi dua-duanya.`; err.classList.add('show'); return; }
+  if(baris.length === 0){ err.textContent = 'Belum ada yang diisi.'; err.classList.add('show'); return; }
+  if(!activeCabangId){ err.textContent = 'Belum ada cabang aktif.'; err.classList.add('show'); return; }
+  const btn = document.getElementById('beliNescafeSimpanBtn'); btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const rows = baris.map(({r,j,t}) => ({
+    cabang_id: activeCabangId, bahan_baku_id: r.bahan.id, jumlah: j,
+    harga_satuan: Math.round(t / j * 10000) / 10000, total: t,
+    catatan: `Beli Nescafe: ${r.nama} ${j.toLocaleString('id-ID')} ${r.sat} ${fmt(t)}`,
+    sumber_dana: dariLaci ? 'tunai' : 'non_tunai', dibeli_oleh: currentUser.id
+  }));
+  const { error } = await sb.from('pembelian').insert(rows);
+  btn.disabled = false; btn.textContent = 'Simpan';
+  if(error){ err.textContent = 'Gagal menyimpan: ' + error.message; err.classList.add('show'); return; }
+  const total = rows.reduce((a,x)=>a+x.total,0);
+  catatLog('Beli Bahan Nescafe', rows.map(x=>x.catatan.replace('Beli Nescafe: ','')).join(', ') + (dariLaci ? ' (dari laci)' : ''));
+  tutupBeliNescafe();
+  alert(`✅ Tersimpan ${rows.length} bahan, total ${fmt(total)}. Stok sudah bertambah.`);
+  await loadPembelianData();
+  try{ await loadBahanBakuStock(); }catch(_){}
 }
 
 // ================== PEMBELIAN BAHAN BAKU ==================
