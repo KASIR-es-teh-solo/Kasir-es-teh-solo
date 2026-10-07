@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-06.4">
+<meta name="app-version" content="2026-10-07.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1315,8 +1315,33 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <h3>💰 Uang Laci</h3>
     <p>Catat uang yang keluar dari laci, atau hitung kas saat tutup.</p>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaBelanjaKecil();">🧊 Catat Belanja</button>
+    <button class="login-btn" style="margin-bottom:8px;background:#6d3b1f;" onclick="tutupUangLaci(); bukaBeliStok();">📦 Beli Stok Bahan</button>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaKasModal();">💵 Hitung / Tutup Kas</button>
     <button class="modal-close" onclick="tutupUangLaci()">Tutup</button>
+  </div>
+</div>
+
+<!-- Beli stok bahan (kasir): bahan yang berkurang otomatis saat transaksi -->
+<div class="overlay" id="beliStokOverlay">
+  <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
+    <h3>📦 Beli Stok Bahan</h3>
+    <p style="margin-bottom:10px;">Pilih bahan yang dibeli. Uangnya dari laci.</p>
+    <div class="login-error" id="beliStokError"></div>
+    <div id="beliStokPilihan" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+    <div id="beliStokIsi" style="display:none;background:#fbf3ec;border:2px solid #6d3b1f;border-radius:12px;padding:12px;margin-bottom:12px;">
+      <div id="beliStokNama" style="font-weight:800;font-size:16px;color:#6d3b1f;margin-bottom:8px;"></div>
+      <div class="field" style="margin-bottom:8px;">
+        <label id="beliStokJumlahLabel">Berapa?</label>
+        <input type="number" inputmode="decimal" id="beliStokJumlah" placeholder="0" oninput="hitungBeliStok()" style="font-size:18px;">
+      </div>
+      <div class="field" style="margin-bottom:6px;">
+        <label>Total bayar (Rp)</label>
+        <input type="text" inputmode="decimal" class="input-rupiah" id="beliStokTotal" placeholder="0" oninput="hitungBeliStok()" style="font-size:18px;">
+      </div>
+      <div id="beliStokInfo" style="font-size:13px;min-height:16px;color:var(--ink);"></div>
+    </div>
+    <button class="login-btn" id="beliStokSimpanBtn" onclick="simpanBeliStok()">Simpan</button>
+    <button class="modal-close" onclick="tutupBeliStok()">Batal</button>
   </div>
 </div>
 
@@ -6817,6 +6842,80 @@ function pilihKategoriBelanja(btn){
   if(info) info.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_BAYAR_HUTANG);
   const infoTab = document.getElementById('belanjaInfoTabungan');
   if(infoTab) infoTab.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_TABUNGAN);
+}
+
+// ================== BELI STOK BAHAN (KASIR) ==================
+// Hanya bahan yang stoknya berkurang otomatis saat transaksi. Disimpan lewat fungsi database kasir_beli_stok
+// (uang dari laci, stok bertambah lewat trigger pembelian, harga modal ikut harga terbaru).
+let beliStokDaftar = [], beliStokDipilih = null;
+const BELI_STOK_URUT = ['cup 18 oz','cup 22 oz','cup 16 oz','sedotan','kopi ice roast','milo','teh original'];
+
+function satuanBeliStok(b){
+  const n = String(b.nama).toLowerCase();
+  if(n === 'kopi ice roast') return 'sachet';
+  if(n === 'teh original') return 'gram teh kering';
+  return b.satuan_beli || b.satuan;
+}
+
+async function bukaBeliStok(){
+  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
+  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, dihitung_stok').eq('dihitung_stok', true).order('nama');
+  if(error){ alert('Gagal memuat bahan: ' + error.message); return; }
+  const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
+  beliStokDaftar = (data||[]).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
+  beliStokDipilih = null;
+  document.getElementById('beliStokError').classList.remove('show');
+  document.getElementById('beliStokJumlah').value = '';
+  document.getElementById('beliStokTotal').value = '';
+  renderBeliStokPilihan();
+  document.getElementById('beliStokOverlay').classList.add('show');
+}
+
+function renderBeliStokPilihan(){
+  document.getElementById('beliStokPilihan').innerHTML = beliStokDaftar.map((b,i) => {
+    const aktif = beliStokDipilih === i;
+    const utama = BELI_STOK_URUT.includes(String(b.nama).toLowerCase());
+    const nama = String(b.nama).replace(/^Bubuk rasa /i, '');
+    return `<button type="button" onclick="pilihBeliStok(${i})" style="padding:${utama?'11px 12px':'8px 10px'};border-radius:10px;border:2px solid #6d3b1f;background:${aktif?'#6d3b1f':'#fff'};color:${aktif?'#fff':'#6d3b1f'};font-weight:700;font-size:${utama?14:12}px;cursor:pointer;">${escTG(nama)}</button>`
+      + (b.nama.toLowerCase()==='teh original' ? '<div style="width:100%;font-size:11px;opacity:.6;margin-top:2px;color:var(--ink);">Bubuk rasa:</div>' : '');
+  }).join('');
+  const isi = document.getElementById('beliStokIsi');
+  if(beliStokDipilih == null){ isi.style.display = 'none'; return; }
+  const b = beliStokDaftar[beliStokDipilih];
+  isi.style.display = 'block';
+  document.getElementById('beliStokNama').textContent = b.nama;
+  document.getElementById('beliStokJumlahLabel').textContent = `Berapa ${satuanBeliStok(b)}?`;
+  hitungBeliStok();
+}
+
+function pilihBeliStok(i){ beliStokDipilih = i; renderBeliStokPilihan(); setTimeout(()=>document.getElementById('beliStokJumlah').focus(), 50); }
+
+function hitungBeliStok(){
+  const info = document.getElementById('beliStokInfo');
+  if(beliStokDipilih == null || !info) return;
+  const j = Number(document.getElementById('beliStokJumlah').value) || 0;
+  const t = angkaRupiah('beliStokTotal') || 0;
+  const sat = satuanBeliStok(beliStokDaftar[beliStokDipilih]).split(' ')[0];
+  info.innerHTML = (j>0 && t>0) ? `= <b>Rp ${(t/j).toLocaleString('id-ID',{maximumFractionDigits: t/j < 100 ? 1 : 0})}</b> per ${sat}` : '';
+}
+
+function tutupBeliStok(){ document.getElementById('beliStokOverlay').classList.remove('show'); }
+
+async function simpanBeliStok(){
+  const err = document.getElementById('beliStokError'); err.classList.remove('show');
+  const gagal = m => { err.textContent = m; err.classList.add('show'); };
+  if(beliStokDipilih == null) return gagal('Pilih bahan yang dibeli dulu.');
+  const b = beliStokDaftar[beliStokDipilih];
+  const j = Number(document.getElementById('beliStokJumlah').value) || 0;
+  const t = angkaRupiah('beliStokTotal') || 0;
+  if(j <= 0) return gagal(`Isi berapa ${satuanBeliStok(b)} yang dibeli.`);
+  if(t <= 0) return gagal('Isi total bayar.');
+  const btn = document.getElementById('beliStokSimpanBtn'); btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const { error } = await sb.rpc('kasir_beli_stok', { p_cabang: activeCabangId, p_bahan: b.id, p_jumlah: j, p_total: t });
+  btn.disabled = false; btn.textContent = 'Simpan';
+  if(error) return gagal('Gagal menyimpan: ' + error.message);
+  tutupBeliStok();
+  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan. Stok sudah bertambah.`);
 }
 
 async function bukaBelanjaKecil(){
