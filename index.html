@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-07.1">
+<meta name="app-version" content="2026-10-07.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -961,7 +961,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;">🧾 Riwayat Pembelian Bahan Baku</h3>
-          <button class="header-btn gold" id="catatPembelianBtn" onclick="openPembelianModal()">📦 Beli Stok Bahan</button>
+          <button class="header-btn gold" id="catatPembelianBtn" onclick="bukaBeliStok()">📦 Beli Stok Bahan</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;">
           <div>
@@ -1162,43 +1162,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <img id="stikerAbsenImg" alt="Stiker QR" style="width:100%;border:1px solid var(--line-soft);border-radius:10px;">
     <a id="stikerAbsenDownload" class="login-btn" style="display:block;text-decoration:none;margin-top:10px;" download="stiker-absen.png">⬇️ Download Stiker (PNG)</a>
     <button class="modal-close" onclick="document.getElementById('stikerAbsenOverlay').classList.remove('show')">Tutup</button>
-  </div>
-</div>
-
-<!-- catat / edit pembelian -->
-<div class="overlay" id="pembelianOverlay">
-  <div class="modal">
-    <h3 id="pembelianModalTitle">Catat Pembelian</h3>
-    <p>Stok bahan baku akan otomatis bertambah sesuai jumlah yang dicatat.</p>
-    <div class="login-error" id="pembelianError"></div>
-    <div class="field">
-      <label>Bahan Baku</label>
-      <select id="pembelianBahanBaku" onchange="updatePembelianSatuanInfo()" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;"></select>
-    </div>
-    <div class="field">
-      <label>Jumlah Dibeli <span id="pembelianSatuanLabel" style="opacity:.7;"></span></label>
-      <input type="number" id="pembelianJumlah" placeholder="0" oninput="updateTotalPembelian()">
-    </div>
-    <div class="field">
-      <label>Harga Satuan (Rp) <span id="pembelianHargaLabel" style="opacity:.7;"></span></label>
-      <input type="text" inputmode="decimal" class="input-rupiah" id="pembelianHargaSatuan" placeholder="0" oninput="updateTotalPembelian()">
-    </div>
-    <div id="pembelianTotalInfo" style="display:flex;justify-content:space-between;align-items:center;background:rgba(12,31,20,.05);border-radius:8px;padding:10px 12px;margin:-4px 0 12px;font-size:14px;">
-      <span>Total uang keluar</span><b id="pembelianTotalNilai" style="font-size:17px;">Rp 0</b>
-    </div>
-    <div class="field">
-      <label>Catatan (opsional)</label>
-      <input type="text" id="pembelianCatatan" placeholder="misal: beli di Toko Makmur">
-    </div>
-    <label for="pembelianDariLaci" style="display:flex;gap:10px;align-items:flex-start;background:#fff8e1;border:1px solid #e0a030;border-radius:10px;padding:10px 12px;margin:4px 0 12px;cursor:pointer;">
-      <input type="checkbox" id="pembelianDariLaci" style="width:22px;height:22px;margin:2px 0 0;flex:none;accent-color:#2e7d32;">
-      <span style="font-size:13px;line-height:1.35;color:var(--ink);">
-        <b>💵 Dibayar dari uang laci</b><br>
-        <span style="opacity:.75;">Centang kalau uangnya diambil dari laci kasir. Saldo Kas &amp; Hitung Kas ikut berkurang. Laba tidak terpotong dobel.</span>
-      </span>
-    </label>
-    <button class="login-btn" id="pembelianSubmitBtn" onclick="submitPembelian()">Simpan</button>
-    <button class="modal-close" onclick="closePembelianModal()">Batal</button>
   </div>
 </div>
 
@@ -3684,7 +3647,6 @@ function showDashPanel(panelName){
   if(panelName === 'menuoutlet'){ hentikanPollingAktif(); simpanViewState({ type:'dash', panel:'menuoutlet' }); return; }
   loadDashboard();
   loadKaryawan();
-  { const cb = document.getElementById('catatPembelianBtn'); if(cb) cb.textContent = (currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'owner')) ? '📦 Beli Stok Bahan' : '+ Catat Pembelian'; }
   loadPembelianData();
   loadBiayaData();
 
@@ -6578,121 +6540,10 @@ async function hapusBahanRusak(id){
 }
 
 // ================== PEMBELIAN BAHAN BAKU ==================
-let editingPembelianId = null;
 
 async function pastikanBahanBakuTermuat(){
   // daftar bahan baku dulu hanya dimuat saat menu Stok dibuka -> form Pembelian bisa kosong. Muat kalau belum ada.
   if(!bahanBakuList || bahanBakuList.length === 0){ await loadBahanBakuList(); }
-}
-
-async function openPembelianModal(){
-  // admin & owner: pakai form simpel "Beli Stok Bahan" sebagai pengganti form lama
-  if(currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'owner')){ return bukaBeliStok(); }
-  await pastikanBahanBakuTermuat();
-  editingPembelianId = null;
-  document.getElementById('pembelianModalTitle').textContent = 'Catat Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}">${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
-  updatePembelianSatuanInfo();
-  document.getElementById('pembelianJumlah').value = '';
-  document.getElementById('pembelianHargaSatuan').value = '';
-  document.getElementById('pembelianCatatan').value = '';
-  document.getElementById('pembelianDariLaci').checked = false;
-  updateTotalPembelian();
-  document.getElementById('pembelianError').classList.remove('show');
-  document.getElementById('pembelianOverlay').classList.add('show');
-}
-
-async function openEditPembelianModal(p){
-  await pastikanBahanBakuTermuat();
-  editingPembelianId = p.id;
-  document.getElementById('pembelianModalTitle').textContent = 'Edit Pembelian';
-  document.getElementById('pembelianBahanBaku').innerHTML = bahanBakuList.map(b=>`<option value="${b.id}" ${b.id===p.bahan_baku_id?'selected':''}>${escTG(b.nama)} (${escTG(b.satuan_beli||b.satuan)})</option>`).join('');
-  updatePembelianSatuanInfo();
-  document.getElementById('pembelianJumlah').value = p.jumlah;
-  setInputRupiah('pembelianHargaSatuan', p.harga_satuan);
-  document.getElementById('pembelianCatatan').value = p.catatan || '';
-  document.getElementById('pembelianDariLaci').checked = p.sumber_dana === 'tunai';
-  updateTotalPembelian();
-  document.getElementById('pembelianError').classList.remove('show');
-  document.getElementById('pembelianOverlay').classList.add('show');
-}
-
-// total = jumlah x harga satuan, ditampilkan langsung supaya tidak salah isi (mis. harga per slop vs per pcs)
-function updateTotalPembelian(){
-  const j = Number(document.getElementById('pembelianJumlah').value) || 0;
-  const h = angkaRupiah('pembelianHargaSatuan') || 0;
-  const el = document.getElementById('pembelianTotalNilai');
-  if(el) el.textContent = fmt(j * h);
-}
-
-function updatePembelianSatuanInfo(){
-  const sel = document.getElementById('pembelianBahanBaku');
-  const b = (bahanBakuList||[]).find(x=>x.id===sel.value);
-  const lbl = document.getElementById('pembelianSatuanLabel');
-  const hrg = document.getElementById('pembelianHargaLabel');
-  if(!b || !lbl) return;
-  const sat = b.satuan_beli || b.satuan;
-  lbl.textContent = `(dalam ${sat})` + (b.konversi ? ` → otomatis jadi ${b.satuan}, 1 ${sat} = ${fmtKonversi(b.konversi)} ${b.satuan}` : '');
-  if(hrg) hrg.textContent = `(per ${sat})`;
-}
-
-function closePembelianModal(){
-  document.getElementById('pembelianOverlay').classList.remove('show');
-  editingPembelianId = null;
-}
-
-async function submitPembelian(){
-  if(bahanBakuList.length === 0){ await loadBahanBakuList(); }
-
-  const bahanBakuId = document.getElementById('pembelianBahanBaku').value;
-  const jumlah = Number(document.getElementById('pembelianJumlah').value);
-  const hargaSatuan = angkaRupiah('pembelianHargaSatuan') || 0;
-  const catatan = document.getElementById('pembelianCatatan').value.trim();
-  const sumberDana = document.getElementById('pembelianDariLaci').checked ? 'tunai' : 'non_tunai';
-  const errBox = document.getElementById('pembelianError');
-  const btn = document.getElementById('pembelianSubmitBtn');
-  errBox.classList.remove('show');
-
-  if(!bahanBakuId || !jumlah || jumlah <= 0){
-    errBox.textContent = "Pilih bahan baku dan isi jumlah yang valid (lebih dari 0).";
-    errBox.classList.add('show');
-    return;
-  }
-  if(!activeCabangId){
-    errBox.textContent = "Belum ada cabang aktif.";
-    errBox.classList.add('show');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = "Menyimpan...";
-
-  const total = jumlah * hargaSatuan;
-
-  let error;
-  if(editingPembelianId){
-    ({ error } = await sb
-      .from('pembelian')
-      .update({ bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan, sumber_dana: sumberDana })
-      .eq('id', editingPembelianId));
-  } else {
-    ({ error } = await sb
-      .from('pembelian')
-      .insert({ cabang_id: activeCabangId, bahan_baku_id: bahanBakuId, jumlah, harga_satuan: hargaSatuan, total, catatan, sumber_dana: sumberDana, dibeli_oleh: currentUser.id }));
-  }
-
-  btn.disabled = false;
-  btn.textContent = "Simpan";
-
-  if(error){
-    errBox.textContent = "Gagal menyimpan: " + error.message;
-    errBox.classList.add('show');
-    return;
-  }
-
-  closePembelianModal();
-  await loadPembelianData();
-  await loadBahanBakuStock();
 }
 
 async function hapusPembelian(id){
@@ -6749,7 +6600,6 @@ async function loadPembelianData(){
         <b style="color:var(--gold-deep);">${fmt(p.total)}</b>
       </span>
       <span style="width:100%;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-        <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditPembelianModal(${escTG(JSON.stringify(p))})'>Edit</button>
         ${currentProfile && currentProfile.role==='owner'
           ? `<button class="remove-btn" onclick="hapusPembelian('${p.id}')">Hapus</button>`
           : ''}
