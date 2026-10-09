@@ -1,0 +1,3 @@
+-- 2026-10-09: atas permintaan Owner, cek jarak GPS di absen_masuk DIHAPUS (tablet outlet akurasi ±2000 m).
+-- Verifikasi absen tetap: QR mesin sealer (ESTEHSOLO-ABSEN:<kode>) + foto segar (<=10 menit, sekali pakai).
+-- Lokasi masih dicatat kalau dikirim (hanya informasi). Sudah dijalankan di Supabase; isi lengkap = definisi fungsi absen_masuk saat ini.
