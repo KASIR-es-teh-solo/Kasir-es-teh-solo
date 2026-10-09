@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-09.1">
+<meta name="app-version" content="2026-10-09.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1325,7 +1325,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <input id="stempelCari" placeholder="Cari nama / no. WA / kode hadiah" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:10px;font-size:15px;margin-bottom:8px;" oninput="cariStempelNanti()" onkeydown="if(event.key==='Enter') cariStempel()">
     <div id="stempelKodeBox"></div>
     <div id="stempelDaftar" style="font-size:14px;">Memuat…</div>
-    <div style="font-weight:800;margin:14px 0 6px;font-size:14px;">Klaim scan hari ini</div>
+    <div style="font-weight:800;margin:10px 0 4px;font-size:15px;">Klaim scan hari ini</div>
     <div id="stempelKlaimDaftar" style="font-size:13px;">-</div>
     <button class="modal-close" onclick="tutupStempel()">Tutup</button>
   </div>
@@ -7153,22 +7153,39 @@ async function pantauStempel(){
     });
   }catch(e){}
 }
+// Notifikasi klaim di halaman kasir: besar & hijau, cuma tombol × (tanpa Batalkan supaya tidak salah pencet).
+// Membatalkan klaim lewat menu 🎟️ Stempel.
 function tampilNotifStempel(k){
   const wadah = document.getElementById('stempelNotifWadah'); if(!wadah) return;
   const el = document.createElement('div');
-  el.style.cssText = 'background:#0c1f14;color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.3);font-size:14px;';
-  el.innerHTML = `<span style="flex:1">✅ <b>${escS(k.nama)}</b> klaim ${k.jumlah} Original besar (+${k.jumlah}) · ${jamWIB(k.created_at)}</span>
-    <button style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px 10px;font-weight:800;">✖ Batalkan</button>
-    <button style="background:none;border:none;color:#fff;font-size:18px;padding:0 2px;" title="Tutup">×</button>`;
-  const [btnBatal, btnTutup] = el.querySelectorAll('button');
-  btnBatal.onclick = async () => { if(await batalkanKlaimStempel(k.id, k.nama, k.jumlah)) el.remove(); };
-  btnTutup.onclick = () => el.remove();
+  el.style.cssText = 'background:#1f7a3a;color:#fff;border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.35);';
+  el.innerHTML = `<span style="font-size:30px;">🧋</span>
+    <div style="flex:1;min-width:0;"><div style="font-size:19px;font-weight:900;">+${k.jumlah} stempel</div>
+    <div style="font-size:15px;"><b>${escS(k.nama)}</b> · ${jamWIB(k.created_at)}</div></div>
+    <button style="background:none;border:none;color:#fff;font-size:28px;line-height:1;padding:0 6px;cursor:pointer;" title="Tutup">×</button>`;
+  el.querySelector('button').onclick = () => el.remove();
   wadah.appendChild(el);
   while(wadah.children.length > 3) wadah.firstChild.remove();
   setTimeout(() => el.remove(), 90000);
 }
+// Kotak konfirmasi sendiri (pengganti confirm() bawaan HP yang tombolnya "Batal"/"Oke" membingungkan)
+function konfirmasiStempel(judul, isiTeks, labelYa){
+  return new Promise(res => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = `<div style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:340px;color:#0c1f14;">
+      <div style="font-size:17px;font-weight:900;margin-bottom:6px;">${escS(judul)}</div>
+      <div style="font-size:14px;color:#444;margin-bottom:16px;">${escS(isiTeks)}</div>
+      <button data-ya style="width:100%;padding:12px;border:none;border-radius:10px;background:#c0392b;color:#fff;font-weight:900;font-size:15px;margin-bottom:8px;cursor:pointer;">${escS(labelYa)}</button>
+      <button data-tidak style="width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;background:#fff;color:#0c1f14;font-weight:800;font-size:15px;cursor:pointer;">Tidak</button></div>`;
+    const selesai = v => { ov.remove(); res(v); };
+    ov.querySelector('[data-ya]').onclick = () => selesai(true);
+    ov.querySelector('[data-tidak]').onclick = () => selesai(false);
+    document.body.appendChild(ov);
+  });
+}
 async function batalkanKlaimStempel(id, nama, jumlah){
-  if(!confirm(`Batalkan ${jumlah} stempel milik ${nama}?\n\nStempel dicabut dan pesanan bisa diklaim ulang pemilik aslinya.`)) return false;
+  if(!await konfirmasiStempel(`Cabut ${jumlah} stempel ${nama}?`, 'Pakai ini kalau yang klaim bukan pembeli aslinya. Pesanan bisa diklaim ulang oleh pemilik aslinya.', 'Ya, cabut stempel')) return false;
   const { error } = await sb.rpc('stempel_batalkan', { p_klaim: id });
   if(error){ alert('Gagal: ' + error.message); return false; }
   showSuccessToast('↩️', 'Stempel dibatalkan', `${jumlah} stempel ${nama} dicabut`);
@@ -7186,10 +7203,12 @@ async function muatStempel(){ await Promise.all([cariStempel(), muatKlaimStempel
 async function cariStempel(){
   const box = document.getElementById('stempelDaftar');
   const q = document.getElementById('stempelCari').value.trim();
+  document.getElementById('stempelKodeBox').innerHTML = '';
+  // Daftar pelanggan disembunyikan sampai dicari, supaya halaman simpel
+  if(!q){ box.innerHTML = '<div style="font-size:12px;color:#888;margin:-2px 0 4px;">Daftar pelanggan muncul kalau dicari (untuk +1, 🔑 PIN, tukar hadiah).</div>'; return; }
   const { data, error } = await sb.rpc('stempel_cari', { p_cari: q });
   if(error){ box.textContent = 'Gagal memuat: ' + error.message; return; }
-  const kodeBox = document.getElementById('stempelKodeBox');
-  kodeBox.innerHTML = '';
+  if(document.getElementById('stempelCari').value.trim() !== q) return; // sudah diketik lagi
   if(!data.length){ box.innerHTML = q ? 'Tidak ketemu.' : 'Belum ada pelanggan yang daftar.'; return; }
   const role = currentProfile && currentProfile.role;
   box.innerHTML = data.map(p => {
@@ -7208,10 +7227,20 @@ async function muatKlaimStempel(){
   const { data, error } = await sb.rpc('stempel_klaim_terbaru', { p_cabang: getActiveCabangId(), p_sejak: awal.toISOString() });
   if(error){ box.textContent = 'Gagal memuat: ' + error.message; return; }
   if(!data.length){ box.textContent = 'Belum ada klaim hari ini.'; return; }
-  box.innerHTML = data.slice().reverse().map(k => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;${k.dibatalkan_at ? 'opacity:.5;text-decoration:line-through;' : ''}">
-      <span>${jamWIB(k.created_at)} · <b>${escS(k.nama)}</b> +${k.jumlah}</span>
-      ${k.dibatalkan_at ? '<span>dibatalkan</span>' : `<button class="mini-stempel" style="background:#c0392b;color:#fff;" onclick="batalkanKlaimStempel('${k.id}','${escS(k.nama)}',${k.jumlah})">✖ Batalkan</button>`}
-    </div>`).join('');
+  box.innerHTML = '';
+  data.slice().reverse().forEach(k => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #f0f0f0;' + (k.dibatalkan_at ? 'opacity:.5;' : '');
+    row.innerHTML = `<div style="min-width:0;"><div style="font-size:17px;font-weight:800;${k.dibatalkan_at ? 'text-decoration:line-through;' : ''}">${escS(k.nama)}</div>
+        <div style="font-size:13px;color:#666;">${jamWIB(k.created_at)}${k.dibatalkan_at ? ' · dibatalkan' : ' · ' + Math.min(k.stempel, 10) + '/10'}</div></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <span style="background:${k.dibatalkan_at ? '#999' : '#1f7a3a'};color:#fff;font-weight:900;font-size:20px;border-radius:10px;padding:6px 12px;white-space:nowrap;">+${k.jumlah} 🧋</span>
+        ${k.dibatalkan_at ? '' : '<button class="mini-stempel" style="background:#c0392b;color:#fff;">✖ Batalkan</button>'}
+      </div>`;
+    const b = row.querySelector('button');
+    if(b) b.onclick = () => batalkanKlaimStempel(k.id, k.nama, k.jumlah);
+    box.appendChild(row);
+  });
 }
 async function tambahStempelManual(id, nama){
   const j = prompt(`Tambah berapa stempel untuk ${nama}?\n(1 Es Teh Original besar = 1 stempel, maks. 5)`, '1');
