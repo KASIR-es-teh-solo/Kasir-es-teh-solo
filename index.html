@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-11.1">
+<meta name="app-version" content="2026-10-12.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1594,7 +1594,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <hr>
     <div class="receipt-total"><span>TOTAL</span><span id="receiptTotal">Rp 0</span></div>
     <div class="sub" style="margin-top:10px;">Terima kasih sudah pesan!</div>
-    <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar()" style="margin-top:8px;">BAYAR</button>
+    <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar('tunai')" style="margin-top:8px;">💵 BAYAR TUNAI</button>
+    <button class="receipt-close" id="receiptOnlineBtn" onclick="konfirmasiBayar('online')" style="margin-top:8px;background:#ee4d2d;">🛵 PESANAN ONLINE (Shopee/Grab)</button>
+    <div class="sub" style="margin-top:4px;font-size:11px;">Pesanan online tetap pakai harga outlet & tidak masuk uang laci.</div>
     <button class="receipt-close" onclick="tutupKonfirmasiBayar()" style="background:transparent;color:var(--forest-dark);border:1px solid var(--line-soft);margin-top:8px;">KEMBALI</button>
   </div>
 </div>
@@ -4131,20 +4133,17 @@ function bukaKonfirmasiBayar(){
   if(diskon > subtotal) diskon = subtotal;
   const totalPrice = subtotal - diskon;
 
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer' };
+  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online' };
   const lines = cart.map(c=>`
     <div class="receipt-line"><span>${escTG(c.nama)} (${escTG(c.size)}) x${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>
   `).join('');
   const diskonLine = diskon > 0
     ? `<div class="receipt-line"><span>Diskon</span><span>- ${fmt(diskon)}</span></div>`
     : '';
-  document.getElementById('receiptLines').innerHTML = lines + diskonLine +
-    `<div class="receipt-line"><span>Metode Bayar</span><span>${labelMetode[selectedMetodeBayar]}</span></div>`;
+  document.getElementById('receiptLines').innerHTML = lines + diskonLine;
   document.getElementById('receiptTotal').textContent = fmt(totalPrice);
 
-  const btn = document.getElementById('receiptBayarBtn');
-  btn.disabled = false;
-  btn.textContent = "BAYAR";
+  aturTombolBayar(false);
 
   document.getElementById('receiptOverlay').classList.add('show');
 }
@@ -4155,10 +4154,20 @@ function tutupKonfirmasiBayar(){
 }
 
 // baru di sini transaksi BENERAN diproses & masuk database
-async function konfirmasiBayar(){
+// tombol BAYAR TUNAI & PESANAN ONLINE dikunci bersamaan saat menyimpan (anti dobel)
+function aturTombolBayar(menyimpan, metode){
+  const t = document.getElementById('receiptBayarBtn'), o = document.getElementById('receiptOnlineBtn');
+  t.disabled = menyimpan; if(o) o.disabled = menyimpan;
+  t.textContent = (menyimpan && metode !== 'online') ? 'Menyimpan...' : '💵 BAYAR TUNAI';
+  if(o) o.textContent = (menyimpan && metode === 'online') ? 'Menyimpan...' : '🛵 PESANAN ONLINE (Shopee/Grab)';
+}
+
+async function konfirmasiBayar(metode){
   const btn = document.getElementById('receiptBayarBtn');
-  btn.disabled = true;
-  btn.textContent = "Menyimpan...";
+  if(btn.disabled) return;
+  // 'online' = pesanan Shopee/Grab: harga outlet, stok berkurang, TIDAK masuk saldo kas laci
+  selectedMetodeBayar = metode === 'online' ? 'online' : 'tunai';
+  aturTombolBayar(true, selectedMetodeBayar);
 
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
   let diskon = angkaRupiah('diskonInput') || 0;
@@ -4210,8 +4219,8 @@ async function konfirmasiBayar(){
 
     if(stokKurangMsg){
       // transaksi DITOLAK: keranjang tidak dikosongkan, kasir bisa ganti ukuran / kurangi jumlah
-      btn.disabled = false;
-      btn.textContent = "BAYAR";
+      selectedMetodeBayar = 'tunai';
+      aturTombolBayar(false);
       tutupKonfirmasiBayar();
       alert("❌ Transaksi tidak bisa disimpan, bahan baku tidak cukup:\n\n" + stokKurangMsg.split('; ').join('\n') +
             "\n\nSilakan ganti ukuran atau kurangi jumlah pesanan.");
@@ -4233,8 +4242,7 @@ async function konfirmasiBayar(){
 
   document.getElementById('diskonInput').value = 0;
   selectedMetodeBayar = 'tunai';
-  btn.disabled = false;
-  btn.textContent = "BAYAR";
+  aturTombolBayar(false);
 
   await selesaikanTransaksi(); // cetak (kalau aktif) + tutup + kosongkan keranjang + notif sukses
 }
@@ -4544,7 +4552,7 @@ function disconnectPrinter(){
 }
 
 function buildReceiptText(items, total, diskon, metodeBayar){
-  const labelMetode = { tunai:'Tunai', qris:'QRIS', transfer:'Transfer' };
+  const labelMetode = { tunai:'Tunai', qris:'QRIS', transfer:'Transfer', online:'Online (Shopee/Grab)' };
   let t = "ES TEH S.O.L.O\nKesegaran Alami\n--------------------------\n";
   items.forEach(c=>{
     t += `${c.nama} (${c.size}) x${c.qty}\n   ${fmt(c.price*c.qty)}\n`;
@@ -5311,7 +5319,7 @@ function renderTxList(list){
     txList.innerHTML = '<div class="empty-msg">Tidak ada transaksi.</div>';
     return;
   }
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer' };
+  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online' };
   txList.innerHTML = list.map(t=>{
     const dibatalkan = t.status === 'dibatalkan';
     return `
@@ -6907,7 +6915,7 @@ async function loadPenjualanHariIni(){
   const totalDiskon = sukses.reduce((s,t)=>s+Number(t.diskon||0),0);
   const cup = sukses.reduce((s,t)=>s+(t.transaksi_item||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
 
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer' };
+  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online' };
   const perMetode = {};
   sukses.forEach(t=>{
     const m = t.metode_bayar || 'tunai';
