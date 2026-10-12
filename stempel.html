@@ -169,6 +169,7 @@ function kirimPulihkan(){
 // ---------- alur utama ----------
 let pesananSiap = null, statusSaya = null;
 async function mulai(){
+  if(typeof cekUlangTimer !== 'undefined') clearTimeout(cekUlangTimer);
   const token = bacaToken();
   if(!token){ tampilDaftar(); return; }
   isi().innerHTML = '<p class="kecil">Memuat…</p>';
@@ -185,6 +186,27 @@ async function mulai(){
   if(!kodeQR()){ tampilKartuSaja(); return; }
   if(c.ada){ pesananSiap = c; tampilPesanan(); return; }
   tampilAlasan(c);
+  mulaiCekUlang(c);
+}
+// Pembeli sering scan sebelum kasir selesai menyimpan transaksi -> cek ulang otomatis tiap 3 detik selama 1 menit.
+var cekUlangTimer = null;
+function mulaiCekUlang(c){
+  clearTimeout(cekUlangTimer);
+  if(!['tidak_ada', 'bukan_ori_besar', 'sudah_diambil'].includes(c.alasan)) return;
+  const batas = Date.now() + 60000;
+  const info = document.createElement('div');
+  info.className = 'kecil'; info.id = 'cekUlangInfo'; info.style.marginTop = '6px';
+  info.textContent = '⏳ Menunggu kasir menyimpan pesananmu… dicek otomatis';
+  const kotak = isi().querySelector('.kartu.err'); if(kotak) kotak.appendChild(info);
+  const ulang = async () => {
+    if(Date.now() > batas || !kodeQR()){ const el = document.getElementById('cekUlangInfo'); if(el) el.textContent = 'Kalau sudah bayar, tekan 🔄 Muat ulang.'; return; }
+    try{
+      const { data } = await sb.rpc('stempel_cek', { p_token: bacaToken(), p_cabang: CABANG });
+      if(data && data.ada){ pesananSiap = data; tampilPesanan(); return; }
+    }catch(e){}
+    cekUlangTimer = setTimeout(ulang, 3000);
+  };
+  cekUlangTimer = setTimeout(ulang, 3000);
 }
 function tampilBuatPin(){
   atas('Hai, ' + statusSaya.nama + '!', '🔑');
