@@ -1,0 +1,4 @@
+-- 2026-10-13: Brankas Online (GrabFood + ShopeeFood) — sudah dijalankan di Supabase (migration brankas_online).
+-- Saldo = total transaksi metode 'online' − total dipindah ke laci (tabel brankas_online, jenis 'ke_laci').
+-- Fungsi: brankas_online_data(p_cabang) & brankas_online_ke_laci(p_cabang, p_jumlah, p_keterangan) — khusus owner/admin.
+-- laporan_biaya_kas: tambah baris 'Masuk dari Brankas Online' dengan jumlah NEGATIF (= uang masuk laci).
