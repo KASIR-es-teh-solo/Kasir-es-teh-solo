@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-13.1">
+<meta name="app-version" content="2026-10-13.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1008,7 +1008,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <div class="label" style="color:#fff;">Isi Brankas Online (GrabFood + ShopeeFood)</div>
           <div class="value" id="brankasOnlineSaldo" style="color:#fff;">Rp 0</div>
           <div id="brankasOnlineInfo" style="font-size:12.5px;color:#fff;margin-top:4px;line-height:1.5;"></div>
-          <button class="header-btn" style="margin-top:10px;background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="pindahBrankasOnlineKeLaci()">➡️ Masukkan ke Laci</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="pindahBrankasOnlineKeLaci()">➡️ Masukkan ke Laci</button>
+            <button class="header-btn" style="background:transparent;color:#fff;border-color:#fff;font-weight:700;" onclick="kosongkanBrankasOnline()">🧹 Kosongkan sisa</button>
+          </div>
         </div>
       </div>
       <div class="dash-section" style="margin-bottom:0;">
@@ -7623,15 +7626,15 @@ async function loadBrankasOnline(){
   brankasOnlineSaldo = Number(data.saldo || 0);
   document.getElementById('brankasOnlineSaldo').textContent = fmt(brankasOnlineSaldo);
   document.getElementById('brankasOnlineInfo').innerHTML =
-    `Pesanan online bulan ini: <b>${data.pesanan_bulan}</b> · ${fmt(data.masuk_bulan)} (harga outlet)<br>Sudah dimasukkan ke laci bulan ini: ${fmt(data.ke_laci_bulan)}`;
+    `Pesanan online bulan ini: <b>${data.pesanan_bulan}</b> · ${fmt(data.masuk_bulan)} (harga outlet)<br>Sudah dimasukkan ke laci bulan ini: ${fmt(data.ke_laci_bulan)}${Number(data.selisih_bulan) > 0 ? ' · selisih dikosongkan ' + fmt(data.selisih_bulan) : ''}`;
   const rows = data.riwayat || [];
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>{
     const tgl = new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
     const masuk = r.jenis === 'masuk';
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
-      <span>${masuk ? `🛵 Pesanan online · ${r.jumlah_pesanan} pesanan` : '➡️ Dimasukkan ke laci'}${r.keterangan ? ' · ' + escTG(r.keterangan) : ''}
+      <span>${masuk ? `🛵 Pesanan online · ${r.jumlah_pesanan} pesanan` : (r.jenis === 'selisih' ? '🧹 Sisa dikosongkan (tidak masuk laci)' : '➡️ Dimasukkan ke laci')}${r.keterangan ? ' · ' + escTG(r.keterangan) : ''}
         <small style="display:block;opacity:.6;font-size:11px;">${masuk ? tgl : tglJamWIB(r.waktu) + ' · ' + escTG(r.pencatat || '-')}</small></span>
-      <span style="font-weight:800;white-space:nowrap;color:${masuk ? '#1b5e20' : '#c62828'};">${masuk ? '+' : '−'} ${fmt(r.jumlah)}</span>
+      <span style="font-weight:800;white-space:nowrap;color:${masuk ? '#1b5e20' : (r.jenis === 'selisih' ? '#888' : '#c62828')};">${masuk ? '+' : '−'} ${fmt(r.jumlah)}</span>
     </div>`;
   }).join('') + `</div>` : '<div class="empty-msg">Belum ada pesanan online.</div>';
 }
@@ -7651,6 +7654,17 @@ async function pindahBrankasOnlineKeLaci(){
   showSuccessToast('➡️', 'Masuk ke laci', `${fmt(jumlah)} dari Brankas Online`);
   await loadBrankasOnline();
   if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader();
+}
+
+async function kosongkanBrankasOnline(){
+  const role = currentProfile && currentProfile.role;
+  if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
+  if(brankasOnlineSaldo <= 0){ alert('Brankas Online sudah kosong.'); return; }
+  if(!confirm(`Kosongkan sisa ${fmt(brankasOnlineSaldo)} di Brankas Online?\n\nPakai ini SETELAH uang yang cair dari Grab/Shopee dimasukkan ke laci. Sisa ini selisih komisi/harga, jadi TIDAK menambah uang laci.`)) return;
+  const { error } = await sb.rpc('brankas_online_kosongkan', { p_cabang: activeCabangId, p_keterangan: null });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('🧹', 'Brankas Online dikosongkan', 'Sisa selisih dihapus, laci tidak berubah');
+  await loadBrankasOnline();
 }
 
 // ================== BIAYA OPERASIONAL ==================

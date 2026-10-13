@@ -2,3 +2,5 @@
 -- Saldo = total transaksi metode 'online' − total dipindah ke laci (tabel brankas_online, jenis 'ke_laci').
 -- Fungsi: brankas_online_data(p_cabang) & brankas_online_ke_laci(p_cabang, p_jumlah, p_keterangan) — khusus owner/admin.
 -- laporan_biaya_kas: tambah baris 'Masuk dari Brankas Online' dengan jumlah NEGATIF (= uang masuk laci).
+-- 2026-10-13 20.1x: jenis 'selisih' + fungsi brankas_online_kosongkan(p_cabang, p_keterangan): sisa saldo (selisih komisi/harga)
+-- dihapus tanpa menambah laci; laporan_biaya_kas hanya menghitung jenis 'ke_laci'. (migration brankas_online_kosongkan_sisa)
