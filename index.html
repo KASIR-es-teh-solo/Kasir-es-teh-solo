@@ -3817,7 +3817,7 @@ const AKSI_MENU = {
   log:()=>{ showDashPanel('ringkasan'); setTimeout(()=>{ const el = document.getElementById('dashLogAktivitasSection'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 500); },
   sop:()=>showSOPView(), karyawan:()=>showDashPanel('karyawan'), pengaturan:()=>showSettingsView(),
   pengaturanKasir:()=>bukaPengaturanKasir(), password:()=>openGantiPasswordModal(), izin:()=>bukaIzinKeluarModal(),
-  teh:()=>bukaTehSiap(), uangLaci:()=>bukaUangLaci(), keluar:()=>doLogout()
+  teh:()=>bukaTehSiap(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
 };
 function jalankanMenu(k){ const f = AKSI_MENU[k]; if(f) f(); }
 // [ikon, nama, aksi]
@@ -3839,7 +3839,7 @@ const MENU_PER_ROLE = {
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
     laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline']]],
-    profil: ['👤 Profil', [['⚙️','Pengaturan & Password','pengaturanKasir'],['🚪','Keluar','keluar']]]
+    profil: ['👤 Profil', [['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   kasir: {
     // cuma 1 kategori -> kotaknya langsung tampil di Beranda (tanpa folder)
@@ -3848,7 +3848,8 @@ const MENU_PER_ROLE = {
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['uangLaci','💰','Uang Laci'],['profil','👤','Profil']],
     laporan: null,
-    profil: ['👤 Profil', [['⚙️','Pengaturan & Password','pengaturanKasir'],['🚶','Izin Keluar','izin'],['🚪','Keluar','keluar']]]
+    uangLaci: ['💰 Uang Laci', [['🧊','Catat Belanja','belanja'],['💵','Hitung / Tutup Kas','kas']]],
+    profil: ['👤 Profil', [['🔑','Ganti Password','password'],['🚶','Izin Keluar','izin'],['🚪','Keluar','keluar']]]
   }
 };
 function menuRoleIni(){ return MENU_PER_ROLE[(currentProfile && currentProfile.role) || 'kasir'] || MENU_PER_ROLE.kasir; }
@@ -3857,7 +3858,7 @@ function htmlKotakMenu(judul, items){
     `<div class="bd-tile${k === 'keluar' ? ' keluar' : ''}" onclick="jalankanMenu('${k}')">${ic}<span>${nama}</span></div>`).join('') + `</div></div>`;
 }
 // overlay yang dibuka dari tombol bawah tampil sebagai halaman penuh
-const OVERLAY_HALAMAN = { hariIni:'penjualanHariIniOverlay', uangLaci:'uangLaciOverlay', beliStok:'beliStokOverlay' };
+const OVERLAY_HALAMAN = { hariIni:'penjualanHariIniOverlay', beliStok:'beliStokOverlay' };
 function tutupHalamanOverlay(){ document.body.classList.remove('ada-halaman-overlay'); document.querySelectorAll('.overlay.sebagai-halaman').forEach(o=>o.classList.remove('show','sebagai-halaman')); }
 function navKe(k){
   tutupHalamanOverlay();
@@ -3947,7 +3948,7 @@ function tampilkanGrid(jenis){
   if(!cfg){ tampilkanBeranda(); return; }
   tampilkanHalamanBaru('halamanGridView');
   tandaiNavBawah(jenis);
-  document.getElementById('halamanGridView').innerHTML = `<div class="bd-kats">${htmlKotakMenu(cfg[0], cfg[1])}</div>`;
+  document.getElementById('halamanGridView').innerHTML = `<div class="bd-kats bd-utama">${htmlKotakMenu(cfg[0], cfg[1])}</div>`;
 }
 async function isiRingkasBeranda(role){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
