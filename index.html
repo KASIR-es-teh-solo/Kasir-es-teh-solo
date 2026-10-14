@@ -518,6 +518,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bd-tile span{display:block;font-size:12.5px;font-weight:800;margin-top:4px;}
   .bd-tile:active{transform:scale(.97);}
   .bd-tile.keluar{background:rgba(160,30,30,.85);}
+  .bd-folder{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+  .bd-folder .bd-tile{font-size:34px;padding:18px 6px 14px;}
+  .bd-folder .bd-tile span{font-size:15px;}
+  .bd-tile small{display:block;font-size:11.5px;font-weight:700;opacity:.9;margin-top:2px;}
+  .bd-kembali{background:#fff;color:#0c1f14;border:none;border-radius:12px;padding:10px 16px;font-weight:800;font-size:15px;margin-bottom:12px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25);}
 
   /* Keterbacaan: tulisan kecil/abu lebih tebal & hitam (permintaan Boss Leo 14 Okt) */
   .modal p{font-size:13px;font-weight:600;color:#1a1a1a;}
@@ -3909,9 +3914,20 @@ function tampilkanBeranda(){
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
-    <div class="bd-kats">${menuRoleIni().kategori.map(([j, items]) => htmlKotakMenu(j, items)).join('')}</div>`;
+    <div class="bd-kat"><h3>Menu Utama</h3><div style="font-size:13px;font-weight:700;margin:-4px 0 10px;">Pilih kategori menu</div><div class="bd-grid bd-folder">${
+      menuRoleIni().kategori.map(([j, items], i) => { const m = j.match(/^(\S+)\s+(.*)$/) || [null,'📁',j];
+        return `<div class="bd-tile" onclick="tampilkanKategori(${i})">${m[1]}<span>${m[2]}</span><small>${items.length} menu</small></div>`; }).join('')
+    }</div></div>`;
   simpanViewState({ type:'beranda' });
   isiRingkasBeranda(role);
+}
+// Beranda cuma menampilkan folder kategori; ketuk folder = satu halaman berisi menu kategori itu
+function tampilkanKategori(i){
+  const kat = menuRoleIni().kategori[i]; if(!kat){ tampilkanBeranda(); return; }
+  tampilkanHalamanBaru('halamanGridView');
+  tandaiNavBawah('beranda');
+  document.getElementById('halamanGridView').innerHTML =
+    `<button class="bd-kembali" onclick="tampilkanBeranda()">◀ Beranda</button><div class="bd-kats">${htmlKotakMenu(kat[0], kat[1])}</div>`;
 }
 function tampilkanGrid(jenis){
   const cfg = menuRoleIni()[jenis];
