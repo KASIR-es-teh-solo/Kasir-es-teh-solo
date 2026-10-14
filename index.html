@@ -511,6 +511,20 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   /* tombol SOP Menu di bar atas: khusus saat di halaman Kasir */
   #topbarSopBtn{display:none;cursor:pointer;background:#e8b923;color:#0c1f14;border-color:#e8b923;font-weight:800;}
   body.ui-baru.nav-ciut #topbarSopBtn{display:inline-flex;align-items:center;}
+  #topbarMenuBtn{display:none;cursor:pointer;background:#0c1f14;color:#fff;border-color:rgba(255,255,255,.4);font-weight:800;}
+  body.ui-baru.nav-ciut #topbarMenuBtn{display:inline-flex;align-items:center;}
+  /* tombol ☰ melayang di kiri bawah diganti tombol "☰ Menu" di bar atas (mengganggu saat melayani) */
+  body.ui-baru.nav-ciut #navBukaBtn{display:none !important;}
+  /* halaman Kasir tanpa kolom cari (sudah ada kategori di bawah) */
+  body.ui-baru #menuSearchInput{display:none;}
+  /* halaman Kasir: bar atas dibuat pendek (1 baris) supaya daftar menu lebih luas */
+  body.ui-baru.nav-ciut .topbar{padding:6px 14px;gap:8px;flex-wrap:nowrap;}
+  body.ui-baru.nav-ciut .topbar-brand{width:auto;text-align:left;flex:none;}
+  body.ui-baru.nav-ciut .topbar-brand h1{font-size:17px;}
+  body.ui-baru.nav-ciut .topbar-brand span{font-size:11px;margin-top:0;}
+  body.ui-baru.nav-ciut .topbar-status{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  body.ui-baru.nav-ciut .topbar-cart{height:40px;width:46px;font-size:21px;}
+  body.ui-baru.nav-ciut .catalog{padding-top:8px;}
   #berandaView, #halamanGridView{padding:18px clamp(12px,3vw,36px) 24px;max-width:none !important;width:100%;box-sizing:border-box;}
   .bd-atas{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);margin-bottom:12px;}
   .bd-salam{font-size:clamp(21px,3vw,28px);} .bd-salam b{font-weight:800;}
@@ -755,6 +769,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <span class="status-chip" id="connStatus">🟢 Online</span>
         <span class="status-chip chip-cabang hidden" id="kasirCabangStatus">🟢 <span id="kasirCabangNamaLabel">Aktif</span></span>
         <button class="status-chip" id="topbarSopBtn" onclick="showSOPView()" title="SOP / resep menu">📋 SOP Menu</button>
+        <button class="status-chip" id="topbarMenuBtn" onclick="document.body.classList.remove('nav-ciut')" title="Tampilkan tombol menu bawah">☰ Menu</button>
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
