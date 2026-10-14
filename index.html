@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-14.3">
+<meta name="app-version" content="2026-10-14.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -466,6 +466,14 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .dash-card .value{font-size:24px;font-weight:800;color:var(--gold-light);}
   .dash-panel{}
   .dash-section{margin-bottom:26px;}
+  /* Belanja dari Laci: tulisan lebih tebal & hitam (permintaan Boss Leo 14 Okt) */
+  #belanjaKecilOverlay .modal > p{color:#111;font-weight:600;opacity:1;}
+  #belanjaKecilOverlay input::placeholder{color:#555;font-weight:600;opacity:1;}
+  #belanjaKecilOverlay .bk-head{font-size:14px;font-weight:800;color:#000;}
+  #belanjaKecilOverlay #belanjaKecilList .tx-row{font-size:14px;color:#000;font-weight:600;}
+  #belanjaKecilOverlay #belanjaKecilList .tx-row b{font-weight:800;color:#000;}
+  #belanjaKecilOverlay .bk-sub{color:#333;font-weight:600;}
+  #belanjaKecilOverlay .modal-close{color:#111;font-weight:700;opacity:1;}
   .lb-box{background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px;}
   .lb-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-soft);}
   .lb-row:last-child{border-bottom:0;}
@@ -1269,7 +1277,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <button class="login-btn" id="belanjaKecilSubmitBtn" onclick="submitBelanjaKecil()">Simpan</button>
     <div style="margin-top:14px;">
-      <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Uang keluar laci hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
+      <div class="bk-head" style="margin-bottom:6px;">Uang keluar laci hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
       <div id="belanjaKecilList" style="max-height:180px;overflow:auto;"></div>
     </div>
     <button class="modal-close" onclick="tutupBelanjaKecil()">Tutup</button>
@@ -7576,9 +7584,9 @@ async function loadBelanjaKecilHariIni(){
   const rows = (data || []).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
   document.getElementById('belanjaKecilTotal').textContent = fmt(rows.reduce((s,r)=>s+Number(r.jumlah),0));
   box.innerHTML = rows.length ? rows.map(r=>`
-    <div class="tx-row" style="font-size:12px;">
-      <span>${escTG(r.kategori)}${r.deskripsi ? ' <span style="opacity:.6;">· '+escTG(r.deskripsi)+'</span>' : ''}</span>
-      <span><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span style="opacity:.6;">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></span>
+    <div class="tx-row">
+      <span>${escTG(r.kategori)}${r.deskripsi ? ' <span class="bk-sub">· '+escTG(r.deskripsi)+'</span>' : ''}</span>
+      <span><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span class="bk-sub">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></span>
     </div>`).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar laci hari ini.</div>';
 }
 
