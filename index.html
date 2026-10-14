@@ -478,6 +478,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .dash-section{margin-bottom:26px;}
 
   /* ================== TAMPILAN BARU: Beranda + tombol bawah (semua role) ================== */
+  /* Latar foto selalu utuh (langit + gunung + kebun teh) walau halamannya panjang, mis. halaman Kasir.
+     Dulu foto ikut memanjang setinggi halaman di tablet Android, jadi yang terlihat cuma langit. */
+  body::before{content:'';position:fixed;inset:0;z-index:-1;background:inherit;background-size:cover;background-position:center center;background-attachment:scroll;pointer-events:none;}
   body.ui-baru #sideNav, body.ui-baru #sidebarToggleBtn{display:none !important;}
   body.ui-baru .app-main{margin-left:0 !important;width:100vw !important;max-width:100vw !important;padding-bottom:84px;}
   body.ui-baru .kat-bawah{bottom:84px;}
