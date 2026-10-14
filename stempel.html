@@ -308,10 +308,14 @@ function tampilPesanan(){
     <div class="salah" id="ambilSalah"></div>
     <div class="kecil">Bukan pesananmu? Jangan diambil ya, nanti dibatalkan kasir 🙏</div>
     <div class="kecil" style="margin-top:8px">Stempelmu sekarang: <b>${Math.min(statusSaya.stempel,10)} / 10</b></div>`;
+  // 2026-10-14: banyak pembeli mengira stempel otomatis masuk setelah scan dan tidak menekan "Ambil".
+  // Sekarang langsung diambil otomatis (sekali per pesanan); tombol tetap ada kalau gagal (mis. izin lokasi ditolak).
+  if(pesananOtomatisDicoba !== p.transaksi_id){ pesananOtomatisDicoba = p.transaksi_id; ambilStempel(); }
 }
+var pesananOtomatisDicoba = null;
 async function ambilStempel(){
   const btn = document.getElementById('ambilBtn'), salah = document.getElementById('ambilSalah');
-  btn.disabled = true; btn.textContent = 'Cek lokasi…'; salah.textContent = '';
+  btn.disabled = true; btn.textContent = '⏳ Mengambil stempel otomatis… (izinkan lokasi)'; salah.textContent = '';
   let pos;
   try{ pos = await ambilLokasi(); }
   catch(e){
