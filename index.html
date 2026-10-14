@@ -527,6 +527,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bd-tile span{display:block;font-size:12.5px;font-weight:800;margin-top:4px;}
   .bd-tile:active{transform:scale(.97);}
   .bd-tile.keluar{background:rgba(160,30,30,.85);}
+  .bd-utama .bd-grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px;}
+  .bd-utama .bd-tile{font-size:32px;padding:16px 4px 12px;}
+  .bd-utama .bd-tile span{font-size:14px;}
   .bd-folder{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
   .bd-folder .bd-tile{font-size:34px;padding:18px 6px 14px;}
   .bd-folder .bd-tile span{font-size:15px;}
@@ -3924,7 +3927,7 @@ function tampilkanBeranda(){
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
-    <div class="bd-kats">${menuRoleIni().kategori.map(([j, items]) => htmlKotakMenu(menuRoleIni().kategori.length === 1 ? 'Menu Utama' : j, items)).join('')}</div>`;
+    <div class="bd-kats bd-utama">${htmlKotakMenu('Menu Utama', menuRoleIni().kategori.flatMap(([j, items]) => items))}</div>`;
   simpanViewState({ type:'beranda' });
   isiRingkasBeranda(role);
 }
