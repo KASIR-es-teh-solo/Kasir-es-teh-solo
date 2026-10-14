@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-14.1">
+<meta name="app-version" content="2026-10-14.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -466,6 +466,18 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .dash-card .value{font-size:24px;font-weight:800;color:var(--gold-light);}
   .dash-panel{}
   .dash-section{margin-bottom:26px;}
+  .lb-box{background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px;}
+  .lb-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-soft);}
+  .lb-row:last-child{border-bottom:0;}
+  .lb-row > span:last-child{white-space:nowrap;text-align:right;}
+  .lb-row.tot{font-weight:800;font-size:15px;}
+  .lb-row small{display:block;opacity:.6;font-size:11px;}
+  .lb-min{color:#c0392b;} .lb-plus{color:#1b7f3a;}
+  .lb-bar{height:14px;background:#e6e1d2;border-radius:8px;overflow:hidden;margin:8px 0 4px;}
+  .lb-bar i{display:block;height:100%;background:var(--leaf);}
+  .lb-box input{width:110px;padding:7px 8px;border:1px solid var(--line-soft);border-radius:8px;font-size:14px;text-align:right;}
+  #lbPeriode .header-btn{background:#fff;color:var(--ink);border-color:#fff;font-weight:700;}
+  #lbPeriode .header-btn.aktif{background:var(--gold);color:var(--ink);border-color:var(--gold);}
   .sop-card{background:rgba(255,255,255,.08);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.55);border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(12,31,20,.12);margin-bottom:26px;}
   .dash-section h3{font-size:23px;letter-spacing:.2px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65);margin-bottom:12px;font-weight:700;}
   .tx-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;}
@@ -1017,6 +1029,41 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <h3 style="margin:0 0 12px;">📒 Riwayat Brankas Online</h3>
         <div id="brankasOnlineList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
+
+    <!-- LABA BERSIH & TITIK IMPAS (khusus Owner) -->
+    <div class="dash-panel hidden" id="dashPanel-lababersih">
+      <div id="lbPeriode" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+        <button class="header-btn" data-hari="1" onclick="loadLabaBersih(1)">Hari ini</button>
+        <button class="header-btn" data-hari="7" onclick="loadLabaBersih(7)">7 hari</button>
+        <button class="header-btn" data-hari="30" onclick="loadLabaBersih(30)">30 hari</button>
+      </div>
+      <div class="dash-cards" style="margin-bottom:18px;">
+        <div class="dash-card">
+          <span class="icon">💰</span>
+          <div class="label" id="lbLabelLaba">Laba Bersih</div>
+          <div class="value" id="lbLaba">Rp 0</div>
+          <div id="lbLabaHarian" style="font-size:12.5px;color:#f3e6b5;margin-top:4px;"></div>
+        </div>
+        <div class="dash-card">
+          <span class="icon">🎯</span>
+          <div class="label">Titik Impas</div>
+          <div class="value" id="lbImpas">Rp 0</div>
+          <div id="lbImpasInfo" style="font-size:12.5px;color:#f3e6b5;margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="dash-section">
+        <h3>📊 Rincian</h3>
+        <div id="lbRincian" class="lb-box"><div class="empty-msg">Memuat...</div></div>
+      </div>
+      <div class="dash-section">
+        <h3>🎯 Hari ini vs titik impas</h3>
+        <div id="lbHariIni" class="lb-box"></div>
+      </div>
+      <div class="dash-section" style="margin-bottom:0;">
+        <h3>⚙️ Pengaturan biaya</h3>
+        <div id="lbPengaturan" class="lb-box"></div>
       </div>
     </div>
 
@@ -3664,7 +3711,8 @@ const DASH_NAV_MAP = {
   pembelian: 'navPembelianBtn',
   biaya: 'navBiayaBtn',
   brankas: 'navBrankasBtn',
-  brankasonline: 'menuLaporanBtn'
+  brankasonline: 'menuLaporanBtn',
+  lababersih: 'menuLaporanBtn'
 };
 
 function showDashPanel(panelName){
@@ -3677,7 +3725,7 @@ function showDashPanel(panelName){
   document.querySelectorAll('#ownerView .dash-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById('dashPanel-' + panelName).classList.remove('hidden');
   const ownerNav = pakaiMenuToggle()
-    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', brankasonline:'menuLaporanBtn', karyawan:(currentProfile.role === 'owner' ? 'settingsBtn' : 'menuLaporanBtn'), menuoutlet:'menuOutletBtn', stokmenipis:'navCekStokBtn', stokcup:'navCekStokBtn' })[panelName]
+    ? ({ ringkasan:'menuLaporanBtn', stok:'menuLaporanBtn', pembelian:'menuLaporanBtn', biaya:'menuLaporanBtn', brankas:'menuLaporanBtn', brankasonline:'menuLaporanBtn', lababersih:'menuLaporanBtn', karyawan:(currentProfile.role === 'owner' ? 'settingsBtn' : 'menuLaporanBtn'), menuoutlet:'menuOutletBtn', stokmenipis:'navCekStokBtn', stokcup:'navCekStokBtn' })[panelName]
     : null;
   setActiveNav(ownerNav || DASH_NAV_MAP[panelName]);
   aturBarLaporan(panelName);
@@ -3705,6 +3753,10 @@ function showDashPanel(panelName){
 
   if(panelName === 'brankasonline'){
     loadBrankasOnline();
+  }
+
+  if(panelName === 'lababersih'){
+    loadLabaBersih();
   }
 
   if(panelName === 'stok'){
@@ -7362,9 +7414,9 @@ if(document.readyState !== 'loading') siapkanLipatPengaturan();
 
 // ================== MENU OUTLET (owner) ==================
 // Menu Outlet & Laporan Keuangan (owner): halaman berisi daftar toggle seperti Pengaturan
-const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['stok','📦 Stok'],['pembelian','📥 Pembelian'],['brankas','🔒 Brankas'],['brankasonline','🛵 Brankas Online'],['biaya','💸 Biaya'],['karyawan','👥 Karyawan']];
+const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['lababersih','💰 Laba Bersih'],['stok','📦 Stok'],['pembelian','📥 Pembelian'],['brankas','🔒 Brankas'],['brankasonline','🛵 Brankas Online'],['biaya','💸 Biaya'],['karyawan','👥 Karyawan']];
 // bagian yang TIDAK tampil per role: Brankas khusus Owner; Karyawan owner ada di Pengaturan
-const LIPAT_DISEMBUNYIKAN = { owner:['karyawan'], admin:['brankas'] };
+const LIPAT_DISEMBUNYIKAN = { owner:['karyawan'], admin:['brankas','lababersih'] };
 // pakai tampilan menu toggle (Menu Outlet / Cek Stok): owner & admin
 function pakaiMenuToggle(){ const r = currentProfile && currentProfile.role; return r === 'owner' || r === 'admin'; }
 // Cek Stok (owner): Stok Menipis & Stok Cup dalam satu halaman toggle
@@ -7616,6 +7668,97 @@ async function ambilDariBrankas(){
 // Pesanan online (metode 'online') tidak masuk laci; uangnya dihitung di sini. Owner/Admin memindahkan ke laci
 // (mis. seminggu sekali) -> tercatat di brankas_online & kas laci bertambah (lewat laporan_biaya_kas).
 let brankasOnlineSaldo = 0;
+// ================== LABA BERSIH & TITIK IMPAS (khusus Owner) ==================
+let lbHari = 30, lbData = null;
+async function loadLabaBersih(hari){
+  if(hari) lbHari = hari;
+  const box = document.getElementById('lbRincian');
+  if(!currentProfile || currentProfile.role !== 'owner'){ box.innerHTML = '<div class="empty-msg">Khusus Owner.</div>'; return; }
+  if(!activeCabangId){ box.innerHTML = '<div class="empty-msg">Pilih cabang dulu.</div>'; return; }
+  document.querySelectorAll('#lbPeriode .header-btn').forEach(b=>b.classList.toggle('aktif', Number(b.dataset.hari) === lbHari));
+  box.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const { data, error } = await sb.rpc('laba_bersih', { p_cabang: activeCabangId, p_hari: lbHari });
+  if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
+  lbData = data;
+  const n = k => Number(data[k] || 0);
+  const kotor = n('omzet') - n('modal');
+  const biaya = n('gaji') + n('sewa') + n('listrik') + n('galon') + n('gas') + n('kresek');
+  const laba = kotor - biaya;
+  const hariBuka = Math.max(1, n('hari_buka'));
+  const judulPeriode = lbHari === 1 ? 'hari ini' : lbHari + ' hari';
+  document.getElementById('lbLabelLaba').textContent = `Laba Bersih (${judulPeriode})`;
+  document.getElementById('lbLaba').textContent = (laba < 0 ? '− ' : '') + fmt(Math.abs(laba));
+  document.getElementById('lbLaba').style.color = laba < 0 ? '#ff8a80' : '';
+  document.getElementById('lbLabaHarian').textContent = lbHari === 1 ? `${n('trx')} transaksi · ${n('cup')} cup` : `±${fmt(Math.round(laba / hariBuka))} / hari · ${n('hari_buka')} hari buka`;
+  const margin = n('omzet') > 0 ? kotor / n('omzet') : 0;
+  const impas = margin > 0 ? Math.round(n('biaya_tetap_per_hari') / margin / 1000) * 1000 : 0;
+  const hargaPerCup = n('cup') > 0 ? n('omzet') / n('cup') : 0;
+  document.getElementById('lbImpas').textContent = impas ? fmt(impas) : '-';
+  document.getElementById('lbImpasInfo').textContent = impas && hargaPerCup ? `omzet / hari (±${Math.ceil(impas / hargaPerCup)} cup)` : 'belum ada data penjualan';
+  const p = data.pengaturan || {};
+  const kl = data.kresek_lembar || {};
+  const baris = (label, nilai, kelas='', ket='') => `<div class="lb-row ${kelas.includes('tot') ? 'tot' : ''}"><span>${label}${ket ? `<small>${ket}</small>` : ''}</span><span class="${kelas.replace('tot','')}">${nilai}</span></div>`;
+  const kurang = v => '− ' + fmt(v);
+  box.innerHTML =
+    baris('Omzet', `<b>${fmt(n('omzet'))}</b>`, '', `${n('trx')} transaksi · ${n('cup')} cup`) +
+    baris('Modal resep (termasuk es batu)', kurang(n('modal')), 'lb-min') +
+    baris('Laba kotor', fmt(kotor), 'tot') +
+    baris('👩 Gaji kasir', kurang(n('gaji')), 'lb-min', `${String(n('jam_buka_per_hari')).replace('.',',')} jam × ${fmt(p.gaji_per_jam)} × ${n('hari_buka')} hari buka`) +
+    baris('🏠 Sewa (bagian es teh)', kurang(n('sewa')), 'lb-min', `${fmt(p.sewa_per_tahun)}/tahun × ${String(p.porsi_sewa_persen).replace('.',',')}%`) +
+    baris('⚡ Listrik', kurang(n('listrik')), 'lb-min', `${fmt(p.listrik_per_hari)}/hari`) +
+    baris('💧 Air galon', kurang(n('galon')), 'lb-min', `rata-rata belanja 30 hari ±${fmt(p.galon_per_hari)}/hari`) +
+    baris('🔥 Gas LPG', kurang(n('gas')), 'lb-min', `rata-rata belanja 30 hari ±${fmt(p.gas_per_hari)}/hari`) +
+    baris('🛍️ Kresek', kurang(n('kresek')), 'lb-min', `${kl.k1||0} kecil · ${kl.k2||0} sedang · ${kl.k3||0} besar`) +
+    baris('Laba bersih', (laba < 0 ? '− ' : '') + fmt(Math.abs(laba)), 'tot ' + (laba < 0 ? 'lb-min' : 'lb-plus'));
+  const hariIni = n('omzet_hari_ini');
+  const pct = impas ? Math.round(hariIni / impas * 100) : 0;
+  document.getElementById('lbHariIni').innerHTML =
+    baris('Omzet hari ini', `<b>${fmt(hariIni)}</b>`) +
+    `<div class="lb-bar"><i style="width:${Math.min(100, pct)}%;background:${pct >= 100 ? 'var(--leaf)' : 'var(--gold)'};"></i></div>
+     <div style="font-size:12.5px;color:#555;">${!impas ? 'Titik impas belum bisa dihitung.' : pct >= 100 ? `✅ Sudah lewat titik impas (${pct}%) — sisanya untung bersih` : `⏳ ${pct}% — kurang ${fmt(impas - hariIni)} lagi untuk balik modal hari ini`}</div>`;
+  tampilPengaturanLaba(false);
+}
+function tampilPengaturanLaba(edit){
+  const el = document.getElementById('lbPengaturan');
+  const p = (lbData && lbData.pengaturan) || {};
+  const baris = (label, nilai) => `<div class="lb-row"><span>${label}</span><span>${nilai}</span></div>`;
+  const inp = (id, v, step='1') => `<input type="number" inputmode="decimal" step="${step}" min="0" id="${id}" value="${v}">`;
+  const jam = (id, v) => `<input type="time" id="${id}" value="${v}" style="width:110px;">`;
+  if(!edit){
+    el.innerHTML =
+      baris('Gaji kasir / jam', `<b>${fmt(p.gaji_per_jam)}</b>`) +
+      baris('Jam buka', `<b>${(p.jam_buka||'').replace(':','.')} – ${(p.jam_tutup||'').replace(':','.')}</b>`) +
+      baris('Sewa rumah / tahun · porsi es teh', `<b>${fmt(p.sewa_per_tahun)} · ${String(p.porsi_sewa_persen).replace('.',',')}%</b>`) +
+      baris('Listrik / hari', `<b>${fmt(p.listrik_per_hari)}</b>`) +
+      baris('Kresek per lembar (1 · 2 · 3–6 cup)', `<b>${fmt(p.kresek_1cup)} · ${fmt(p.kresek_2cup)} · ${fmt(p.kresek_3cup)}</b>`) +
+      baris('Galon & gas', '<small style="opacity:.7;">otomatis dari Belanja</small>') +
+      `<div style="margin-top:8px;"><button class="header-btn gold" onclick="tampilPengaturanLaba(true)">✏️ Ubah</button></div>`;
+    return;
+  }
+  el.innerHTML =
+    baris('Gaji kasir / jam (Rp)', inp('lbGaji', p.gaji_per_jam)) +
+    baris('Jam buka', jam('lbBuka', p.jam_buka)) +
+    baris('Jam tutup', jam('lbTutup', p.jam_tutup)) +
+    baris('Sewa rumah / tahun (Rp)', inp('lbSewa', p.sewa_per_tahun)) +
+    baris('Porsi sewa es teh (%)', inp('lbPorsi', p.porsi_sewa_persen, '0.1')) +
+    baris('Listrik / hari (Rp)', inp('lbListrik', p.listrik_per_hari)) +
+    baris('Kresek 1 cup / lembar (Rp)', inp('lbK1', p.kresek_1cup)) +
+    baris('Kresek 2 cup / lembar (Rp)', inp('lbK2', p.kresek_2cup)) +
+    baris('Kresek 3–6 cup / lembar (Rp)', inp('lbK3', p.kresek_3cup)) +
+    `<div style="display:flex;gap:8px;margin-top:10px;"><button class="header-btn gold" onclick="simpanPengaturanLaba()">💾 Simpan</button><button class="header-btn" style="background:#fff;color:var(--ink);border-color:var(--line-soft);" onclick="tampilPengaturanLaba(false)">Batal</button></div>`;
+}
+async function simpanPengaturanLaba(){
+  const v = id => Number(String(document.getElementById(id).value).replace(',','.'));
+  const args = { p_cabang: activeCabangId, p_gaji_per_jam: v('lbGaji'), p_jam_buka: document.getElementById('lbBuka').value, p_jam_tutup: document.getElementById('lbTutup').value,
+    p_sewa_per_tahun: v('lbSewa'), p_porsi_sewa_persen: v('lbPorsi'), p_listrik_per_hari: v('lbListrik'),
+    p_kresek_1cup: v('lbK1'), p_kresek_2cup: v('lbK2'), p_kresek_3cup: v('lbK3') };
+  if(Object.values(args).some(x => x === '' || (typeof x === 'number' && (isNaN(x) || x < 0)))){ alert('Ada isian yang kosong / tidak valid.'); return; }
+  const { error } = await sb.rpc('biaya_tetap_simpan', args);
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('💾', 'Pengaturan biaya disimpan', 'Laba bersih dihitung ulang');
+  loadLabaBersih();
+}
+
 async function loadBrankasOnline(){
   const list = document.getElementById('brankasOnlineList');
   const role = currentProfile && currentProfile.role;
