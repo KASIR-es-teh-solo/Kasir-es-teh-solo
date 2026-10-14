@@ -530,6 +530,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bd-tile span{display:block;font-size:12.5px;font-weight:800;margin-top:4px;}
   .bd-tile:active{transform:scale(.97);}
   .bd-tile.keluar{background:rgba(160,30,30,.85);}
+  /* kotak menu langsung di atas foto, tanpa bingkai transparan pembungkus (permintaan Boss Leo 15 Okt) */
+  .bd-kat{background:none !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;padding:0 !important;}
+  .bd-kat h3{font-size:19px;text-shadow:0 1px 4px rgba(0,0,0,.85);}
+  .bd-tile{box-shadow:0 3px 10px rgba(0,0,0,.35);}
   .bd-utama .bd-grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:12px;}
   .bd-utama .bd-tile{font-size:32px;padding:16px 4px 12px;}
   .bd-utama .bd-tile span{font-size:14px;}
