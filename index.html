@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-15.4">
+<meta name="app-version" content="2026-10-15.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -511,7 +511,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   /* tombol SOP Menu di bar atas: khusus saat di halaman Kasir */
   #topbarSopBtn{display:none;cursor:pointer;background:#e8b923;color:#0c1f14;border-color:#e8b923;font-weight:800;}
   body.ui-baru.nav-ciut #topbarSopBtn{display:inline-flex;align-items:center;}
-  #topbarMenuBtn{display:none;cursor:pointer;background:#0c1f14;color:#fff;border-color:rgba(255,255,255,.4);font-weight:800;}
+  #topbarMenuBtn{display:none;cursor:pointer;background:#e8b923;color:#0c1f14;border:2px solid #fff;font-weight:900;font-size:15px;padding:8px 14px;flex:none;}
   body.ui-baru.nav-ciut #topbarMenuBtn{display:inline-flex;align-items:center;}
   /* tombol ☰ melayang di kiri bawah diganti tombol "☰ Menu" di bar atas (mengganggu saat melayani) */
   body.ui-baru.nav-ciut #navBukaBtn{display:none !important;}
@@ -755,6 +755,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <select id="ownerCabangSelector" class="hidden" onchange="changeOwnerCabang(this)"></select>
       </div>
       <div class="topbar-status">
+        <button class="status-chip" id="topbarMenuBtn" onclick="document.body.classList.remove('nav-ciut')" title="Tampilkan tombol menu bawah (Beranda, Pesanan, dll)">🏠 Menu</button>
         <div class="topbar-clock" id="topbarClock">
           <div class="clock-mini" id="clockMiniFace">
             <div class="hand-m hand-hour-m" id="handHourMini"></div>
@@ -771,7 +772,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <span class="status-chip" id="connStatus">🟢 Online</span>
         <span class="status-chip chip-cabang hidden" id="kasirCabangStatus">🟢 <span id="kasirCabangNamaLabel">Aktif</span></span>
         <button class="status-chip" id="topbarSopBtn" onclick="showSOPView()" title="SOP / resep menu">📋 SOP Menu</button>
-        <button class="status-chip" id="topbarMenuBtn" onclick="document.body.classList.remove('nav-ciut')" title="Tampilkan tombol menu bawah">☰ Menu</button>
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
