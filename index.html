@@ -3815,34 +3815,30 @@ const AKSI_MENU = {
 };
 function jalankanMenu(k){ const f = AKSI_MENU[k]; if(f) f(); }
 // [ikon, nama, aksi]
+// Aturan: setiap fitur cuma muncul SATU kali — yang sudah ada di tombol bawah / halaman Laporan / Profil tidak diulang di Beranda.
 const MENU_PER_ROLE = {
   owner: {
     kategori: [
-      ['🧾 Penjualan', [['📈','Hari Ini','hariIni'],['🎟️','Stempel Pelanggan','stempel'],['👥','Karyawan Aktif','aktif']]],
       ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📥','Pembelian','pembelian'],['🧊','Belanja','belanja']]],
-      ['💰 Keuangan', [['💵','Kas','kas'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['💸','Biaya','biaya'],['💰','Laba Bersih','lababersih']]],
-      ['📋 Panduan & Tim', [['📋','SOP Menu','sop'],['👥','Karyawan','karyawan'],['📊','Ringkasan','ringkasan'],['📜','Log Aktivitas','log'],['⚙️','Pengaturan','pengaturan']]]
+      ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['🟢','Karyawan Aktif','aktif'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan & Keuangan', [['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['📥','Pembelian','pembelian'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['📜','Log Aktivitas','log']]],
+    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['📜','Log Aktivitas','log']]],
     profil: ['👤 Profil & Pengaturan', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   admin: {
     kategori: [
-      ['🧾 Penjualan', [['🛒','Kasir (POS)','kasir'],['📈','Hari Ini','hariIni'],['🎟️','Stempel Pelanggan','stempel'],['👥','Karyawan Aktif','aktif'],['🛵','Brankas Online','brankasonline']]],
       ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📥','Pembelian','pembelian'],['🛍️','Beli Stok Bahan','beliStok']]],
-      ['💰 Keuangan & Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya']]],
-      ['📋 Panduan & Tim', [['📋','SOP Menu','sop'],['👥','Karyawan','karyawan'],['⚙️','Pengaturan','pengaturanKasir']]]
+      ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['🟢','Karyawan Aktif','aktif'],['👥','Karyawan','karyawan'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['📥','Pembelian','pembelian'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline']]],
+    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline']]],
     profil: ['👤 Profil', [['⚙️','Pengaturan & Password','pengaturanKasir'],['🚪','Keluar','keluar']]]
   },
   kasir: {
+    // cuma 1 kategori -> kotaknya langsung tampil di Beranda (tanpa folder)
     kategori: [
-      ['🧾 Penjualan', [['🛒','Kasir (POS)','kasir'],['📈','Hari Ini','hariIni'],['🎟️','Stempel Pelanggan','stempel']]],
-      ['💰 Uang Laci', [['💰','Belanja & Tutup Kas','uangLaci']]],
-      ['📋 Panduan & Lainnya', [['📋','SOP Menu','sop'],['🫖','Teh Siap Saji','teh'],['🚶','Izin Keluar','izin'],['⚙️','Pengaturan','pengaturanKasir']]]
+      ['📋 Menu Lainnya', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop'],['🫖','Teh Siap Saji','teh']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['uangLaci','💰','Uang Laci'],['profil','👤','Profil']],
     laporan: null,
@@ -3928,10 +3924,10 @@ function tampilkanBeranda(){
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
-    <div class="bd-kat"><h3>Menu Utama</h3><div style="font-size:13px;font-weight:700;margin:-4px 0 10px;">Pilih kategori menu</div><div class="bd-grid bd-folder">${
+    ${menuRoleIni().kategori.length === 1 ? `<div class="bd-kats">${htmlKotakMenu('Menu Utama', menuRoleIni().kategori[0][1])}</div>` : `<div class="bd-kat"><h3>Menu Utama</h3><div style="font-size:13px;font-weight:700;margin:-4px 0 10px;">Pilih kategori menu</div><div class="bd-grid bd-folder">${
       menuRoleIni().kategori.map(([j, items], i) => { const m = j.match(/^(\S+)\s+(.*)$/) || [null,'📁',j];
         return `<div class="bd-tile" onclick="tampilkanKategori(${i})">${m[1]}<span>${m[2]}</span><small>${items.length} menu</small></div>`; }).join('')
-    }</div></div>`;
+    }</div></div>`}`;
   simpanViewState({ type:'beranda' });
   isiRingkasBeranda(role);
 }
@@ -3965,7 +3961,9 @@ async function isiRingkasBeranda(role){
   }catch(e){ set('bdOmzet','-'); set('bdTrx','-'); }
   if(role === 'kasir'){
     const teh = document.getElementById('tehSiapTeks');
-    set('bdKe3', teh ? teh.textContent.replace(/^🫖\s*Teh siap saji:\s*/i,'') : '-');
+    const t = teh ? teh.textContent : '';
+    const m = t.match(/(\d[\d.,]*\s*(?:L\s*\d[\d.,]*\s*ml|ml|L))/i);
+    set('bdKe3', m ? m[1] + (/seduh sekarang|tinggal/i.test(t) ? ' ⚠️' : '') : (/belum/i.test(t) ? 'Belum dicatat' : '-'));
     return;
   }
   try{ if(typeof refreshSaldoHeader === 'function') await refreshSaldoHeader(); }catch(e){}
