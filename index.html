@@ -3924,10 +3924,7 @@ function tampilkanBeranda(){
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
-    ${menuRoleIni().kategori.length === 1 ? `<div class="bd-kats">${htmlKotakMenu('Menu Utama', menuRoleIni().kategori[0][1])}</div>` : `<div class="bd-kat"><h3>Menu Utama</h3><div style="font-size:13px;font-weight:700;margin:-4px 0 10px;">Pilih kategori menu</div><div class="bd-grid bd-folder">${
-      menuRoleIni().kategori.map(([j, items], i) => { const m = j.match(/^(\S+)\s+(.*)$/) || [null,'📁',j];
-        return `<div class="bd-tile" onclick="tampilkanKategori(${i})">${m[1]}<span>${m[2]}</span><small>${items.length} menu</small></div>`; }).join('')
-    }</div></div>`}`;
+    <div class="bd-kats">${menuRoleIni().kategori.map(([j, items]) => htmlKotakMenu(menuRoleIni().kategori.length === 1 ? 'Menu Utama' : j, items)).join('')}</div>`;
   simpanViewState({ type:'beranda' });
   isiRingkasBeranda(role);
 }
