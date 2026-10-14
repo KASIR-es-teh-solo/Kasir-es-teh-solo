@@ -2004,7 +2004,7 @@ async function loadProfileAndEnter(){
   }
 
   if(profile.role === 'admin'){
-    document.getElementById('kasirBtn').classList.add('hidden');
+    // admin (Boss Puspita) juga melayani pembeli: Kasir (POS) tetap tampil di menu samping
     // admin: tampilan disamakan dengan owner — menu dikelompokkan jadi "Menu Outlet" & "Cek Stok",
     // Aktif Sekarang di samping Online, Ganti Password di dalam Pengaturan (tanpa Brankas, Kas, Belanja, transaksi kasir)
     ['sopBtn','navRingkasanBtn','navStokBtn','navPembelianBtn','navBiayaBtn','navKaryawanBtn','navAktifBtn','navStokMenipisBtn','navStokCupBtn','sidebarPasswordBtn']
@@ -2080,16 +2080,18 @@ async function loadProfileAndEnter(){
   let viewDipulihkan = false;
 
   if(profile.role === 'admin'){
-    // admin tidak boleh transaksi kasir di cabang manapun, tapi tetap boleh lihat semua Dashboard
-    document.getElementById('cartToggleBtn').classList.add('hidden');
+    // admin boleh pakai Kasir (POS) sejak 15 Okt (permintaan Boss Leo) + tetap lihat semua Dashboard
     if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel)) && savedView.panel !== 'brankas'){
       showDashPanel(savedView.panel);
       viewDipulihkan = true;
     } else if(savedView && savedView.type === 'sop'){
       showSOPView();
       viewDipulihkan = true;
+    } else if(savedView && savedView.type === 'kasir'){
+      showKasirView();
+      viewDipulihkan = true;
     }
-    if(!viewDipulihkan) (UI_BARU ? tampilkanBeranda() : tampilkanLaporanTertutup());
+    if(!viewDipulihkan) tampilkanLaporanTertutup();
   } else if(profile.role === 'owner'){
     if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel))){
       showDashPanel(savedView.panel);
@@ -3871,7 +3873,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 function sembunyikanHalamanBaru(){ tutupHalamanOverlay(); ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
 function tandaiNavBawah(k){ document.querySelectorAll('#navBawah .nb').forEach(b=>b.classList.toggle('on', b.dataset.k === k)); }
 function siapkanTampilanBaru(){
-  if(!UI_BARU) return;
+  // admin tetap tampilan lama (latar hitam + menu samping) sesuai permintaan Boss Leo 14 Okt
+  if(!UI_BARU || (currentProfile && currentProfile.role === 'admin')) return;
   document.body.classList.add('ui-baru');
   const nav = document.getElementById('navBawah');
   nav.innerHTML = menuRoleIni().nav.map(([k, ic, nama, tengah]) =>
@@ -7355,7 +7358,7 @@ async function loadStokCup(){
 // Kasir catat tiap kali selesai seduh; sisa dihitung dari penjualan (resep teh per cup).
 // Peringatan kalau sisa < 1 liter supaya seduh sebelum habis.
 let tehSiapTimer = null, tehSiapData = null, tehSiapSudahDiingatkan = false;
-function bolehLihatTehSiap(){ return currentProfile && (currentProfile.role === 'kasir' || currentProfile.role === 'owner'); }
+function bolehLihatTehSiap(){ return currentProfile && ['kasir','owner','admin'].includes(currentProfile.role); }
 // tanpa angka koma: 600 ml · 1 L · 2 L 600 ml (dibulatkan ke 10 ml)
 function literTeks(ml){
   const v = Math.max(0, Math.round(Number(ml || 0) / 10) * 10);
@@ -7463,7 +7466,7 @@ async function samakanTehWadah(){
 let stempelPantauTimer = null, stempelSejak = null, stempelSudahTampil = new Set(), stempelCariTimer = null;
 const escS = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jamWIB = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' }).replace(':','.');
-function bolehTukarHadiah(){ const r = currentProfile && currentProfile.role; return r === 'kasir' || r === 'owner'; }
+function bolehTukarHadiah(){ const r = currentProfile && currentProfile.role; return r === 'kasir' || r === 'owner' || r === 'admin'; }
 function mulaiPantauStempel(){
   if(stempelPantauTimer) clearInterval(stempelPantauTimer);
   const r = currentProfile && currentProfile.role;
@@ -7670,7 +7673,7 @@ const LAPORAN_LIPAT = [['ringkasan','📊 Ringkasan'],['lababersih','💰 Laba B
 // bagian yang TIDAK tampil per role: Brankas khusus Owner; Karyawan owner ada di Pengaturan
 const LIPAT_DISEMBUNYIKAN = { owner:['karyawan'], admin:['brankas','lababersih'] };
 // pakai tampilan menu toggle (Menu Outlet / Cek Stok): owner & admin
-function pakaiMenuToggle(){ if(UI_BARU) return false; const r = currentProfile && currentProfile.role; return r === 'owner' || r === 'admin'; }
+function pakaiMenuToggle(){ if(document.body.classList.contains('ui-baru')) return false; const r = currentProfile && currentProfile.role; return r === 'owner' || r === 'admin'; }
 // Cek Stok (owner): Stok Menipis & Stok Cup dalam satu halaman toggle
 const STOK_LIPAT = [['stokmenipis','⚠️ Stok Menipis'],['stokcup','🥤 Stok Cup']];
 const grupLipat = p => LAPORAN_LIPAT.some(([x])=>x===p) ? 'laporan' : (STOK_LIPAT.some(([x])=>x===p) ? 'stok' : null);
