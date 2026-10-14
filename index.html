@@ -511,6 +511,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #navBukaBtn{display:none;position:fixed;left:10px;bottom:76px;z-index:31;width:46px;height:46px;border-radius:14px;border:2px solid rgba(255,255,255,.5);
     background:rgba(12,31,20,.85);color:#fff;font-size:20px;font-weight:900;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer;}
   body.ui-baru.nav-ciut #navBukaBtn{display:block;}
+  /* tombol SOP Menu di bar atas: khusus saat di halaman Kasir */
+  #topbarSopBtn{display:none;cursor:pointer;background:#e8b923;color:#0c1f14;border-color:#e8b923;font-weight:800;}
+  body.ui-baru.nav-ciut #topbarSopBtn{display:inline-flex;align-items:center;}
   #berandaView, #halamanGridView{padding:18px clamp(12px,3vw,36px) 24px;max-width:none !important;width:100%;box-sizing:border-box;}
   .bd-atas{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);margin-bottom:12px;}
   .bd-salam{font-size:clamp(21px,3vw,28px);} .bd-salam b{font-weight:800;}
@@ -754,6 +757,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button class="topbar-cart hidden" id="topbarCartBtn" onclick="bukaKeranjangAtas()" title="Keranjang">🛒<span class="tc-badge kosong" id="topbarCartBadge">0</span></button>
         <span class="status-chip" id="connStatus">🟢 Online</span>
         <span class="status-chip chip-cabang hidden" id="kasirCabangStatus">🟢 <span id="kasirCabangNamaLabel">Aktif</span></span>
+        <button class="status-chip" id="topbarSopBtn" onclick="showSOPView()" title="SOP / resep menu">📋 SOP Menu</button>
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
