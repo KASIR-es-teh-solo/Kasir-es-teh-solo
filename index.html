@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-15.2">
+<meta name="app-version" content="2026-10-15.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -895,15 +895,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div id="dashKategoriList"><div class="empty-msg">Memuat...</div></div>
       </div>
 
-      <div class="dash-section" style="margin-bottom:0;">
-        <div class="lipat-bar" id="riwayatKasBar" onclick="toggleRiwayatKas()"><span>💰 Riwayat Tutup Kas</span><span class="lipat-panah">▶</span></div>
-        <div id="dashRiwayatKasList" class="hidden"><div class="empty-msg">Memuat...</div></div>
-      </div>
-
-      <div class="dash-section hidden" id="dashLogAktivitasSection" style="margin-bottom:0;">
-        <div class="lipat-bar" id="logAktivitasBar" onclick="toggleLogAktivitas()"><span>📋 Log Aktivitas</span><span class="lipat-panah">▶</span></div>
-        <div id="dashLogAktivitasList" class="hidden"><div class="empty-msg">Memuat...</div></div>
-      </div>
       </div>
 
       <div class="ringkasan-tab-content hidden" id="ringkasanTabContent-transaksi">
@@ -1128,6 +1119,20 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <h3 style="margin:0 0 12px;">📒 Riwayat Brankas Online</h3>
         <div id="brankasOnlineList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
+
+    <!-- RIWAYAT TUTUP KAS & LOG AKTIVITAS: halaman sendiri (dulu di dalam Ringkasan) -->
+    <div class="dash-panel hidden" id="dashPanel-riwayatkas">
+      <div class="dash-section" style="margin-bottom:0;">
+        <h3>💰 Riwayat Tutup Kas</h3>
+        <div id="dashRiwayatKasList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
+    <div class="dash-panel hidden" id="dashPanel-logaktivitas">
+      <div class="dash-section" id="dashLogAktivitasSection" style="margin-bottom:0;">
+        <h3>📜 Log Aktivitas</h3>
+        <div id="dashLogAktivitasList"><div class="empty-msg">Memuat...</div></div>
       </div>
     </div>
 
@@ -3818,7 +3823,7 @@ const AKSI_MENU = {
   pembelian:()=>showDashPanel('pembelian'), beliStok:()=>bukaBeliStok(), belanja:()=>bukaBelanjaKecil(), kas:()=>bukaKasModal(),
   brankas:()=>showDashPanel('brankas'), brankasonline:()=>showDashPanel('brankasonline'), biaya:()=>showDashPanel('biaya'),
   lababersih:()=>showDashPanel('lababersih'), ringkasan:()=>showDashPanel('ringkasan'),
-  log:()=>{ showDashPanel('ringkasan'); setTimeout(()=>{ const el = document.getElementById('dashLogAktivitasSection'); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 500); },
+  log:()=>showDashPanel('logaktivitas'), riwayatkas:()=>showDashPanel('riwayatkas'),
   sop:()=>showSOPView(), karyawan:()=>showDashPanel('karyawan'), pengaturan:()=>showSettingsView(),
   pengaturanKasir:()=>bukaPengaturanKasir(), password:()=>openGantiPasswordModal(), izin:()=>bukaIzinKeluarModal(),
   teh:()=>bukaTehSiap(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
@@ -3833,7 +3838,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['🟢','Karyawan Aktif','aktif'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['📜','Log Aktivitas','log']]],
+    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
     profil: ['👤 Profil & Pengaturan', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   admin: {
@@ -3842,7 +3847,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['🟢','Karyawan Aktif','aktif'],['👥','Karyawan','karyawan'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline']]],
+    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
     profil: ['👤 Profil', [['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   kasir: {
@@ -4000,7 +4005,9 @@ const DASH_NAV_MAP = {
   biaya: 'navBiayaBtn',
   brankas: 'navBrankasBtn',
   brankasonline: 'menuLaporanBtn',
-  lababersih: 'menuLaporanBtn'
+  lababersih: 'menuLaporanBtn',
+  riwayatkas: 'menuLaporanBtn',
+  logaktivitas: 'menuLaporanBtn'
 };
 
 function showDashPanel(panelName){
@@ -4046,6 +4053,14 @@ function showDashPanel(panelName){
 
   if(panelName === 'lababersih'){
     loadLabaBersih();
+  }
+
+  if(panelName === 'riwayatkas'){
+    loadRiwayatKas();
+  }
+
+  if(panelName === 'logaktivitas'){
+    loadLogAktivitas();
   }
 
   if(panelName === 'stok'){
