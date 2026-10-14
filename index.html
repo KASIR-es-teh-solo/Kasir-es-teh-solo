@@ -2091,7 +2091,7 @@ async function loadProfileAndEnter(){
       showKasirView();
       viewDipulihkan = true;
     }
-    if(!viewDipulihkan) tampilkanLaporanTertutup();
+    if(!viewDipulihkan) (document.body.classList.contains('ui-baru') ? tampilkanBeranda() : tampilkanLaporanTertutup());
   } else if(profile.role === 'owner'){
     if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel))){
       showDashPanel(savedView.panel);
@@ -3814,12 +3814,12 @@ const MENU_PER_ROLE = {
   },
   admin: {
     kategori: [
-      ['🧾 Penjualan', [['🎟️','Stempel Pelanggan','stempel'],['👥','Karyawan Aktif','aktif'],['🛵','Brankas Online','brankasonline']]],
+      ['🧾 Penjualan', [['🛒','Kasir (POS)','kasir'],['📈','Hari Ini','hariIni'],['🎟️','Stempel Pelanggan','stempel'],['👥','Karyawan Aktif','aktif'],['🛵','Brankas Online','brankasonline']]],
       ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📥','Pembelian','pembelian'],['🛍️','Beli Stok Bahan','beliStok']]],
       ['💰 Keuangan & Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya']]],
       ['📋 Panduan & Tim', [['📋','SOP Menu','sop'],['👥','Karyawan','karyawan'],['⚙️','Pengaturan','pengaturanKasir']]]
     ],
-    nav: [['beranda','🏠','Beranda'],['brankasonline','🛵','Online'],['beliStok','📥','Beli Stok',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
+    nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
     laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['📥','Pembelian','pembelian'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline']]],
     profil: ['👤 Profil', [['⚙️','Pengaturan & Password','pengaturanKasir'],['🚪','Keluar','keluar']]]
   },
@@ -3873,15 +3873,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
 function sembunyikanHalamanBaru(){ tutupHalamanOverlay(); ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
 function tandaiNavBawah(k){ document.querySelectorAll('#navBawah .nb').forEach(b=>b.classList.toggle('on', b.dataset.k === k)); }
 function siapkanTampilanBaru(){
-  // admin tetap tampilan lama (latar hitam + menu samping) sesuai permintaan Boss Leo 14 Okt
-  if(!UI_BARU || (currentProfile && currentProfile.role === 'admin')) return;
+  // admin: tata letak baru juga, tapi latar tetap hitam (permintaan Boss Leo 14 Okt)
+  if(!UI_BARU) return;
   document.body.classList.add('ui-baru');
   const nav = document.getElementById('navBawah');
   nav.innerHTML = menuRoleIni().nav.map(([k, ic, nama, tengah]) =>
     `<button class="nb${tengah ? ' nb-tengah' : ''}" data-k="${k}" onclick="navKe('${k}')"><span class="nbi">${ic}</span>${nama}</button>`).join('');
   nav.classList.remove('hidden');
   // tanpa sidebar: kasir buka keranjang lewat tombol 🛒 di atas (seperti owner)
-  if(currentProfile && currentProfile.role === 'kasir') document.getElementById('topbarCartBtn').classList.remove('hidden');
+  if(currentProfile && ['kasir','admin'].includes(currentProfile.role)) document.getElementById('topbarCartBtn').classList.remove('hidden');
 }
 function tampilkanHalamanBaru(id){
   ['kasirView','ownerView','settingsView','sopView'].forEach(v=>document.getElementById(v).classList.add('hidden'));
