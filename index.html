@@ -494,6 +494,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #navBawah .nb-tengah .nbi{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:60px;height:60px;line-height:60px;padding:0;
     border-radius:18px;background:#1c5236;font-size:28px;box-shadow:0 4px 14px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.35);}
   #navBawah .nb-tengah.on .nbi{background:#e8b923;}
+  /* tombol bawah Pesanan / Uang Laci / Beli Stok: isinya tampil sebagai satu halaman penuh (bukan kotak melayang) */
+  body.ui-baru .overlay.sebagai-halaman{background:transparent;align-items:flex-start;padding:14px clamp(10px,3vw,36px) 84px;z-index:29;overflow-y:auto;}
+  body.ui-baru .overlay.sebagai-halaman .modal{max-width:960px;width:100%;max-height:none;margin:0 auto;}
+  body.ui-baru .overlay.sebagai-halaman .modal-close{display:none;}
+  body.ui-baru.ada-halaman-overlay #topbarUtama{visibility:hidden;}
   #berandaView, #halamanGridView{padding:18px clamp(12px,3vw,36px) 24px;max-width:none !important;width:100%;box-sizing:border-box;}
   .bd-atas{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);margin-bottom:12px;}
   .bd-salam{font-size:clamp(21px,3vw,28px);} .bd-salam b{font-weight:800;}
@@ -3832,14 +3837,45 @@ function htmlKotakMenu(judul, items){
   return `<div class="bd-kat"><h3>${judul}</h3><div class="bd-grid">` + items.map(([ic, nama, k]) =>
     `<div class="bd-tile${k === 'keluar' ? ' keluar' : ''}" onclick="jalankanMenu('${k}')">${ic}<span>${nama}</span></div>`).join('') + `</div></div>`;
 }
-function sembunyikanHalamanBaru(){ ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
+// overlay yang dibuka dari tombol bawah tampil sebagai halaman penuh
+const OVERLAY_HALAMAN = { hariIni:'penjualanHariIniOverlay', uangLaci:'uangLaciOverlay', beliStok:'beliStokOverlay' };
+function tutupHalamanOverlay(){ document.body.classList.remove('ada-halaman-overlay'); document.querySelectorAll('.overlay.sebagai-halaman').forEach(o=>o.classList.remove('show','sebagai-halaman')); }
+function navKe(k){
+  tutupHalamanOverlay();
+  const idOverlay = OVERLAY_HALAMAN[k];
+  if(!idOverlay){ jalankanMenu(k); return; }
+  tampilkanHalamanBaru('halamanGridView');
+  document.getElementById('halamanGridView').innerHTML = '';
+  tandaiNavBawah(k);
+  document.getElementById(idOverlay).classList.add('sebagai-halaman');
+  document.body.classList.add('ada-halaman-overlay');
+  jalankanMenu(k);
+}
+// kalau halaman itu tertutup sendiri (mis. sesudah Simpan), kembali ke Beranda — jangan tinggal layar kosong
+document.addEventListener('DOMContentLoaded', ()=>{
+  Object.values(OVERLAY_HALAMAN).forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    new MutationObserver(()=>{
+      const hal = el.classList.contains('sebagai-halaman'), buka = el.classList.contains('show');
+      if(hal && buka){ el.dataset.halTerbuka = '1'; return; }
+      if(!hal){ el.dataset.halTerbuka = ''; return; }
+      if(!buka && el.dataset.halTerbuka === '1'){
+        el.dataset.halTerbuka = '';
+        el.classList.remove('sebagai-halaman');
+        document.body.classList.remove('ada-halaman-overlay');
+        if(!document.getElementById('halamanGridView').classList.contains('hidden')) tampilkanBeranda();
+      }
+    }).observe(el, { attributes:true, attributeFilter:['class'] });
+  });
+});
+function sembunyikanHalamanBaru(){ tutupHalamanOverlay(); ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
 function tandaiNavBawah(k){ document.querySelectorAll('#navBawah .nb').forEach(b=>b.classList.toggle('on', b.dataset.k === k)); }
 function siapkanTampilanBaru(){
   if(!UI_BARU) return;
   document.body.classList.add('ui-baru');
   const nav = document.getElementById('navBawah');
   nav.innerHTML = menuRoleIni().nav.map(([k, ic, nama, tengah]) =>
-    `<button class="nb${tengah ? ' nb-tengah' : ''}" data-k="${k}" onclick="jalankanMenu('${k}')"><span class="nbi">${ic}</span>${nama}</button>`).join('');
+    `<button class="nb${tengah ? ' nb-tengah' : ''}" data-k="${k}" onclick="navKe('${k}')"><span class="nbi">${ic}</span>${nama}</button>`).join('');
   nav.classList.remove('hidden');
   // tanpa sidebar: kasir buka keranjang lewat tombol 🛒 di atas (seperti owner)
   if(currentProfile && currentProfile.role === 'kasir') document.getElementById('topbarCartBtn').classList.remove('hidden');
