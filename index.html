@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-14.2">
+<meta name="app-version" content="2026-10-14.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -8047,6 +8047,15 @@ function renderSOPList(){
     return 80; // bahan lain: sebelum sealer
   };
 
+  // Gelas takar gula di outlet (dipotong pas): R = 35 ml (cup 16 Oz), K = 45 ml (cup 18 Oz), B = 65 ml (cup 22 Oz)
+  const gelasGulaSOP = (r) => {
+    if(!String(r.bahan_baku.nama || '').toLowerCase().includes('gula')) return '';
+    const g = ({ 35:'R', 45:'K', 65:'B' })[Number(r.jumlah)];
+    return g
+      ? `<span title="Gelas takar ${g}" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;padding:0 6px;border-radius:8px;background:#0c1f14;color:#ffd400;font-weight:900;font-size:17px;text-shadow:none;">${g}</span>`
+      : `<span style="font-size:11px;font-weight:700;background:#fff3cd;color:#7a5200;padding:3px 7px;border-radius:8px;text-shadow:none;">gelas bergaris</span>`;
+  };
+
   const renderBahanRows = (rows, produkId, ukuran, label) => {
     rows = rows.slice().sort((a,b)=> urutanBahanSOP(a.bahan_baku.nama) - urutanBahanSOP(b.bahan_baku.nama)
       || a.bahan_baku.nama.localeCompare(b.bahan_baku.nama));
@@ -8057,6 +8066,7 @@ function renderSOPList(){
             <span><b>${i+1}.</b> ${escTG(r.bahan_baku.nama)}</span>
             <span style="display:flex;align-items:center;gap:8px;">
               <span>${r.jumlah} ${escTG(r.bahan_baku.satuan)}</span>
+              ${gelasGulaSOP(r)}
               ${isOwner ? `
                 <button class="qty-btn" style="width:auto;padding:4px 8px;font-size:11px;" onclick="editResepJumlah('${r.id}', ${r.jumlah})">Edit</button>
                 <button class="remove-btn" onclick="hapusResep('${r.id}')">Hapus</button>
