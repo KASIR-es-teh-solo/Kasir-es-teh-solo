@@ -519,7 +519,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   body.ui-baru #menuSearchInput{display:none;}
   /* halaman Kasir: bar atas dibuat pendek (1 baris) supaya daftar menu lebih luas */
   body.ui-baru.nav-ciut .topbar{padding:6px 14px;gap:8px;flex-wrap:nowrap;}
-  body.ui-baru.nav-ciut .topbar-brand{width:auto;text-align:left;flex:none;}
+  /* tukar posisi (permintaan Boss Leo): tombol-tombol di kiri, tulisan Es Teh S.O.L.O di kanan */
+  body.ui-baru.nav-ciut .topbar-brand{width:auto;text-align:right;flex:none;order:2;margin-left:auto;}
+  body.ui-baru.nav-ciut .topbar-status{order:1;}
   body.ui-baru.nav-ciut .topbar-brand h1{font-size:17px;}
   body.ui-baru.nav-ciut .topbar-brand span{font-size:11px;margin-top:0;}
   body.ui-baru.nav-ciut .topbar-status{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
