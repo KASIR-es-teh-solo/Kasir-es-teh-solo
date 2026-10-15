@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-15.9">
+<meta name="app-version" content="2026-10-15.10">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -493,6 +493,22 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   body.ui-baru .bd-kat h3{text-align:center;}
   /* owner & admin: ikon keranjang di bar atas disembunyikan di tablet (keranjang tetap lewat strip kanan) */
   @media (min-width:881px){ body.ui-baru.role-owner #topbarCartBtn, body.ui-baru.role-admin #topbarCartBtn{display:none !important;} }
+  /* Bar atas rapi (permintaan Boss Leo 15 Okt): rata tengah, semua kotak tinggi sama & gaya sama (hitam) */
+  body.ui-baru .topbar{padding:12px 14px;justify-content:center;row-gap:10px;}
+  body.ui-baru .topbar-status{width:100%;justify-content:center;gap:8px;}
+  body.ui-baru .topbar-status > *{height:46px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;margin:0;}
+  body.ui-baru .topbar-status > .hidden{display:none !important;}
+  body.ui-baru .topbar-status .status-chip{background:#000;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:0 14px;font-size:14px;font-weight:800;}
+  body.ui-baru .topbar-status #topbarMenuBtn{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  body.ui-baru .topbar-status #syncBtn{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  body.ui-baru .topbar-clock{padding:0 12px 0 6px;}
+  body.ui-baru .topbar-saldo{flex-direction:column;padding:0 14px;border-width:2px;}
+  body.ui-baru .topbar-saldo .ts-label{font-size:11px;}
+  body.ui-baru .topbar-saldo .ts-nilai{font-size:17px;}
+  /* urutan: Menu · Jam · Saldo | Online · Aktif · SOP · Keranjang · Sinkron */
+  body.ui-baru #topbarMenuBtn{order:0;} body.ui-baru #topbarClock{order:1;} body.ui-baru #topbarSaldo{order:2;}
+  body.ui-baru #connStatus{order:3;} body.ui-baru #kasirCabangStatus{order:4;} body.ui-baru #topbarAktifBtn{order:5;}
+  body.ui-baru #topbarSopBtn{order:6;} body.ui-baru #topbarCartBtn{order:7;} body.ui-baru #syncBtn{order:8;}
   body.memuat-awal:has(#appView:not(.hidden))::after{content:'Memuat Es Teh S.O.L.O…';position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font:800 20px sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.8);z-index:5;}
   body.ui-baru .app-main{margin-left:0 !important;width:100vw !important;max-width:100vw !important;padding-bottom:84px;}
   body.ui-baru .kat-bawah{bottom:84px;}
