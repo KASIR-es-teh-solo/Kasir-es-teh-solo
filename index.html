@@ -490,6 +490,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   /* kotak menu di Beranda / Laporan / Profil / Uang Laci juga rata tengah */
   body.ui-baru .bd-grid{display:flex !important;flex-wrap:wrap;justify-content:center;}
   body.ui-baru .bd-grid > .bd-tile{flex:0 0 132px;}
+  /* kotak menu diperkecil (permintaan Boss Leo 15 Okt: kebesaran) — HP 3 kotak per baris */
+  body.ui-baru .bd-grid{gap:8px !important;}
+  body.ui-baru .bd-grid > .bd-tile{flex:0 0 106px;font-size:26px !important;padding:10px 4px 9px !important;border-radius:12px;}
+  body.ui-baru .bd-grid > .bd-tile span{font-size:12.5px !important;line-height:1.2;margin-top:3px;}
+  @media (max-width:420px){ body.ui-baru .bd-grid > .bd-tile{flex:0 0 calc((100% - 16px)/3);} }
   body.ui-baru .bd-kat h3{text-align:center;}
   /* owner & admin: ikon keranjang di bar atas disembunyikan di tablet (keranjang tetap lewat strip kanan) */
   @media (min-width:881px){ body.ui-baru.role-owner #topbarCartBtn, body.ui-baru.role-admin #topbarCartBtn{display:none !important;} }
