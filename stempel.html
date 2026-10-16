@@ -90,6 +90,12 @@ const KUNCI = 'stempel_es_teh_solo_token';
 function bacaToken(){ try{ return localStorage.getItem(KUNCI); }catch(e){ return null; } }
 function simpanToken(t){ try{ localStorage.setItem(KUNCI, t); }catch(e){} }
 function hapusToken(){ try{ localStorage.removeItem(KUNCI); }catch(e){} }
+// 2026-10-16: HP dipakai daftar orang lain -> bisa keluar dari kartu ini (stempel tetap aman, bisa dipulihkan pakai nama + WA + PIN)
+function tombolGantiAkun(){ return statusSaya ? `<button class="link" style="display:block;margin:6px auto 0;font-size:14px" onclick="gantiAkun()">👤 Bukan ${esc(statusSaya.nama)}? Ganti akun</button>` : ''; }
+function gantiAkun(){
+  if(!confirm(`Keluar dari kartu ${statusSaya ? statusSaya.nama : 'ini'} di HP ini?\n\nStempelnya tetap aman. Pemilik kartu bisa membukanya lagi dengan nama + WA + PIN.`)) return;
+  hapusToken(); statusSaya = null; tampilDaftar();
+}
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const isi = () => document.getElementById('isi');
 function atas(judul, ikon='🌲', emas=false){
@@ -232,7 +238,7 @@ function tampilKartuSaja(){
   atas(penuh ? 'Selamat, ' + st.nama + '!' : 'Hai, ' + st.nama + '!', penuh ? '🎁' : '🌲', penuh);
   isi().innerHTML = `<div class="kartu">${kartuStatus(st)}</div>
     <div class="kartu err kuning"><b>Mau ambil stempel?</b><div class="kecil" style="margin:4px 0 10px">Setelah bayar Es Teh Original besar, scan QR di meja kasir.</div>
-    <button class="btn" onclick="bukaScanner()">📷 Scan QR di meja kasir</button></div>`;
+    <button class="btn" onclick="bukaScanner()">📷 Scan QR di meja kasir</button></div>` + tombolGantiAkun();
 }
 // ---------- scanner QR di dalam halaman ----------
 let scanStream = null, scanJalan = false;
@@ -358,7 +364,7 @@ function tampilAlasan(c){
   } else {
     kotak = `<div class="kartu err"><div class="ik">🙏</div><b>Tidak ada pesanan yang bisa diambil</b><div class="kecil">Scan <b>langsung</b> setelah bayar, sebelum kasir melayani pembeli berikutnya.</div></div>`;
   }
-  isi().innerHTML = kotak + `<div class="kartu">${kartuStatus(st)}</div><button class="link" onclick="mulai()">🔄 Muat ulang</button>`;
+  isi().innerHTML = kotak + `<div class="kartu">${kartuStatus(st)}</div><button class="link" onclick="mulai()">🔄 Muat ulang</button>` + tombolGantiAkun();
 }
 mulai();
 </script>
