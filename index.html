@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-15.13">
+<meta name="app-version" content="2026-10-18.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -450,6 +450,22 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .lk-status.kurang{background:rgba(192,57,43,.12);color:#c0392b}
   .lk-status.lebih{background:rgba(230,160,30,.15);color:#a06000}
   .lk-judul{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--forest-dark);margin:12px 0 4px}
+  /* tutup kas 3 langkah */
+  .tk-step{display:flex;gap:6px;margin-bottom:12px}.tk-step i{flex:1;height:6px;border-radius:3px;background:#ddd}.tk-step i.on{background:#1c5236}
+  .tk-sub{font-size:13px;color:#222;font-weight:600;margin-bottom:12px}
+  .tk-list{border:1.5px solid #111;border-radius:14px;background:linear-gradient(160deg,#f6efe1,#eadfc9);padding:2px 12px;max-height:42vh;overflow:auto}
+  .tk-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.12);font-size:14px;font-weight:700;color:#111}
+  .tk-row:last-child{border:none}.tk-row b{font-weight:800;white-space:nowrap}.tk-row small{display:block;font-size:11.5px;color:#444;font-weight:600}
+  .tk-q{font-size:15px;font-weight:800;margin:14px 0 4px;color:#111}
+  .tk-btn-o{display:block;width:100%;border:2px solid #1c5236;background:#fff;color:#1c5236;border-radius:12px;padding:12px;font-size:15px;font-weight:800;margin-top:8px;cursor:pointer}
+  .tk-big{border-radius:16px;padding:14px;text-align:center;margin:12px 0 6px;background:#1c5236;color:#fff}.tk-big small{display:block;font-size:13px;font-weight:700;opacity:.9}.tk-big b{font-size:28px}
+  .tk-kunci{font-size:11.5px;color:#444;font-weight:600;margin-bottom:6px}
+  .tk-input{width:100%;font-size:26px !important;font-weight:800;text-align:center;padding:12px;border:2px solid #1c5236;border-radius:14px;margin-top:6px;box-sizing:border-box}
+  .tk-pas{background:#e6f4ea;border:2px solid #2e7d32;color:#1b5e20;border-radius:14px;padding:10px;text-align:center;font-weight:800;font-size:17px;margin-top:10px}
+  .tk-pas.tk-krg{background:#fdecea;border-color:#c62828;color:#b71c1c}
+  .tk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tk-chips span{border:1.5px solid #111;border-radius:16px;padding:7px 11px;font-size:13px;font-weight:700;background:#fff;color:#111;cursor:pointer}
+  .tk-chips span.on{background:#1c5236;color:#fff;border-color:#1c5236}
+  .tk-setor{border:2px dashed #1c5236;border-radius:14px;padding:10px 12px;margin-top:10px;font-size:14px;font-weight:700;color:#111}.tk-setor b{font-size:17px}.tk-setor span{font-size:12px;font-weight:600}
   .lk-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dashed rgba(12,31,20,.15)}
   .lk-row.kecil{font-size:12px;color:#1a1a1a;padding-left:8px}
   .lk-row.total{font-size:16px;border-bottom:none;border-top:2px solid var(--forest-dark);margin-top:4px;padding-top:8px}
@@ -1295,6 +1311,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <input type="checkbox" id="akhiriShiftToggle" style="width:22px;height:22px;flex-shrink:0;">
       </div>
       <button class="header-btn gold" onclick="simpanPengaturanAbsen()">Simpan Pengaturan Absen</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin:12px 0 10px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:700;">💵 Kas awal paten (uang kembalian tiap pagi)<br><span style="font-weight:400;font-size:11px;">Saat tutup kas, kelebihannya otomatis disetor ke Brankas</span></span>
+        <span style="display:flex;gap:6px;align-items:center;"><input type="text" inputmode="numeric" class="input-rupiah" id="kasAwalPatenInput" style="width:110px;padding:8px;border-radius:8px;border:1px solid var(--line-soft);">
+        <button class="header-btn gold" onclick="simpanKasAwalPaten()">Simpan</button></span>
+      </div>
       <div id="absenStikerList" style="margin-top:12px;"></div>
     </div>
 
@@ -2583,6 +2604,7 @@ async function loadPengaturanAbsenOwner(){
   document.getElementById('absenWajibToggle').checked = !!cfg.wajib;
   document.getElementById('akhiriShiftToggle').checked = !!cfg.akhiri_shift;
   document.getElementById('absenRadiusInput').value = cfg.radius;
+  try{ const k = await sb.rpc('pengaturan_kas'); setInputRupiah('kasAwalPatenInput', k.data ? k.data.kas_awal_paten : 200000); }catch(e){}
   box.innerHTML = (cabangList || []).map(c => `
     <div class="tx-row" style="flex-wrap:wrap;gap:6px;">
       <span><b>${escTG(c.nama)}</b>${c.latitude == null ? ' <span style="color:var(--danger);">· titik GPS belum diatur</span>' : ''}</span>
@@ -2591,6 +2613,14 @@ async function loadPengaturanAbsenOwner(){
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="gantiKodeAbsen('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🔄 Ganti Kode</button>
       </span>
     </div>`).join('') || '<div class="empty-msg">Belum ada cabang.</div>';
+}
+
+async function simpanKasAwalPaten(){
+  const n = angkaRupiah('kasAwalPatenInput');
+  if(isNaN(n) || n < 0){ alert('Isi kas awal paten yang valid.'); return; }
+  const { error } = await sb.rpc('set_kas_awal_paten', { p_nilai: n });
+  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  alert('Kas awal paten: ' + fmt(n) + '\nBerlaku mulai tutup kas berikutnya.');
 }
 
 async function simpanPengaturanAbsen(){
@@ -2807,54 +2837,132 @@ async function refreshIzinKeluarBtnState(){
 // ================== KAS (1 langkah: hitung kas pas mau tutup outlet) ==================
 let kasAwalOtomatisDari = null; // simpan info baris kas kemarin (kalau ada), buat ditampilkan
 
+// ===== TUTUP KAS 3 LANGKAH (2026-10-18, permintaan Boss Leo) =====
+// 1) cek semua uang keluar laci  2) rincian "seharusnya di laci" (kas awal paten, terkunci)  3) hitung uang, selisih langsung tampil.
+// Kelebihan di atas kas awal paten otomatis disetor ke Brankas (fungsi kas_tutup), sisa paten ditinggal untuk kembalian besok.
+let kasTK = null;
+async function ambilDataTutupKas(){
+  const [{ data: lastKas }, cfgRes] = await Promise.all([
+    sb.from('kas_shift').select('kas_fisik, kas_ditinggal, waktu_tutup').eq('cabang_id', activeCabangId)
+      .order('waktu_tutup', { ascending:false }).limit(1).maybeSingle(),
+    sb.rpc('pengaturan_kas')
+  ]);
+  const paten = Number((cfgRes && cfgRes.data && cfgRes.data.kas_awal_paten) ?? 200000);
+  // hitung mulai jam 00:00 hari ini, ATAU sejak tutup kas terakhir kalau itu juga hari ini (cegah penjualan pagi terhitung 2x)
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  if(lastKas && lastKas.waktu_tutup && new Date(lastKas.waktu_tutup) > startOfDay) startOfDay.setTime(new Date(lastKas.waktu_tutup).getTime());
+  const kasAwal = lastKas ? Number(lastKas.kas_ditinggal ?? lastKas.kas_fisik) : paten;
+  const [txRes, byRes] = await Promise.all([
+    sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','tunai').gt('created_at', startOfDay.toISOString()),
+    sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() })
+  ]);
+  if(txRes.error) throw new Error('Gagal mengambil data transaksi: ' + txRes.error.message);
+  if(byRes.error) throw new Error('Gagal mengambil data uang keluar: ' + byRes.error.message);
+  const biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
+  const totalTunai = (txRes.data || []).reduce((a,t)=>a+Number(t.total),0);
+  const totalBiaya = biaya.reduce((a,b)=>a+Number(b.jumlah),0);
+  return { paten, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
+           jumlahTx: (txRes.data || []).length, totalTunai, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya };
+}
+
 async function bukaKasModal(){
-  document.getElementById('kasModalTitle').textContent = '💵 Hitung Kas';
+  document.getElementById('kasModalTitle').textContent = '🔒 Tutup Kas';
   const body = document.getElementById('kasModalBody');
-  body.innerHTML = `
-    <p style="margin:0 0 14px;font-size:12px;color:#1a1a1a;">
-      Memuat kas awal...
-    </p>
-  `;
+  body.innerHTML = `<p style="margin:0 0 14px;font-size:13px;color:#1a1a1a;">Memuat data hari ini...</p>`;
   document.getElementById('kasOverlay').classList.add('show');
-
-  // transaksi offline yang belum terkirim: uangnya sudah di laci tapi belum tercatat di server
-  // -> kalau dihitung sekarang hasilnya "kas lebih" palsu. Wajib sinkron dulu.
+  // transaksi offline yang belum terkirim -> wajib sinkron dulu (kalau tidak, kas "lebih" palsu)
   if(tampilkanPeringatanAntrianKas()) return;
+  try{ kasTK = await ambilDataTutupKas(); }
+  catch(e){ body.innerHTML = `<div class="login-error show">${escTG(e.message)}</div><button class="login-btn" onclick="bukaKasModal()">Coba lagi</button>`; return; }
+  kasTK.alasan = '';
+  kasLangkah(1);
+}
 
-  const { data: lastKas } = await sb
-    .from('kas_shift')
-    .select('kas_fisik, waktu_tutup')
-    .eq('cabang_id', activeCabangId)
-    .order('waktu_tutup', { ascending:false })
-    .limit(1)
-    .maybeSingle();
-
-  kasAwalOtomatisDari = lastKas || null;
-  const kasAwalDefault = lastKas ? Number(lastKas.kas_fisik) : '';
-  const keteranganAwal = lastKas
-    ? `Otomatis dari hasil hitung terakhir (${new Date(lastKas.waktu_tutup).toLocaleDateString('id-ID')}). Bisa diubah kalau memang beda.`
-    : `Belum ada catatan sebelumnya, isi manual dulu untuk kali ini.`;
-
-  body.innerHTML = `
-    <p style="margin:0 0 14px;font-size:12px;color:#1a1a1a;">
-      Pas mau tutup outlet, cek 2 angka ini, nanti otomatis dihitung selisihnya (catatan Biaya hari ini yang sumbernya Kas Tunai ikut dikurangi otomatis).
-    </p>
-    <div class="field">
-      <label>Kas Awal (uang buat kembalian)</label>
-      <input type="text" inputmode="numeric" class="input-rupiah" id="kasAwalInput" placeholder="Contoh: 100.000" value="${formatRupiahTeks(String(kasAwalDefault ?? '').replace('.', ','))}">
-      <div style="font-size:11px;color:#1a1a1a;margin-top:4px;">${keteranganAwal}</div>
+function kasLangkah(n){
+  const d = kasTK; if(!d) return;
+  const body = document.getElementById('kasModalBody');
+  const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+  const namaB = b => escTG((b.deskripsi || b.kategori || 'Belanja').split(' · dicatat')[0]);
+  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
+  const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
+  const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  if(n === 1){
+    document.getElementById('kasModalTitle').textContent = '🔒 Tutup Kas';
+    body.innerHTML = strip + `
+      <div class="tk-sub">${tgl} · cek dulu semua uang keluar laci hari ini</div>
+      <div class="tk-list">
+        ${d.biaya.length ? d.biaya.map(b=>`<div class="tk-row"><span>${ikon(b.kategori)} ${escTG(b.kategori)}<small>${namaB(b)} · ${jam(b.created_at)}</small></span><b>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</b></div>`).join('')
+          : '<div class="tk-row"><span>Belum ada uang keluar laci hari ini</span><b>Rp0</b></div>'}
+        <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
+      </div>
+      <div class="tk-q">Semua belanja, es batu &amp; tabungan hari ini sudah dicatat?</div>
+      <button class="login-btn" onclick="kasLangkah(2)">✅ Sudah semua, lanjut</button>
+      <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada yang lupa, catat dulu</button>`;
+    return;
+  }
+  if(n === 2){
+    document.getElementById('kasModalTitle').textContent = '🧮 Rincian Kas';
+    const isOwner = currentProfile && currentProfile.role === 'owner';
+    const ketAwal = d.kasAwalPaten ? 'uang kembalian tiap pagi 🔒' : (d.adaKasLalu ? 'dari tutup kas terakhir 🔒' : 'kas awal paten 🔒');
+    body.innerHTML = strip + `
+      <div class="tk-sub">Dihitung otomatis oleh aplikasi</div>
+      <div class="tk-list">
+        <div class="tk-row"><span>Kas awal<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
+        <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
+        <div class="tk-row"><span>− Uang keluar laci<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
+      </div>
+      <div class="tk-big"><small>Seharusnya ada di laci</small><b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-kunci">🔒 Kas awal paten ${fmt(d.paten)} hanya bisa diubah Owner (Pengaturan).</div>
+      <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
+      <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
+    return;
+  }
+  document.getElementById('kasModalTitle').textContent = '💵 Hitung Uang di Laci';
+  const alasan = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
+  body.innerHTML = strip + `
+    <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
+    <div style="font-weight:800;font-size:14px;color:#111;">Jumlah uang di laci sekarang</div>
+    <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
+    <div id="tkStatus"></div>
+    <div id="tkAlasan" class="hidden">
+      <div style="font-weight:800;font-size:14px;margin-top:10px;color:#111;">Kenapa? (pilih salah satu)</div>
+      <div class="tk-chips">${alasan.map(a=>`<span onclick="kasPilihAlasan(this,'${a}')">${a === 'Lainnya' ? 'Lainnya…' : a}</span>`).join('')}</div>
+      <textarea id="kasCatatanInput" class="hidden" rows="2" placeholder="Tulis alasannya" style="width:100%;margin-top:8px;padding:10px 12px;border-radius:10px;border:1.5px solid #111;font-size:14px;box-sizing:border-box;"></textarea>
     </div>
-    <div class="field">
-      <label>Hasil Hitung Uang di Laci Sekarang</label>
-      <input type="text" inputmode="numeric" class="input-rupiah" id="kasFisikInput" placeholder="Contoh: 450.000">
-    </div>
-    <div class="field">
-      <label>Catatan (wajib diisi kalau ternyata kas tidak pas)</label>
-      <textarea id="kasCatatanInput" rows="2" placeholder="Contoh: kembalian kurang tadi siang, dll" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
-    </div>
+    <div id="tkSetor"></div>
     <div class="login-error" id="kasError"></div>
-    <button class="login-btn" id="kasSubmitBtn" onclick="submitHitungKas()">Hitung & Simpan</button>
-  `;
+    <button class="login-btn" id="kasSubmitBtn" onclick="submitHitungKas()">💾 Simpan Tutup Kas</button>
+    <button class="tk-btn-o" onclick="kasLangkah(2)">◀ Kembali</button>`;
+  setTimeout(()=>{ const el = document.getElementById('kasFisikInput'); if(el) el.focus(); }, 50);
+}
+
+async function ubahKasAwalTK(){
+  const v = prompt('Kas awal untuk tutup kas ini (khusus Owner):', String(kasTK.kasAwal));
+  if(v === null) return;
+  const n = Number(String(v).replace(/[^0-9]/g, ''));
+  if(!Number.isFinite(n) || n < 0) return;
+  kasTK.kasAwal = n; kasTK.kasSistem = n + kasTK.totalTunai - kasTK.totalBiaya;
+  kasLangkah(2);
+}
+
+function kasHitungLive(){
+  const d = kasTK; const fisik = angkaRupiah('kasFisikInput');
+  const st = document.getElementById('tkStatus'), al = document.getElementById('tkAlasan'), se = document.getElementById('tkSetor');
+  if(isNaN(fisik)){ st.innerHTML = ''; se.innerHTML = ''; al.classList.add('hidden'); return; }
+  const selisih = fisik - d.kasSistem;
+  st.innerHTML = selisih === 0 ? '<div class="tk-pas">✅ PAS! Tidak ada selisih</div>'
+    : `<div class="tk-pas tk-krg">⚠️ ${selisih < 0 ? 'KURANG' : 'LEBIH'} ${fmt(Math.abs(selisih))}</div>`;
+  al.classList.toggle('hidden', selisih === 0);
+  const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
+  se.innerHTML = `<div class="tk-setor">💼 Setor ke Owner (masuk Brankas): <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
+}
+
+function kasPilihAlasan(el, a){
+  document.querySelectorAll('#tkAlasan .tk-chips span').forEach(x=>x.classList.toggle('on', x === el));
+  kasTK.alasan = a === 'Lainnya' ? '' : a;
+  const ta = document.getElementById('kasCatatanInput');
+  ta.classList.toggle('hidden', a !== 'Lainnya');
+  if(a === 'Lainnya') ta.focus();
 }
 
 function antrianOfflineCabangAktif(){
@@ -2907,135 +3015,58 @@ function closeKasModal(){
 }
 
 async function submitHitungKas(){
-  const kasAwalInput = document.getElementById('kasAwalInput');
-  const kasFisikInput = document.getElementById('kasFisikInput');
-  const catatanInput = document.getElementById('kasCatatanInput');
   const errBox = document.getElementById('kasError');
   errBox.classList.remove('show');
-
-  const kasAwal = angkaRupiah(kasAwalInput);
-  const kasFisik = angkaRupiah(kasFisikInput);
-  const catatan = catatanInput.value.trim();
-  if(kasAwalInput.value === '' || isNaN(kasAwal) || kasAwal < 0){
-    errBox.textContent = "Isi dulu kas awalnya ya.";
-    errBox.classList.add('show');
-    return;
-  }
-  if(kasFisikInput.value === '' || isNaN(kasFisik) || kasFisik < 0){
-    errBox.textContent = "Isi dulu hasil hitung uang di lacinya.";
-    errBox.classList.add('show');
-    return;
-  }
-
+  const kasFisik = angkaRupiah('kasFisikInput');
+  if(isNaN(kasFisik) || kasFisik < 0){ errBox.textContent = 'Isi dulu jumlah uang di laci.'; errBox.classList.add('show'); return; }
+  let catatan = kasTK.alasan || '';
+  const ta = document.getElementById('kasCatatanInput');
+  if(ta && !ta.classList.contains('hidden')) catatan = ta.value.trim();
+  if(kasFisik !== kasTK.kasSistem && !catatan){ errBox.textContent = 'Kas tidak pas. Pilih dulu alasannya.'; errBox.classList.add('show'); return; }
   // jaga-jaga: ada transaksi offline baru masuk antrian selama form terbuka
   if(tampilkanPeringatanAntrianKas()) return;
 
   const btn = document.getElementById('kasSubmitBtn');
-  btn.disabled = true;
-  btn.textContent = "Menghitung...";
-
-  // hitung penjualan/biaya mulai jam 00:00 hari ini, ATAU sejak Hitung Kas terakhir kalau itu juga hari ini.
-  // Kas awal = uang laci hasil hitung terakhir, jadi penjualan sebelum itu sudah termasuk di dalamnya
-  // (tanpa ini, Hitung Kas ke-2 di hari yang sama menghitung penjualan pagi dua kali -> kas "kurang" palsu).
-  const startOfDay = new Date();
-  startOfDay.setHours(0,0,0,0);
-  if(kasAwalOtomatisDari && kasAwalOtomatisDari.waktu_tutup){
-    const terakhir = new Date(kasAwalOtomatisDari.waktu_tutup);
-    if(terakhir > startOfDay) startOfDay.setTime(terakhir.getTime());
-  }
-
-  const { data: txData, error: txError } = await sb
-    .from('transaksi')
-    .select('total')
-    .eq('cabang_id', activeCabangId)
-    .eq('status', 'selesai')
-    .eq('metode_bayar', 'tunai')
-    .gt('created_at', startOfDay.toISOString());
-
-  if(txError){
-    btn.disabled = false;
-    btn.textContent = "Hitung & Simpan";
-    errBox.textContent = "Gagal mengambil data transaksi: " + txError.message;
-    errBox.classList.add('show');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  // cek ulang angka (mungkin ada transaksi / belanja baru selama form terbuka)
+  let baru;
+  try{ baru = await ambilDataTutupKas(); }
+  catch(e){ btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas'; errBox.textContent = e.message; errBox.classList.add('show'); return; }
+  const kasAwalDipakai = (currentProfile && currentProfile.role === 'owner') ? kasTK.kasAwal : baru.kasAwal;
+  baru.kasSistem = kasAwalDipakai + baru.totalTunai - baru.totalBiaya; baru.kasAwal = kasAwalDipakai;
+  if(baru.kasSistem !== kasTK.kasSistem){
+    kasTK = Object.assign(baru, { alasan: kasTK.alasan });
+    btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
+    document.querySelector('#kasModalBody .tk-sub').innerHTML = `Seharusnya: <b>${fmt(kasTK.kasSistem)}</b>`;
+    kasHitungLive();
+    errBox.textContent = 'Ada transaksi / belanja baru, angka "seharusnya" diperbarui. Cek lagi lalu Simpan.'; errBox.classList.add('show');
     return;
   }
-
-  // uang keluar dari laci: biaya tunai + pembelian stok yang dibayar dari laci (lewat fungsi database,
-  // karena kasir tidak boleh membaca tabel pembelian langsung)
-  const { data: biayaSemua, error: biayaError } = await sb.rpc('laporan_biaya_kas', {
-    p_cabang: activeCabangId, p_sejak: startOfDay.toISOString()
+  const d = kasTK;
+  const { data: hasil, error } = await sb.rpc('kas_tutup', {
+    p_cabang: activeCabangId, p_kas_awal: d.kasAwal, p_kas_sistem: d.kasSistem, p_kas_fisik: kasFisik,
+    p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString()
   });
-  const biayaData = (biayaSemua || []).filter(b => new Date(b.created_at) > startOfDay);
-
-  if(biayaError){
-    btn.disabled = false;
-    btn.textContent = "Hitung & Simpan";
-    errBox.textContent = "Gagal mengambil data biaya: " + biayaError.message;
-    errBox.classList.add('show');
-    return;
-  }
-
-  const totalTunai = (txData || []).reduce((s,t)=>s+Number(t.total),0);
-  const totalBiaya = (biayaData || []).reduce((s,b)=>s+Number(b.jumlah),0);
-  const kasSistem = kasAwal + totalTunai - totalBiaya;
-  const selisih = kasFisik - kasSistem;
-
-  if(selisih !== 0 && !catatan){
-    btn.disabled = false;
-    btn.textContent = "Hitung & Simpan";
-    errBox.textContent = `Kas ${selisih > 0 ? 'lebih' : 'kurang'} ${fmt(Math.abs(selisih))}. Isi dulu catatan alasannya sebelum disimpan.`;
-    errBox.classList.add('show');
-    return;
-  }
-
-  const { error } = await sb.from('kas_shift').insert({
-    cabang_id: activeCabangId,
-    dibuka_oleh: currentUser.id,
-    ditutup_oleh: currentUser.id,
-    kas_awal: kasAwal,
-    status: 'selesai',
-    kas_sistem: kasSistem,
-    kas_fisik: kasFisik,
-    selisih: selisih,
-    total_biaya: totalBiaya,
-    catatan: catatan || null,
-    waktu_buka: startOfDay.toISOString(),
-    waktu_tutup: new Date().toISOString()
-  });
-
-  btn.disabled = false;
-  btn.textContent = "Hitung & Simpan";
-
-  if(error){
-    errBox.textContent = "Gagal menyimpan: " + error.message;
-    errBox.classList.add('show');
-    return;
-  }
+  btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
+  if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
 
   closeKasModal();
   refreshSaldoHeader();
-
+  const selisih = kasFisik - d.kasSistem;
   try{
     await tampilkanLaporanKas({
-      kasAwal, kasFisik, kasSistem, selisih, catatan,
-      totalTunai, jumlahTx: (txData||[]).length, totalBiaya, sejak: startOfDay.toISOString()
+      kasAwal: d.kasAwal, kasFisik, kasSistem: d.kasSistem, selisih, catatan,
+      totalTunai: d.totalTunai, jumlahTx: d.jumlahTx, totalBiaya: d.totalBiaya, sejak: d.startOfDay.toISOString(),
+      setoran: Number(hasil && hasil.setoran || 0), kasDitinggal: Number(hasil && hasil.kas_ditinggal != null ? hasil.kas_ditinggal : kasFisik)
     });
-    // kasir: laporan sudah tersimpan & tampil -> wajib akhiri shift lewat tombol "Selesai & Akhiri Shift"
-    // 2026-10-15 (permintaan Owner): kasir SELALU keluar setelah tutup kas, tidak tergantung pengaturan "Akhiri shift otomatis"
+    // 2026-10-15 (permintaan Owner): kasir SELALU keluar setelah tutup kas
     if(currentProfile && currentProfile.role === 'kasir'){
       document.getElementById('laporanKasSelesaiBtn').classList.remove('hidden');
       document.getElementById('laporanKasTutupBtn').classList.add('hidden');
     }
     return;
   }catch(e){ /* kalau laporan gagal dibuat, tetap tampilkan notifikasi biasa */ }
-
-  if(selisih === 0){
-    showSuccessToast('✅', 'Kas pas!', 'Kas seharusnya ' + fmt(kasSistem) + ', sesuai hitungan.');
-  } else if(selisih > 0){
-    showSuccessToast('⚠️', 'Kas lebih ' + fmt(Math.abs(selisih)), 'Seharusnya: ' + fmt(kasSistem) + ' · Dihitung: ' + fmt(kasFisik));
-  } else {
-    showSuccessToast('⚠️', 'Kas kurang ' + fmt(Math.abs(selisih)), 'Seharusnya: ' + fmt(kasSistem) + ' · Dihitung: ' + fmt(kasFisik));
-  }
+  showSuccessToast(selisih === 0 ? '✅' : '⚠️', selisih === 0 ? 'Kas pas!' : ('Kas ' + (selisih > 0 ? 'lebih ' : 'kurang ') + fmt(Math.abs(selisih))), 'Seharusnya: ' + fmt(d.kasSistem));
 }
 
 // ================== LAPORAN PENUTUPAN KAS ==================
@@ -3075,6 +3106,9 @@ async function tampilkanLaporanKas(d){
     <div class="lk-row"><span>Seharusnya di laci</span><b>${fmt(d.kasSistem)}</b></div>
     <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
     <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
+    ${d.setoran != null ? `<div class="lk-judul">Setoran</div>
+    <div class="lk-row"><span>💼 Setor ke Owner (Brankas)</span><b>${fmt(d.setoran)}</b></div>
+    <div class="lk-row"><span>Ditinggal di laci (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
 
   const garis = '--------------------------------\n';
@@ -3096,6 +3130,7 @@ async function tampilkanLaporanKas(d){
   t += baris('SELISIH', teksSelisih);
   t += (d.selisih === 0 ? 'STATUS: KAS PAS' : d.selisih < 0 ? 'STATUS: KAS KURANG' : 'STATUS: KAS LEBIH') + '\n';
   if(d.catatan) t += 'Catatan: ' + d.catatan + '\n';
+  if(d.setoran != null){ t += garis + baris('Setor ke Owner', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
   laporanKasTeks = t;
 
   document.getElementById('laporanKasOverlay').classList.add('show');
@@ -3176,7 +3211,7 @@ async function loadRiwayatKas(){
 
   const { data, error } = await sb
     .from('kas_shift')
-    .select('id, kas_awal, kas_sistem, kas_fisik, selisih, total_biaya, catatan, waktu_tutup, cabang:cabang_id(nama), ditutup:ditutup_oleh(nama)')
+    .select('id, kas_awal, kas_sistem, kas_fisik, selisih, total_biaya, catatan, waktu_tutup, setoran, kas_ditinggal, cabang:cabang_id(nama), ditutup:ditutup_oleh(nama)')
     .order('waktu_tutup', { ascending:false })
     .limit(50);
 
@@ -3199,7 +3234,7 @@ async function loadRiwayatKas(){
         <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
         <span class="time">${new Date(r.waktu_tutup).toLocaleTimeString('id-ID', { timeZone:'Asia/Jakarta' })}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
-          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}
+          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Setor ke Brankas: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
@@ -3220,7 +3255,7 @@ async function loadRiwayatKas(){
     const tgl = new Date(g.list[0].waktu_tutup).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short', ...(tahunIni ? {} : { year:'numeric' }), timeZone:'Asia/Jakarta' });
     const totalSelisih = g.list.reduce((a,r)=>a + Number(r.selisih || 0), 0);
     const akhir = g.list[0]; // tutup kas terakhir hari itu
-    const sub = `Uang di laci: ${fmt(akhir.kas_fisik)}${g.list.length > 1 ? ' · ' + g.list.length + 'x tutup kas' : ''}`;
+    const sub = `Uang di laci: ${fmt(akhir.kas_fisik)}${Number(akhir.setoran) > 0 ? ' · setor ' + fmt(akhir.setoran) : ''}${g.list.length > 1 ? ' · ' + g.list.length + 'x tutup kas' : ''}`;
     return `
       <div class="rk-hari">
         <div class="rk-kepala" onclick="this.parentNode.classList.toggle('terbuka')">
@@ -5153,7 +5188,7 @@ async function hitungSaldoKas(daftarCabang){
   let total = 0; const info = [];
   for(const c of daftarCabang){
     const { data: lastKas } = await sb.from('kas_shift')
-      .select('kas_fisik, waktu_tutup').eq('cabang_id', c.id)
+      .select('kas_fisik, kas_ditinggal, waktu_tutup').eq('cabang_id', c.id)
       .order('waktu_tutup', { ascending:false }).limit(1).maybeSingle();
     if(!lastKas){ info.push(`${c.nama}: belum pernah Hitung Kas`); continue; }
     const sejak = lastKas.waktu_tutup;
@@ -5164,9 +5199,10 @@ async function hitungSaldoKas(daftarCabang){
     const by = (bySemua || []).filter(b => new Date(b.created_at) > new Date(sejak));
     const masuk = (tx||[]).reduce((a,t)=>a+Number(t.total),0);
     const keluar = (by||[]).reduce((a,b)=>a+Number(b.jumlah),0);
-    total += Number(lastKas.kas_fisik) + masuk - keluar;
+    const kasLaci = Number(lastKas.kas_ditinggal ?? lastKas.kas_fisik); // sesudah setoran tutup kas
+    total += kasLaci + masuk - keluar;
     const tgl = new Date(sejak).toLocaleString('id-ID',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-    info.push(`${daftarCabang.length>1 ? c.nama+': ' : ''}Hitung Kas ${tgl} ${fmt(Number(lastKas.kas_fisik))}` +
+    info.push(`${daftarCabang.length>1 ? c.nama+': ' : ''}Hitung Kas ${tgl} ${fmt(kasLaci)}` +
       (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} keluar laci` : ''));
   }
   return { total, info };
