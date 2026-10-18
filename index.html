@@ -533,18 +533,29 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   body.ui-baru .topbar-saldo .ts-label{font-size:11px;}
   body.ui-baru .topbar-saldo .ts-nilai{font-size:17px;}
   /* urutan: Menu · Jam · Saldo | Online · Aktif · SOP · Keranjang · Sinkron */
-  body.ui-baru #topbarMenuBtn{order:0;} body.ui-baru #topbarClock{order:1;} body.ui-baru #topbarSaldo{order:2;} body.ui-baru #topbarBrankas{order:2;}
-  /* HP: baris 1 = jam, Online, Aktif, keranjang; baris 2 = Saldo Kas + Brankas berdampingan */
+  /* 2026-10-18: bar atas tersusun per kelompok (permintaan Boss Leo: rapi di HP & tablet)
+     Kelompok 1 = Menu · Jam · Saldo Kas · Brankas | Kelompok 2 = Online · Cabang · SOP · Aktif · Keranjang · Sinkron */
+  body.ui-baru #topbarMenuBtn{order:0;} body.ui-baru #topbarClock{order:1;} body.ui-baru .tb-br1{order:3;}
+  body.ui-baru #topbarSaldo{order:4;} body.ui-baru #topbarBrankas{order:5;} body.ui-baru .tb-br2{order:6;}
+  body.ui-baru #connStatus{order:7;} body.ui-baru #kasirCabangStatus{order:8;} body.ui-baru #topbarSopBtn{order:9;}
+  body.ui-baru #topbarAktifBtn{order:10;} body.ui-baru #topbarCartBtn{order:11;} body.ui-baru #syncBtn{order:12;}
+  .tb-br1, .tb-br2{display:none;flex-basis:100%;height:0;margin:0;padding:0;}
+  body.ui-baru .topbar-status > .tb-br1, body.ui-baru .topbar-status > .tb-br2{display:none !important;height:0 !important;min-height:0;flex-basis:100%;}
+  /* tablet: 2 baris (kelompok 1 di atas, kelompok 2 di bawah) */
+  @media (max-width:999px){ body.ui-baru .topbar-status > .tb-br2{display:block !important;} }
+  /* HP: 3 baris rapi berpasangan */
   @media (max-width:520px){
-    body.ui-baru.role-owner .topbar-status{gap:6px;}
-    body.ui-baru.role-owner .topbar-status .status-chip{padding:0 8px;font-size:13px;}
-    body.ui-baru.role-owner .topbar-saldo{padding:0 8px;}
-    body.ui-baru.role-owner .topbar-saldo .ts-nilai{font-size:15px;}
-    body.ui-baru.role-owner #topbarCartBtn{width:40px;}
-    body.ui-baru.role-owner #topbarBrankas{order:3;} body.ui-baru.role-owner #connStatus{order:4;} body.ui-baru.role-owner #topbarAktifBtn{order:5;}
+    body.ui-baru .topbar-status{gap:6px;row-gap:8px;}
+    body.ui-baru .topbar-status .status-chip{padding:0 10px;font-size:13px;}
+    body.ui-baru .topbar-saldo{padding:0 10px;}
+    body.ui-baru .topbar-saldo .ts-nilai{font-size:15px;}
+    body.ui-baru #topbarCartBtn{width:44px;}
+    body.ui-baru .topbar-status > .tb-br1{display:block !important;}
+    /* Beranda dll: Online naik ke baris 1 di samping jam */
+    body.ui-baru:not(.nav-ciut) #connStatus{order:2;}
+    /* kasir (tanpa Saldo/Brankas): tidak perlu baris tengah */
+    body.ui-baru:not(.role-owner):not(.role-admin) .topbar-status > .tb-br2{display:none !important;}
   }
-  body.ui-baru #connStatus{order:3;} body.ui-baru #kasirCabangStatus{order:4;} body.ui-baru #topbarAktifBtn{order:5;}
-  body.ui-baru #topbarSopBtn{order:6;} body.ui-baru #topbarCartBtn{order:7;} body.ui-baru #syncBtn{order:8;}
   body.memuat-awal:has(#appView:not(.hidden))::after{content:'Memuat Es Teh S.O.L.O…';position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font:800 20px sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.8);z-index:5;}
   body.ui-baru .app-main{margin-left:0 !important;width:100vw !important;max-width:100vw !important;padding-bottom:84px;}
   body.ui-baru .kat-bawah{bottom:84px;}
@@ -837,6 +848,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button class="status-chip" id="topbarSopBtn" onclick="showSOPView()" title="SOP / resep menu">📋 SOP Menu</button>
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
+        <i class="tb-br1"></i><i class="tb-br2"></i>
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
           <div class="ts-label">🏦 Saldo Kas</div>
           <div class="ts-nilai" id="topbarSaldoNilai">…</div>
