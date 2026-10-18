@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-18.4">
+<meta name="app-version" content="2026-10-18.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -533,7 +533,16 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   body.ui-baru .topbar-saldo .ts-label{font-size:11px;}
   body.ui-baru .topbar-saldo .ts-nilai{font-size:17px;}
   /* urutan: Menu · Jam · Saldo | Online · Aktif · SOP · Keranjang · Sinkron */
-  body.ui-baru #topbarMenuBtn{order:0;} body.ui-baru #topbarClock{order:1;} body.ui-baru #topbarSaldo{order:2;}
+  body.ui-baru #topbarMenuBtn{order:0;} body.ui-baru #topbarClock{order:1;} body.ui-baru #topbarSaldo{order:2;} body.ui-baru #topbarBrankas{order:2;}
+  /* HP: baris 1 = jam, Online, Aktif, keranjang; baris 2 = Saldo Kas + Brankas berdampingan */
+  @media (max-width:520px){
+    body.ui-baru.role-owner .topbar-status{gap:6px;}
+    body.ui-baru.role-owner .topbar-status .status-chip{padding:0 8px;font-size:13px;}
+    body.ui-baru.role-owner .topbar-saldo{padding:0 8px;}
+    body.ui-baru.role-owner .topbar-saldo .ts-nilai{font-size:15px;}
+    body.ui-baru.role-owner #topbarCartBtn{width:40px;}
+    body.ui-baru.role-owner #topbarBrankas{order:3;} body.ui-baru.role-owner #connStatus{order:4;} body.ui-baru.role-owner #topbarAktifBtn{order:5;}
+  }
   body.ui-baru #connStatus{order:3;} body.ui-baru #kasirCabangStatus{order:4;} body.ui-baru #topbarAktifBtn{order:5;}
   body.ui-baru #topbarSopBtn{order:6;} body.ui-baru #topbarCartBtn{order:7;} body.ui-baru #syncBtn{order:8;}
   body.memuat-awal:has(#appView:not(.hidden))::after{content:'Memuat Es Teh S.O.L.O…';position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font:800 20px sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.8);z-index:5;}
@@ -831,6 +840,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
           <div class="ts-label">🏦 Saldo Kas</div>
           <div class="ts-nilai" id="topbarSaldoNilai">…</div>
+        </div>
+        <div class="topbar-saldo hidden" id="topbarBrankas" onclick="jalankanMenu('brankas')" title="Isi Brankas (ketuk untuk buka)">
+          <div class="ts-label">🔒 Brankas</div>
+          <div class="ts-nilai" id="topbarBrankasNilai">…</div>
         </div>
       </div>
     </div>
@@ -3739,6 +3752,7 @@ async function doLogout(){
   await sb.auth.signOut({ scope: 'local' });
   resetKeHalamanLogin();
   document.body.classList.remove('role-admin', 'role-owner', 'nav-ciut');
+  { const tb = document.getElementById('topbarBrankas'); if(tb) tb.classList.add('hidden'); }
   const navB = document.getElementById('navBawah'); if(navB) navB.classList.add('hidden');
   document.body.classList.remove('sedang-keluar');
   sedangLogout = false;
@@ -5225,7 +5239,23 @@ async function loadSaldoKasOutlet(filterCabangId){
 
 // Saldo di pojok kanan atas: cuma untuk Owner & Admin
 let saldoHeaderTimer = null;
+// 2026-10-18: saldo Brankas di bar atas, khusus Owner
+async function refreshBrankasHeader(){
+  const box = document.getElementById('topbarBrankas');
+  if(!box) return;
+  const owner = currentProfile && currentProfile.role === 'owner';
+  box.classList.toggle('hidden', !owner);
+  if(!owner || !navigator.onLine) return;
+  try{
+    const { data, error } = await sb.from('brankas').select('jenis, jumlah');
+    if(error) throw error;
+    const saldo = (data || []).reduce((a,r)=>a + (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah), 0);
+    document.getElementById('topbarBrankasNilai').textContent = fmt(saldo);
+  }catch(e){ document.getElementById('topbarBrankasNilai').textContent = '-'; }
+}
+
 async function refreshSaldoHeader(){
+  refreshBrankasHeader();
   const box = document.getElementById('topbarSaldo');
   const role = currentProfile && currentProfile.role;
   const boleh = role === 'owner' || role === 'admin';
@@ -8064,6 +8094,7 @@ async function loadBrankas(){
   const masukBln = bulanIni.filter(r=>r.jenis==='masuk').reduce((s,r)=>s+Number(r.jumlah),0);
   const keluarBln = bulanIni.filter(r=>r.jenis==='keluar').reduce((s,r)=>s+Number(r.jumlah),0);
   document.getElementById('brankasSaldo').textContent = fmt(saldo);
+  const tb = document.getElementById('topbarBrankasNilai'); if(tb) tb.textContent = fmt(saldo);
   document.getElementById('brankasInfoBulan').textContent = `Masuk bulan ini ${fmt(masukBln)} · Keluar ${fmt(keluarBln)}`;
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>`
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
