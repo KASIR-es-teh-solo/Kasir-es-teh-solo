@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-18.1">
+<meta name="app-version" content="2026-10-18.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -2848,6 +2848,7 @@ async function ambilDataTutupKas(){
     sb.rpc('pengaturan_kas')
   ]);
   const paten = Number((cfgRes && cfgRes.data && cfgRes.data.kas_awal_paten) ?? 200000);
+  const patenAktif = !(cfgRes && cfgRes.data && cfgRes.data.aktif === false);
   // hitung mulai jam 00:00 hari ini, ATAU sejak tutup kas terakhir kalau itu juga hari ini (cegah penjualan pagi terhitung 2x)
   const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
   if(lastKas && lastKas.waktu_tutup && new Date(lastKas.waktu_tutup) > startOfDay) startOfDay.setTime(new Date(lastKas.waktu_tutup).getTime());
@@ -2861,7 +2862,7 @@ async function ambilDataTutupKas(){
   const biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
   const totalTunai = (txRes.data || []).reduce((a,t)=>a+Number(t.total),0);
   const totalBiaya = biaya.reduce((a,b)=>a+Number(b.jumlah),0);
-  return { paten, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
+  return { paten, patenAktif, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
            jumlahTx: (txRes.data || []).length, totalTunai, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya };
 }
 
@@ -2953,6 +2954,7 @@ function kasHitungLive(){
   st.innerHTML = selisih === 0 ? '<div class="tk-pas">✅ PAS! Tidak ada selisih</div>'
     : `<div class="tk-pas tk-krg">⚠️ ${selisih < 0 ? 'KURANG' : 'LEBIH'} ${fmt(Math.abs(selisih))}</div>`;
   al.classList.toggle('hidden', selisih === 0);
+  if(!d.patenAktif){ se.innerHTML = '<div class="tk-setor">💵 Semua uang tetap di laci (setoran otomatis mulai berlaku besok).</div>'; return; }
   const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
   se.innerHTML = `<div class="tk-setor">💼 Setor ke Owner (masuk Brankas): <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
 }
@@ -3106,7 +3108,7 @@ async function tampilkanLaporanKas(d){
     <div class="lk-row"><span>Seharusnya di laci</span><b>${fmt(d.kasSistem)}</b></div>
     <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
     <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
-    ${d.setoran != null ? `<div class="lk-judul">Setoran</div>
+    ${d.setoran > 0 ? `<div class="lk-judul">Setoran</div>
     <div class="lk-row"><span>💼 Setor ke Owner (Brankas)</span><b>${fmt(d.setoran)}</b></div>
     <div class="lk-row"><span>Ditinggal di laci (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
@@ -3130,7 +3132,7 @@ async function tampilkanLaporanKas(d){
   t += baris('SELISIH', teksSelisih);
   t += (d.selisih === 0 ? 'STATUS: KAS PAS' : d.selisih < 0 ? 'STATUS: KAS KURANG' : 'STATUS: KAS LEBIH') + '\n';
   if(d.catatan) t += 'Catatan: ' + d.catatan + '\n';
-  if(d.setoran != null){ t += garis + baris('Setor ke Owner', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
+  if(d.setoran > 0){ t += garis + baris('Setor ke Owner', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
   laporanKasTeks = t;
 
   document.getElementById('laporanKasOverlay').classList.add('show');
