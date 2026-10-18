@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-19.1">
+<meta name="app-version" content="2026-10-19.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -4050,7 +4050,29 @@ function tampilkanHalamanBaru(id){
   hentikanPollingAktif();
   window.scrollTo(0, 0);
 }
+// 2026-10-19: sapaan ikut jam + tanggal & outlet; Beranda otomatis diperbarui saat ganti jam/hari
+function salamWaktu(){
+  const j = new Date().getHours();
+  return j >= 4 && j < 11 ? 'Selamat Pagi' : j < 15 && j >= 11 ? 'Selamat Siang' : j < 18 && j >= 15 ? 'Selamat Sore' : 'Selamat Malam';
+}
+function teksTglOutlet(){
+  const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const c = (userAllowedCabang || []).find(x => x.id === activeCabangId);
+  return tgl + (c && c.nama ? ' · ' + escTG(c.nama) : '');
+}
+let berandaHariKey = new Date().toDateString();
+setInterval(() => {
+  const v = document.getElementById('berandaView');
+  if(!v || v.classList.contains('hidden') || !currentProfile) return;
+  const kunci = new Date().toDateString();
+  if(kunci !== berandaHariKey){ berandaHariKey = kunci; tampilkanBeranda(); return; } // ganti hari -> data "hari ini" dimuat ulang
+  const s = document.getElementById('bdSalam'), pr = document.getElementById('bdPeran');
+  if(s){ const b = s.querySelector('b'); s.innerHTML = salamWaktu() + ', ' + (b ? b.outerHTML : ''); }
+  if(pr) pr.innerHTML = teksTglOutlet();
+}, 60000);
+
 function tampilkanBeranda(){
+  berandaHariKey = new Date().toDateString();
   tampilkanHalamanBaru('berandaView');
   tandaiNavBawah('beranda');
   const role = (currentProfile && currentProfile.role) || 'kasir';
@@ -4060,7 +4082,7 @@ function tampilkanBeranda(){
   const ringKe3 = role === 'kasir' ? ['…','Teh Siap Saji'] : ['…','Saldo Kas'];
   const ringKe4 = role === 'kasir' ? ['…','Tunai Hari Ini'] : ['…','Stok Cup Menipis'];
   document.getElementById('berandaView').innerHTML = `
-    <div class="bd-atas"><div class="bd-salam">Selamat Datang, <b>${escTG(nama)}</b></div><div class="bd-peran">Masuk sebagai ${peranLabel} · ${tgl}</div></div>
+    <div class="bd-atas"><div class="bd-salam" id="bdSalam">${salamWaktu()}, <b>${escTG(nama)}</b></div><div class="bd-peran" id="bdPeran">${teksTglOutlet()}</div></div>
     <div class="bd-ring">
       <div><b id="bdOmzet">…</b><small>Penjualan Hari Ini</small></div>
       <div><b id="bdTrx">…</b><small>Transaksi</small></div>
