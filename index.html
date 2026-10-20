@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.1">
+<meta name="app-version" content="2026-10-20.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -619,6 +619,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bd-ring > div{border-radius:14px;padding:10px 14px;cursor:default;}
   .bd-ring b{display:block;font-size:clamp(17px,2.2vw,21px);font-weight:800;}
   .bd-ring small{font-size:12.5px;font-weight:700;}
+  .bd-ring > .bd-gabung{grid-column:span 2;border:2px solid var(--gold);}
+  .bd-rinci{display:block;font-size:11.5px;font-weight:600;opacity:.9;margin-top:2px;}
   .bd-peringatan{background:#e8b923;color:#0c1f14;border-radius:12px;padding:11px 14px;font-weight:800;font-size:14px;margin-bottom:12px;cursor:pointer;}
   .bd-kats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;}
   .bd-kat{border-radius:18px;padding:12px 14px 14px;}
@@ -863,8 +865,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <i class="tb-br1"></i><i class="tb-br2"></i>
-        <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Saldo kas outlet (ketuk untuk refresh)">
-          <div class="ts-label">🔒 Saldo Kas</div>
+        <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Kas awal + penjualan hari ini (ketuk untuk refresh)">
+          <div class="ts-label">💰 Kas + Penjualan</div>
           <div class="ts-nilai" id="topbarSaldoNilai">…</div>
         </div>
         <div class="topbar-saldo hidden" id="topbarBrankas" onclick="jalankanMenu('brankas')" title="Isi Brankas (ketuk untuk buka)">
@@ -1205,7 +1207,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
             <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="bukaBeliStok('kas_toko')">📦 Beli Stok (cup dll)</button>
             <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="kasTokoBiaya()">📝 Biaya Lain</button>
-            <button class="header-btn" style="background:transparent;color:#fff;border-color:#fff;font-weight:700;" onclick="kasTokoKeBrankas()">🏦 Pindah ke Brankas</button>
             <button class="header-btn hidden" id="kasTokoAmbilBtn" style="background:transparent;color:#fff;border-color:#fff;font-weight:700;" onclick="kasTokoDariBrankas()">⬅️ Ambil dari Brankas</button>
           </div>
         </div>
@@ -1227,7 +1228,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
           <h3 style="margin:0;">📒 Riwayat Tabungan</h3>
-          <button class="header-btn" style="background:#fff;color:#c62828;border-color:#fff;" onclick="ambilDariBrankas()">− Ambil</button>
+          <div style="display:flex;gap:8px;">
+            <button class="header-btn" style="background:#fff;color:#1b5e20;border-color:#fff;" onclick="tambahUangBrankas()">+ Tambah Uang</button>
+            <button class="header-btn" style="background:#fff;color:#c62828;border-color:#fff;" onclick="ambilDariBrankas()">− Ambil</button>
+          </div>
         </div>
         <div id="brankasList"><div class="empty-msg">Memuat...</div></div>
       </div>
@@ -4104,14 +4108,15 @@ function tampilkanBeranda(){
   const nama = (currentProfile && currentProfile.nama) || '';
   const peranLabel = ({ owner:'Owner', admin:'Admin', kasir:'Kasir' })[role] || role;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  const ringKe3 = role === 'kasir' ? ['…','Teh Siap Saji'] : ['…','Saldo Kas'];
+  const ringKe3 = role === 'kasir' ? ['…','Teh Siap Saji'] : null;
   const ringKe4 = role === 'kasir' ? ['…','Tunai Hari Ini'] : ['…','Stok Cup Menipis'];
   document.getElementById('berandaView').innerHTML = `
     <div class="bd-atas"><div class="bd-salam" id="bdSalam">${salamWaktu()}, <b>${escTG(nama)}</b></div><div class="bd-peran" id="bdPeran">${teksTglOutlet()}</div></div>
     <div class="bd-ring">
-      <div><b id="bdOmzet">…</b><small>Penjualan Hari Ini</small></div>
+      ${ringKe3 ? '<div><b id="bdOmzet">…</b><small>Penjualan Hari Ini</small></div>'
+        : '<div class="bd-gabung"><b id="bdOmzet">…</b><small>Kas + Penjualan Hari Ini</small><span class="bd-rinci" id="bdRinci"></span></div>'}
       <div><b id="bdTrx">…</b><small>Transaksi</small></div>
-      <div><b id="bdKe3">${ringKe3[0]}</b><small>${ringKe3[1]}</small></div>
+      ${ringKe3 ? `<div><b id="bdKe3">${ringKe3[0]}</b><small>${ringKe3[1]}</small></div>` : ''}
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
@@ -4143,7 +4148,7 @@ async function isiRingkasBeranda(role){
     if(cabangId) q = q.eq('cabang_id', cabangId);
     const { data } = await q;
     const rows = data || [];
-    set('bdOmzet', fmt(rows.reduce((t,r)=>t+Number(r.total),0)));
+    if(role === 'kasir') set('bdOmzet', fmt(rows.reduce((t,r)=>t+Number(r.total),0)));
     set('bdTrx', rows.length);
     if(role === 'kasir') set('bdKe4', fmt(rows.filter(r=>(r.metode_bayar||'tunai')==='tunai').reduce((t,r)=>t+Number(r.total),0)));
   }catch(e){ set('bdOmzet','-'); set('bdTrx','-'); }
@@ -4154,9 +4159,12 @@ async function isiRingkasBeranda(role){
     set('bdKe3', m ? m[1] + (/seduh sekarang|tinggal/i.test(t) ? ' ⚠️' : '') : (/belum/i.test(t) ? 'Belum dicatat' : '-'));
     return;
   }
-  try{ if(typeof refreshSaldoHeader === 'function') await refreshSaldoHeader(); }catch(e){}
-  const saldo = document.getElementById('topbarSaldoNilai');
-  set('bdKe3', saldo && saldo.textContent.trim() !== '…' ? saldo.textContent : '-');
+  try{
+    const { total, kasAwal, omzet } = await hitungKasPenjualan(cabangId ? [{ id: cabangId }] : []);
+    set('bdOmzet', fmt(total));
+    set('bdRinci', `Kas awal ${fmt(kasAwal)} + Penjualan ${fmt(omzet)}`);
+  }catch(e){ set('bdOmzet','-'); }
+  try{ if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader(); }catch(e){}
   try{
     const tipis = (await ambilStokCup()).filter(r => hitungCup(r).menipis);
     set('bdKe4', tipis.length ? tipis.length + ' jenis' : 'Aman');
@@ -5313,6 +5321,21 @@ async function loadSaldoKasOutlet(filterCabangId){
   }
 }
 
+// 2026-10-20: uang laci tidak dipisah lagi -> kas awal paten + penjualan hari ini jadi satu angka
+async function hitungKasPenjualan(daftarCabang){
+  let kasAwal = 200000;
+  try{ const k = await sb.rpc('pengaturan_kas'); if(k.data && k.data.kas_awal_paten != null) kasAwal = Number(k.data.kas_awal_paten); }catch(e){}
+  const awal = new Date(); awal.setHours(0,0,0,0);
+  let q = sb.from('transaksi').select('total').eq('status','selesai').gte('created_at', awal.toISOString());
+  const ids = (daftarCabang || []).map(c => c.id);
+  if(ids.length) q = q.in('cabang_id', ids);
+  const { data, error } = await q;
+  if(error) throw error;
+  const omzet = (data || []).reduce((t,r)=>t+Number(r.total),0);
+  const totalKasAwal = kasAwal * Math.max(ids.length, 1);
+  return { total: totalKasAwal + omzet, kasAwal: totalKasAwal, omzet };
+}
+
 // Saldo di pojok kanan atas: cuma untuk Owner & Admin
 let saldoHeaderTimer = null;
 // 2026-10-18: saldo Brankas di bar atas, khusus Owner
@@ -5348,9 +5371,9 @@ async function refreshSaldoHeader(){
       const { data } = await sb.from('cabang').select('id, nama').eq('aktif', true);
       target = data || [];
     }
-    const { total, info } = await hitungSaldoKas(target);
+    const { total, kasAwal, omzet } = await hitungKasPenjualan(target);
     document.getElementById('topbarSaldoNilai').textContent = fmt(total);
-    box.title = info.join(' | ') + ' (ketuk untuk refresh)';
+    box.title = `Kas awal ${fmt(kasAwal)} + penjualan hari ini ${fmt(omzet)} (ketuk untuk refresh)`;
   }catch(e){
     document.getElementById('topbarSaldoNilai').textContent = '-';
   }
@@ -5360,7 +5383,7 @@ async function loadRingkasan(){
   const isOwner = currentProfile && currentProfile.role === 'owner';
   document.getElementById('ringkasanFilterRow').classList.toggle('hidden', !isOwner);
   document.getElementById('dashLabaCard').classList.toggle('hidden', !isOwner);
-  document.getElementById('dashKasCard').classList.toggle('hidden', isOwner);
+  document.getElementById('dashKasCard').classList.add('hidden'); // 2026-10-20: uang laci tidak ditampilkan terpisah
 
   const startOfDay = new Date();
   startOfDay.setHours(0,0,0,0);
@@ -8239,21 +8262,6 @@ function kasTokoBiaya(){
   document.getElementById('biayaKategori').value = 'Lainnya';
 }
 
-async function kasTokoKeBrankas(){
-  const role = currentProfile && currentProfile.role;
-  if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
-  const saldoTeks = document.getElementById('kasTokoSaldo').textContent.replace(/[^0-9]/g,'');
-  const a = prompt(`Pindahkan berapa ke Brankas utama?\nSaldo Kas Es Teh S.O.L.O: ${fmt(Number(saldoTeks||0))}`, saldoTeks);
-  if(a === null) return;
-  const jumlah = Number(String(a).replace(/[^0-9]/g,''));
-  if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
-  if(!confirm(`Pindahkan ${fmt(jumlah)} dari Kas Es Teh S.O.L.O ke Brankas?`)) return;
-  const { error } = await sb.rpc('kas_toko_ke_brankas', { p_cabang: activeCabangId, p_jumlah: jumlah, p_keterangan: null });
-  if(error){ alert('Gagal: ' + error.message); return; }
-  showSuccessToast('🏦', 'Dipindah ke Brankas', fmt(jumlah));
-  await loadKasToko(); if(typeof refreshBrankasHeader === 'function') refreshBrankasHeader();
-}
-
 async function kasTokoDariBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
   const a = prompt('Ambil berapa dari Brankas ke Kas Es Teh S.O.L.O?', '');
@@ -8265,6 +8273,22 @@ async function kasTokoDariBrankas(){
   if(error){ alert('Gagal: ' + error.message); return; }
   showSuccessToast('⬅️', 'Masuk Kas Es Teh S.O.L.O', fmt(jumlah));
   await loadKasToko(); if(typeof refreshBrankasHeader === 'function') refreshBrankasHeader();
+}
+
+// 2026-10-20: Brankas cuma bertambah lewat Tabungan (belanja laci) atau Tambah Uang ini (khusus Owner)
+async function tambahUangBrankas(){
+  if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
+  const input = prompt('Tambah uang ke Brankas berapa? (angka saja, misal 500000)');
+  if(input === null) return;
+  const jumlah = Number(String(input).replace(/[^0-9]/g,''));
+  if(!jumlah || jumlah <= 0){ alert('Masukkan jumlah yang valid.'); return; }
+  const ket = prompt('Keterangan (misal: tambahan modal)', '') || null;
+  if(!confirm(`Tambah ${fmt(jumlah)} ke Brankas?`)) return;
+  const { error } = await sb.from('brankas').insert({ cabang_id: activeCabangId, jenis: 'masuk', jumlah, keterangan: 'Tambah uang Owner' + (ket ? ' · ' + ket : ''), dicatat_oleh: currentUser.id, dilihat_owner: true });
+  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
+  catatLog('Tambah Brankas', `Tambah ${fmt(jumlah)} ke Brankas${ket ? ' · ' + ket : ''}`);
+  showSuccessToast('🏦', 'Masuk Brankas', fmt(jumlah));
+  await loadBrankas(); refreshBrankasHeader();
 }
 
 async function ambilDariBrankas(){
