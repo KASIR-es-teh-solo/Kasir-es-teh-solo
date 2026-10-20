@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.8">
+<meta name="app-version" content="2026-10-20.9">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1973,6 +1973,28 @@ function angkaRupiah(idAtauEl){
   const v = String(el ? el.value : '').replace(/\./g, '').replace(',', '.').trim();
   return v === '' ? NaN : Number(v);
 }
+// mintaRupiah(pesan, awal): seperti prompt() tapi kolomnya bertitik ribuan. Hasil: teks angka tanpa titik ('' kalau kosong) atau null kalau Batal.
+let _rupiahSelesai = null;
+function mintaRupiah(pesan, awal){
+  return new Promise(resolve => {
+    _rupiahSelesai = resolve;
+    document.getElementById('rupiahJudul').textContent = pesan;
+    const n = Number(String(awal ?? '').replace(/[^0-9.]/g, ''));
+    setInputRupiah('rupiahInput', String(awal ?? '').trim() !== '' && n > 0 ? n : '');
+    document.getElementById('rupiahOverlay').classList.add('show');
+    const el = document.getElementById('rupiahInput');
+    el.onkeydown = e => { if(e.key === 'Enter') tutupMintaRupiah(true); if(e.key === 'Escape') tutupMintaRupiah(null); };
+    setTimeout(() => { el.focus(); el.select(); }, 50);
+  });
+}
+function tutupMintaRupiah(ok){
+  document.getElementById('rupiahOverlay').classList.remove('show');
+  const r = _rupiahSelesai; _rupiahSelesai = null;
+  if(!r) return;
+  if(!ok) return r(null);
+  const n = angkaRupiah('rupiahInput');
+  r(isNaN(n) ? '' : String(n));
+}
 function setInputRupiah(id, nilai){
   const el = document.getElementById(id);
   if(el) el.value = (nilai === '' || nilai == null) ? '' : formatRupiahTeks(String(nilai).replace('.', ','));
@@ -2982,7 +3004,7 @@ function kasLangkah(n){
 }
 
 async function ubahKasAwalTK(){
-  const v = prompt('Kas awal untuk tutup kas ini (khusus Owner):', String(kasTK.kasAwal));
+  const v = await mintaRupiah('Kas awal untuk tutup kas ini (khusus Owner):', String(kasTK.kasAwal));
   if(v === null) return;
   const n = Number(String(v).replace(/[^0-9]/g, ''));
   if(!Number.isFinite(n) || n < 0) return;
@@ -6378,7 +6400,7 @@ async function loadModalProdukList(){
 }
 
 async function editHargaModalVarian(varianId, nama, varianLabel, modalSekarang){
-  const input = prompt(`Harga modal "${nama}" varian "${varianLabel}":`, modalSekarang);
+  const input = await mintaRupiah(`Harga modal "${nama}" varian "${varianLabel}":`, modalSekarang);
   if(input === null) return;
   const modalBaru = Number(input);
   if(isNaN(modalBaru) || modalBaru < 0){
@@ -6402,7 +6424,7 @@ async function editHargaModalVarian(varianId, nama, varianLabel, modalSekarang){
 }
 
 async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSekarang){
-  const inputKecil = prompt(`Harga modal "${nama}" ukuran Kecil:`, modalKecilSekarang);
+  const inputKecil = await mintaRupiah(`Harga modal "${nama}" ukuran Kecil:`, modalKecilSekarang);
   if(inputKecil === null) return;
   const modalKecil = Number(inputKecil);
   if(isNaN(modalKecil) || modalKecil < 0){
@@ -6410,7 +6432,7 @@ async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSeka
     return;
   }
 
-  const inputBesar = prompt(`Harga modal "${nama}" ukuran Besar:`, modalBesarSekarang);
+  const inputBesar = await mintaRupiah(`Harga modal "${nama}" ukuran Besar:`, modalBesarSekarang);
   if(inputBesar === null) return;
   const modalBesar = Number(inputBesar);
   if(isNaN(modalBesar) || modalBesar < 0){
@@ -6577,7 +6599,7 @@ async function tambahProdukBaru(){
         if(varianList.length === 0){ alert("Minimal harus ada 1 varian."); continue; }
         break;
       }
-      const hargaVarianStr = prompt(`Harga jual varian "${labelVarian.trim()}" (Rp):`, "0");
+      const hargaVarianStr = await mintaRupiah(`Harga jual varian "${labelVarian.trim()}" (Rp):`, "0");
       if(hargaVarianStr === null) continue;
       const hargaVarian = Number(hargaVarianStr);
       if(isNaN(hargaVarian) || hargaVarian < 0){ alert("Harga tidak valid, varian ini dilewati."); continue; }
@@ -6618,12 +6640,12 @@ async function tambahProdukBaru(){
     }
   } else {
     // === Mode Kecil/Besar biasa (perilaku lama, tidak berubah) ===
-    const hargaKecilStr = prompt(`Harga jual "${nama.trim()}" ukuran Kecil (Rp):`, "0");
+    const hargaKecilStr = await mintaRupiah(`Harga jual "${nama.trim()}" ukuran Kecil:`, "0");
     if(hargaKecilStr === null) return;
     hargaKecil = Number(hargaKecilStr);
     if(isNaN(hargaKecil) || hargaKecil < 0){ alert("Harga Kecil tidak valid."); return; }
 
-    const hargaBesarStr = prompt(`Harga jual "${nama.trim()}" ukuran Besar (Rp):`, "0");
+    const hargaBesarStr = await mintaRupiah(`Harga jual "${nama.trim()}" ukuran Besar:`, "0");
     if(hargaBesarStr === null) return;
     hargaBesar = Number(hargaBesarStr);
     if(isNaN(hargaBesar) || hargaBesar < 0){ alert("Harga Besar tidak valid."); return; }
@@ -8256,7 +8278,7 @@ function kasTokoBiaya(){
 
 async function kasTokoDariBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
-  const a = prompt('Ambil berapa dari Brankas ke Kas Es Teh S.O.L.O?', '');
+  const a = await mintaRupiah('Ambil berapa dari Brankas ke Kas Es Teh S.O.L.O?', '');
   if(a === null) return;
   const jumlah = Number(String(a).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
@@ -8270,7 +8292,7 @@ async function kasTokoDariBrankas(){
 // 2026-10-20: Brankas cuma bertambah lewat Tabungan (belanja laci) atau Tambah Uang ini (khusus Owner)
 async function tambahUangBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
-  const input = prompt('Tambah uang ke Brankas berapa? (angka saja, misal 500000)');
+  const input = await mintaRupiah('Tambah uang ke Brankas berapa?');
   if(input === null) return;
   const jumlah = Number(String(input).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0){ alert('Masukkan jumlah yang valid.'); return; }
@@ -8286,7 +8308,7 @@ async function tambahUangBrankas(){
 
 async function ambilDariBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
-  const input = prompt('Ambil uang dari Brankas berapa? (angka saja, misal 200000)');
+  const input = await mintaRupiah('Ambil uang dari Brankas berapa?');
   if(input === null) return;
   const jumlah = Number(String(input).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0){ alert('Masukkan jumlah yang valid.'); return; }
@@ -8442,11 +8464,11 @@ async function brankasOnlineCair(pf){
   if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
   const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
   if(saldo <= 0){ alert(`${BO_NAMA[pf]} belum ada yang perlu dicairkan.`); return; }
-  const a = prompt(`${BO_NAMA[pf]}\nPesanan yang cair (harga outlet). Belum cair sekarang ${fmt(saldo)}:`, String(saldo));
+  const a = await mintaRupiah(`${BO_NAMA[pf]}\nPesanan yang cair (harga outlet). Belum cair sekarang ${fmt(saldo)}:`, String(saldo));
   if(a === null) return;
   const jumlah = Number(String(a).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
-  const b = prompt(`Uang yang benar-benar MASUK ke rekening ${BO_NAMA[pf]} (setelah potongan komisi):`, '');
+  const b = await mintaRupiah(`Uang yang benar-benar MASUK ke rekening ${BO_NAMA[pf]} (setelah potongan komisi):`, '');
   if(b === null) return;
   const diterima = Number(String(b).replace(/[^0-9]/g,''));
   if(isNaN(diterima) || String(b).trim() === ''){ alert('Isi jumlah uang yang masuk rekening.'); return; }
@@ -8463,7 +8485,7 @@ async function brankasOnlineKeLaci(pf){
   if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
   const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
   if(saldo <= 0){ alert(`${BO_NAMA[pf]} masih kosong.`); return; }
-  const a = prompt(`Masukkan berapa ke laci kasir?\n${BO_NAMA[pf]} belum cair: ${fmt(saldo)}`, String(saldo));
+  const a = await mintaRupiah(`Masukkan berapa ke laci kasir?\n${BO_NAMA[pf]} belum cair: ${fmt(saldo)}`, String(saldo));
   if(a === null) return;
   const jumlah = Number(String(a).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
@@ -8941,5 +8963,19 @@ function toggleSidebar(collapsedState){
   document.addEventListener('DOMContentLoaded',function(){setTopbarH();var t=document.querySelector('.topbar');if(t&&window.ResizeObserver)new ResizeObserver(setTopbarH).observe(t);});
 })();
 </script>
+<!-- Kotak isi nominal uang: angka otomatis bertitik (1.000.000), pengganti prompt() bawaan browser -->
+<div class="overlay" id="rupiahOverlay" style="z-index:90;">
+  <div class="modal" style="max-width:380px;">
+    <h3 id="rupiahJudul" style="white-space:pre-line;font-size:15px;line-height:1.4;"></h3>
+    <div style="display:flex;align-items:center;gap:8px;margin:12px 0 4px;">
+      <b style="font-size:20px;">Rp</b>
+      <input type="text" inputmode="numeric" class="input-rupiah" id="rupiahInput" style="flex:1;min-width:0;width:100%;box-sizing:border-box;font-size:24px;font-weight:800;padding:10px;border-radius:10px;border:2px solid var(--line-soft);" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="tk-btn-o" style="flex:1;margin:0;" onclick="tutupMintaRupiah(null)">Batal</button>
+      <button class="login-btn" style="flex:1;margin:0;" onclick="tutupMintaRupiah(true)">Oke</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
