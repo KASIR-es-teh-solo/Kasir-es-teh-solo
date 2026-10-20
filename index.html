@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.6">
+<meta name="app-version" content="2026-10-20.7">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -865,7 +865,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button class="status-chip chip-aktif hidden" id="topbarAktifBtn" onclick="showDashPanel('aktif')" title="Karyawan yang aktif sekarang">👥 Aktif</button>
         <button class="status-chip gold hidden" id="syncBtn" onclick="trySyncPending()">🔄 Sinkronkan</button>
         <i class="tb-br1"></i><i class="tb-br2"></i>
-        <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Uang kas Outlet Dermo hari ini (ketuk untuk refresh)">
+        <div class="topbar-saldo hidden" id="topbarSaldo" onclick="refreshSaldoHeader()" title="Seluruh uang kas Outlet Dermo (ketuk untuk refresh)">
           <div class="ts-label">💰 Kas Outlet Dermo</div>
           <div class="ts-nilai" id="topbarSaldoNilai">…</div>
         </div>
@@ -1365,7 +1365,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <input type="checkbox" id="akhiriShiftToggle" style="width:22px;height:22px;flex-shrink:0;">
       </div>
       <button class="header-btn gold" onclick="simpanPengaturanAbsen()">Simpan Pengaturan Absen</button>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin:12px 0 10px;flex-wrap:wrap;">
+      <div class="hidden" style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin:12px 0 10px;flex-wrap:wrap;">
         <span style="font-size:13px;font-weight:700;">💵 Kas awal paten (uang kembalian tiap pagi)<br><span style="font-weight:400;font-size:11px;">Saat tutup kas, kelebihannya otomatis disetor ke Brankas</span></span>
         <span style="display:flex;gap:6px;align-items:center;"><input type="text" inputmode="numeric" class="input-rupiah" id="kasAwalPatenInput" style="width:110px;padding:8px;border-radius:8px;border:1px solid var(--line-soft);">
         <button class="header-btn gold" onclick="simpanKasAwalPaten()">Simpan</button></span>
@@ -2963,7 +2963,7 @@ function kasLangkah(n){
   if(n === 2){
     document.getElementById('kasModalTitle').textContent = '🧮 Rincian Kas';
     const isOwner = currentProfile && currentProfile.role === 'owner';
-    const ketAwal = d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
+    const ketAwal = !d.patenAktif ? 'sisa uang dari tutup kas terakhir' : d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
     body.innerHTML = strip + `
       <div class="tk-sub">Dihitung otomatis oleh aplikasi</div>
       <div class="tk-list">
@@ -3012,7 +3012,7 @@ function kasHitungLive(){
   st.innerHTML = selisih === 0 ? '<div class="tk-pas">✅ PAS! Tidak ada selisih</div>'
     : `<div class="tk-pas tk-krg">⚠️ ${selisih < 0 ? 'KURANG' : 'LEBIH'} ${fmt(Math.abs(selisih))}</div>`;
   al.classList.toggle('hidden', selisih === 0);
-  if(!d.patenAktif){ se.innerHTML = '<div class="tk-setor">💵 Semua uang tetap di laci (setoran otomatis mulai berlaku besok).</div>'; return; }
+  if(!d.patenAktif){ se.innerHTML = '<div class="tk-setor">💵 Semua uang tetap jadi Kas Outlet Dermo.</div>'; return; }
   const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
   se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Es Teh S.O.L.O: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
 }
@@ -4114,7 +4114,7 @@ function tampilkanBeranda(){
     <div class="bd-atas"><div class="bd-salam" id="bdSalam">${salamWaktu()}, <b>${escTG(nama)}</b></div><div class="bd-peran" id="bdPeran">${teksTglOutlet()}</div></div>
     <div class="bd-ring">
       ${ringKe3 ? '<div><b id="bdOmzet">…</b><small>Penjualan Hari Ini</small></div>'
-        : '<div class="bd-gabung"><b id="bdOmzet">…</b><small>Kas Outlet Dermo Hari Ini</small><span class="bd-rinci" id="bdRinci"></span></div>'}
+        : '<div class="bd-gabung"><b id="bdOmzet">…</b><small>Kas Outlet Dermo</small><span class="bd-rinci" id="bdRinci"></span></div>'}
       <div><b id="bdTrx">…</b><small>Transaksi</small></div>
       ${ringKe3 ? `<div><b id="bdKe3">${ringKe3[0]}</b><small>${ringKe3[1]}</small></div>` : ''}
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
@@ -4160,9 +4160,9 @@ async function isiRingkasBeranda(role){
     return;
   }
   try{
-    const { total, kasAwal, tunai, keluar } = await hitungKasPenjualan(cabangId ? [{ id: cabangId }] : cabangList);
+    const { total, tunai, keluar } = await hitungKasPenjualan(cabangId ? [{ id: cabangId }] : cabangList);
     set('bdOmzet', fmt(total));
-    set('bdRinci', `Kas awal ${fmt(kasAwal)} + Tunai ${fmt(tunai)} − Belanja ${fmt(keluar)}`);
+    set('bdRinci', `Hari ini: tunai masuk ${fmt(tunai)} · belanja ${fmt(keluar)}`);
   }catch(e){ set('bdOmzet','-'); }
   try{ if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader(); }catch(e){}
   try{
@@ -5321,26 +5321,25 @@ async function loadSaldoKasOutlet(filterCabangId){
   }
 }
 
-// 2026-10-20: uang laci tidak dipisah lagi -> satu angka uang fisik hari ini:
-// kas awal paten + penjualan TUNAI hari ini − uang keluar laci hari ini (belanja, beli stok tunai, tabungan; + online yang dimasukkan ke laci)
+// 2026-10-20: kas awal paten Rp200.000 dihapus -> semua uang outlet jadi satu angka berjalan (tidak di-reset tiap hari):
+// Kas Outlet Dermo = uang laci sejak tutup kas terakhir (sisa + tunai − keluar laci) + saldo Kas Es Teh S.O.L.O
 async function hitungKasPenjualan(daftarCabang){
-  let kasAwal = 200000;
-  try{ const k = await sb.rpc('pengaturan_kas'); if(k.data && k.data.kas_awal_paten != null) kasAwal = Number(k.data.kas_awal_paten); }catch(e){}
   const awal = new Date(); awal.setHours(0,0,0,0);
-  const ids = (daftarCabang || []).map(c => c.id).filter(Boolean);
-  let q = sb.from('transaksi').select('total').eq('status','selesai').eq('metode_bayar','tunai').gte('created_at', awal.toISOString());
-  if(ids.length) q = q.in('cabang_id', ids);
-  const { data, error } = await q;
-  if(error) throw error;
-  const tunai = (data || []).reduce((t,r)=>t+Number(r.total),0);
-  let keluar = 0;
-  for(const id of ids){
-    const { data: by, error: e2 } = await sb.rpc('laporan_biaya_kas', { p_cabang: id, p_sejak: awal.toISOString() });
-    if(e2) throw e2;
-    keluar += (by || []).reduce((a,b)=>a+Number(b.jumlah),0);
+  const list = (daftarCabang || []).filter(c => c && c.id);
+  const { total: laci } = await hitungSaldoKas(list.map(c => ({ id: c.id, nama: c.nama || '' })));
+  let kasToko = 0, tunai = 0, keluar = 0;
+  for(const c of list){
+    const [kt, tx, by] = await Promise.all([
+      sb.rpc('kas_toko_saldo', { p_cabang: c.id }),
+      sb.from('transaksi').select('total').eq('cabang_id', c.id).eq('status','selesai').eq('metode_bayar','tunai').gte('created_at', awal.toISOString()),
+      sb.rpc('laporan_biaya_kas', { p_cabang: c.id, p_sejak: awal.toISOString() })
+    ]);
+    if(kt.error) throw kt.error; if(tx.error) throw tx.error; if(by.error) throw by.error;
+    kasToko += Number(kt.data || 0);
+    tunai += (tx.data || []).reduce((a,r)=>a+Number(r.total),0);
+    keluar += (by.data || []).reduce((a,b)=>a+Number(b.jumlah),0);
   }
-  const totalKasAwal = kasAwal * Math.max(ids.length, 1);
-  return { total: totalKasAwal + tunai - keluar, kasAwal: totalKasAwal, tunai, keluar };
+  return { total: laci + kasToko, tunai, keluar };
 }
 
 // Saldo di pojok kanan atas: cuma untuk Owner & Admin
@@ -5378,9 +5377,9 @@ async function refreshSaldoHeader(){
       const { data } = await sb.from('cabang').select('id, nama').eq('aktif', true);
       target = data || [];
     }
-    const { total, kasAwal, tunai, keluar } = await hitungKasPenjualan(target);
+    const { total, tunai, keluar } = await hitungKasPenjualan(target);
     document.getElementById('topbarSaldoNilai').textContent = fmt(total);
-    box.title = `Kas awal ${fmt(kasAwal)} + penjualan tunai ${fmt(tunai)} − belanja ${fmt(keluar)} (ketuk untuk refresh)`;
+    box.title = `Hari ini: tunai masuk ${fmt(tunai)} · belanja ${fmt(keluar)} (ketuk untuk refresh)`;
   }catch(e){
     document.getElementById('topbarSaldoNilai').textContent = '-';
   }
