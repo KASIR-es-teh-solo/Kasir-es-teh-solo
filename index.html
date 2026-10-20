@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.7">
+<meta name="app-version" content="2026-10-20.8">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1365,11 +1365,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <input type="checkbox" id="akhiriShiftToggle" style="width:22px;height:22px;flex-shrink:0;">
       </div>
       <button class="header-btn gold" onclick="simpanPengaturanAbsen()">Simpan Pengaturan Absen</button>
-      <div class="hidden" style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--page-bg);padding:12px;border-radius:10px;margin:12px 0 10px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:700;">💵 Kas awal paten (uang kembalian tiap pagi)<br><span style="font-weight:400;font-size:11px;">Saat tutup kas, kelebihannya otomatis disetor ke Brankas</span></span>
-        <span style="display:flex;gap:6px;align-items:center;"><input type="text" inputmode="numeric" class="input-rupiah" id="kasAwalPatenInput" style="width:110px;padding:8px;border-radius:8px;border:1px solid var(--line-soft);">
-        <button class="header-btn gold" onclick="simpanKasAwalPaten()">Simpan</button></span>
-      </div>
       <div id="absenStikerList" style="margin-top:12px;"></div>
     </div>
 
@@ -2663,7 +2658,6 @@ async function loadPengaturanAbsenOwner(){
   document.getElementById('absenWajibToggle').checked = !!cfg.wajib;
   document.getElementById('akhiriShiftToggle').checked = !!cfg.akhiri_shift;
   document.getElementById('absenRadiusInput').value = cfg.radius;
-  try{ const k = await sb.rpc('pengaturan_kas'); setInputRupiah('kasAwalPatenInput', k.data ? k.data.kas_awal_paten : 200000); }catch(e){}
   box.innerHTML = (cabangList || []).map(c => `
     <div class="tx-row" style="flex-wrap:wrap;gap:6px;">
       <span><b>${escTG(c.nama)}</b>${c.latitude == null ? ' <span style="color:var(--danger);">· titik GPS belum diatur</span>' : ''}</span>
@@ -2672,14 +2666,6 @@ async function loadPengaturanAbsenOwner(){
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick="gantiKodeAbsen('${c.id}', '${c.nama.replace(ATTR_JS_RE, attrJsEsc)}')">🔄 Ganti Kode</button>
       </span>
     </div>`).join('') || '<div class="empty-msg">Belum ada cabang.</div>';
-}
-
-async function simpanKasAwalPaten(){
-  const n = angkaRupiah('kasAwalPatenInput');
-  if(isNaN(n) || n < 0){ alert('Isi kas awal paten yang valid.'); return; }
-  const { error } = await sb.rpc('set_kas_awal_paten', { p_nilai: n });
-  if(error){ alert('Gagal menyimpan: ' + error.message); return; }
-  alert('Kas awal paten: ' + fmt(n) + '\nBerlaku mulai tutup kas berikutnya.');
 }
 
 async function simpanPengaturanAbsen(){
