@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.18">
+<meta name="app-version" content="2026-10-21.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -833,7 +833,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="side-btn hidden" id="settingsBtn" onclick="showSettingsView()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <div class="side-spacer"></div>
     <button class="side-btn" id="sidebarPasswordBtn" onclick="openGantiPasswordModal()"><span class="side-icon">🔑</span><span class="side-label">Password</span></button>
-    <button class="side-btn" onclick="doLogout()"><span class="side-icon">🚪</span><span class="side-label">Keluar</span></button>
+      <button class="side-btn" id="sidebarPusatKendaliBtn" style="display:none" onclick="kePusatKendali()"><span class="side-icon">👑</span><span class="side-label">Pusat Kendali</span></button>
+  <button class="side-btn" onclick="doLogout()"><span class="side-icon">🚪</span><span class="side-label">Keluar</span></button>
   </aside>
 
   <div class="app-main" id="appMain">
@@ -845,6 +846,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <select id="ownerCabangSelector" class="hidden" onchange="changeOwnerCabang(this)"></select>
       </div>
       <div class="topbar-status">
+        <button class="status-chip" id="topbarPusatKendaliBtn" style="display:none" onclick="kePusatKendali()" title="Halaman khusus kontrol Owner">👑 Pusat Kendali</button>
         <button class="status-chip" id="topbarMenuBtn" onclick="document.body.classList.remove('nav-ciut')" title="Tampilkan tombol menu bawah (Beranda, Pesanan, dll)">🏠 Menu</button>
         <div class="topbar-clock" id="topbarClock">
           <div class="clock-mini" id="clockMiniFace">
@@ -2102,6 +2104,15 @@ async function loadProfileAndEnter(){
 
   // kalau Owner sudah logout paksa akun ini saat HP-nya mati / offline -> langsung keluar begitu dibuka lagi
   if(!freshLogin && await cekLogoutPaksa()) return;
+
+  // Owner dibawa ke Pusat Kendali (owner.html); aplikasi kasir tetap bisa dibuka lewat tombol "Buka Kasir" di sana
+  if(profile.role === 'owner'){
+    let keKasir = /[?&]kasir=1/.test(location.search);
+    try{ if(sessionStorage.getItem('ownerKeKasir') === '1') keKasir = true; }catch(e){}
+    if(!keKasir && navigator.onLine){ location.replace('owner.html'); return; }
+    try{ sessionStorage.setItem('ownerKeKasir', '1'); }catch(e){}
+  }
+  ['topbarPusatKendaliBtn','sidebarPusatKendaliBtn'].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = profile.role === 'owner' ? '' : 'none'; });
 
   document.getElementById('loginView').classList.add('hidden');
   document.getElementById('appView').classList.remove('hidden');
@@ -3800,9 +3811,14 @@ async function loadCabangList(){
 
 let sedangLogout = false;
 
+function kePusatKendali(){
+  try{ sessionStorage.removeItem('ownerKeKasir'); }catch(e){}
+  location.href = 'owner.html';
+}
 async function doLogout(){
   if(typeof stempelPantauTimer !== 'undefined' && stempelPantauTimer){ clearInterval(stempelPantauTimer); stempelPantauTimer = null; }
   if(!confirm("Yakin mau logout? Pastikan sudah tidak ada transaksi/pesanan yang belum selesai.")) return;
+  try{ sessionStorage.removeItem('ownerKeKasir'); }catch(e){}
   sedangLogout = true;
   // 2026-10-15: tampilan aplikasi langsung ditutup tirai "Keluar…" supaya tidak sempat muncul desain lama saat proses logout
   document.body.classList.add('sedang-keluar');
