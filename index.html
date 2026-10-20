@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.16">
+<meta name="app-version" content="2026-10-20.17">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1035,7 +1035,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <!-- STOK MENIPIS (SEMUA CABANG, KHUSUS OWNER) -->
     <div class="dash-panel hidden" id="dashPanel-stokmenipis">
       <div class="dash-section" style="margin-bottom:0;">
-        <h3>📦 Stok Menipis — Semua Cabang</h3>
+        <h3>📦 Stok Menipis</h3>
         <div id="dashStokMenipisList"><div class="empty-msg">Memuat...</div></div>
       </div>
     </div>
@@ -1043,7 +1043,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <!-- STOK CUP (ADMIN & OWNER) -->
     <div class="dash-panel hidden" id="dashPanel-stokcup">
       <div class="dash-section" style="margin-bottom:0;">
-        <h3>🥤 Stok Cup — Semua Cabang</h3>
+        <h3>🥤 Stok Cup</h3>
         <p style="font-size:13px;color:#fff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.6);margin-bottom:10px;">Berkurang otomatis setiap cup terjual. Peringatan merah kalau stok 100 atau kurang. Tambah stok lewat Pembelian.</p>
         <div id="dashStokCupList"><div class="empty-msg">Memuat...</div></div>
       </div>
@@ -3232,7 +3232,8 @@ async function loadStokMenipis(){
   const { data, error } = await sb
     .from('stok_cabang')
     .select('stok, produk:produk_id(nama), cabang:cabang_id(nama)')
-    .lte('stok', 10);
+    .lte('stok', 10)
+    .eq('cabang_id', activeCabangId || '00000000-0000-0000-0000-000000000000');
 
   if(error){
     box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
@@ -3247,7 +3248,8 @@ async function loadStokMenipis(){
     const { data: minus } = await sb
       .from('bahan_baku_stok')
       .select('stok, bahan_baku:bahan_baku_id(nama, satuan, dihitung_stok), cabang:cabang_id(nama)')
-      .lt('stok', 0);
+      .lt('stok', 0)
+      .eq('cabang_id', activeCabangId || '00000000-0000-0000-0000-000000000000');
     const rowsMinus = (minus||[]).filter(r=>r.bahan_baku && r.bahan_baku.dihitung_stok !== false && r.cabang);
     if(rowsMinus.length > 0){
       htmlMinus = `
@@ -3263,7 +3265,7 @@ async function loadStokMenipis(){
   }catch(e){ /* abaikan, daftar stok menipis tetap tampil */ }
 
   box.innerHTML = htmlMinus + (rowsStok.length===0
-    ? '<div class="empty-msg">Tidak ada stok menipis di semua cabang. 🎉</div>'
+    ? '<div class="empty-msg">Tidak ada stok menipis di cabang ini. 🎉</div>'
     : rowsStok.map(r=>`
         <div class="stock-row">
           <span>${escTG(r.produk.nama)} <span style="opacity:.9;font-size:12px;font-weight:600;">· ${escTG(r.cabang.nama)}</span></span>
@@ -3280,6 +3282,7 @@ async function loadRiwayatKas(){
   const { data, error } = await sb
     .from('kas_shift')
     .select('id, kas_awal, kas_sistem, kas_fisik, selisih, total_biaya, catatan, waktu_tutup, setoran, kas_ditinggal, cabang:cabang_id(nama), ditutup:ditutup_oleh(nama)')
+    .eq('cabang_id', activeCabangId || '00000000-0000-0000-0000-000000000000')
     .order('waktu_tutup', { ascending:false })
     .limit(50);
 
@@ -3364,6 +3367,7 @@ async function loadLogAktivitas(){
   const { data, error } = await sb
     .from('log_aktivitas')
     .select('id, aksi, keterangan, created_at, cabang:cabang_id(nama), pelaku:user_id(nama)')
+    .or(activeCabangId ? `cabang_id.eq.${activeCabangId},cabang_id.is.null` : 'cabang_id.is.null')
     .order('created_at', { ascending:false })
     .limit(300);
 
@@ -5423,6 +5427,7 @@ async function loadRingkasan(){
     if(sel.options.length <= cabangList.length){
       sel.innerHTML = '<option value="semua">🌐 Semua Cabang (Gambaran Besar)</option>' +
         cabangList.map(c=>`<option value="${c.id}">🏬 ${escTG(c.nama)}</option>`).join('');
+      if(activeCabangId) sel.value = activeCabangId; // awalnya ikut cabang yang sedang dibuka
     }
     filterCabangId = sel.value === 'semua' ? null : sel.value;
   } else {
@@ -7613,7 +7618,8 @@ let stokCupSudahDiingatkan = false;
 async function ambilStokCup(){
   const { data, error } = await sb.rpc('laporan_stok_cup');
   if(error) throw error;
-  return data || [];
+  // 2026-10-20: data tiap cabang dipisah -> cuma cabang yang sedang dibuka
+  return (data || []).filter(r => !activeCabangId || r.cabang_id === activeCabangId);
 }
 function hitungCup(r){
   const perHari = Number(r.pakai_7hari || 0) / Math.max(1, Number(r.hari_data || 1));
