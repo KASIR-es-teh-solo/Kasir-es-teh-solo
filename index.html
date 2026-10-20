@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.4">
+<meta name="app-version" content="2026-10-20.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -4160,9 +4160,9 @@ async function isiRingkasBeranda(role){
     return;
   }
   try{
-    const { total, kasAwal, omzet } = await hitungKasPenjualan(cabangId ? [{ id: cabangId }] : []);
+    const { total, kasAwal, tunai, keluar } = await hitungKasPenjualan(cabangId ? [{ id: cabangId }] : cabangList);
     set('bdOmzet', fmt(total));
-    set('bdRinci', `Kas awal ${fmt(kasAwal)} + Penjualan ${fmt(omzet)}`);
+    set('bdRinci', `Kas awal ${fmt(kasAwal)} + Tunai ${fmt(tunai)} − Belanja ${fmt(keluar)}`);
   }catch(e){ set('bdOmzet','-'); }
   try{ if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader(); }catch(e){}
   try{
@@ -5321,19 +5321,26 @@ async function loadSaldoKasOutlet(filterCabangId){
   }
 }
 
-// 2026-10-20: uang laci tidak dipisah lagi -> kas awal paten + penjualan hari ini jadi satu angka
+// 2026-10-20: uang laci tidak dipisah lagi -> satu angka uang fisik hari ini:
+// kas awal paten + penjualan TUNAI hari ini − uang keluar laci hari ini (belanja, beli stok tunai, tabungan; + online yang dimasukkan ke laci)
 async function hitungKasPenjualan(daftarCabang){
   let kasAwal = 200000;
   try{ const k = await sb.rpc('pengaturan_kas'); if(k.data && k.data.kas_awal_paten != null) kasAwal = Number(k.data.kas_awal_paten); }catch(e){}
   const awal = new Date(); awal.setHours(0,0,0,0);
-  let q = sb.from('transaksi').select('total').eq('status','selesai').gte('created_at', awal.toISOString());
-  const ids = (daftarCabang || []).map(c => c.id);
+  const ids = (daftarCabang || []).map(c => c.id).filter(Boolean);
+  let q = sb.from('transaksi').select('total').eq('status','selesai').eq('metode_bayar','tunai').gte('created_at', awal.toISOString());
   if(ids.length) q = q.in('cabang_id', ids);
   const { data, error } = await q;
   if(error) throw error;
-  const omzet = (data || []).reduce((t,r)=>t+Number(r.total),0);
+  const tunai = (data || []).reduce((t,r)=>t+Number(r.total),0);
+  let keluar = 0;
+  for(const id of ids){
+    const { data: by, error: e2 } = await sb.rpc('laporan_biaya_kas', { p_cabang: id, p_sejak: awal.toISOString() });
+    if(e2) throw e2;
+    keluar += (by || []).reduce((a,b)=>a+Number(b.jumlah),0);
+  }
   const totalKasAwal = kasAwal * Math.max(ids.length, 1);
-  return { total: totalKasAwal + omzet, kasAwal: totalKasAwal, omzet };
+  return { total: totalKasAwal + tunai - keluar, kasAwal: totalKasAwal, tunai, keluar };
 }
 
 // Saldo di pojok kanan atas: cuma untuk Owner & Admin
@@ -5371,9 +5378,9 @@ async function refreshSaldoHeader(){
       const { data } = await sb.from('cabang').select('id, nama').eq('aktif', true);
       target = data || [];
     }
-    const { total, kasAwal, omzet } = await hitungKasPenjualan(target);
+    const { total, kasAwal, tunai, keluar } = await hitungKasPenjualan(target);
     document.getElementById('topbarSaldoNilai').textContent = fmt(total);
-    box.title = `Kas awal ${fmt(kasAwal)} + penjualan hari ini ${fmt(omzet)} (ketuk untuk refresh)`;
+    box.title = `Kas awal ${fmt(kasAwal)} + penjualan tunai ${fmt(tunai)} − belanja ${fmt(keluar)} (ketuk untuk refresh)`;
   }catch(e){
     document.getElementById('topbarSaldoNilai').textContent = '-';
   }
@@ -8284,7 +8291,8 @@ async function tambahUangBrankas(){
   if(!jumlah || jumlah <= 0){ alert('Masukkan jumlah yang valid.'); return; }
   const ket = prompt('Keterangan (misal: tambahan modal)', '') || null;
   if(!confirm(`Tambah ${fmt(jumlah)} ke Brankas?`)) return;
-  const { error } = await sb.from('brankas').insert({ cabang_id: activeCabangId, jenis: 'masuk', jumlah, keterangan: 'Tambah uang Owner' + (ket ? ' · ' + ket : ''), dicatat_oleh: currentUser.id, dilihat_owner: true });
+  // kas_shift_id nol = bukan dari laci (tidak mengurangi uang laci)
+  const { error } = await sb.from('brankas').insert({ cabang_id: activeCabangId, jenis: 'masuk', jumlah, keterangan: 'Tambah uang Owner' + (ket ? ' · ' + ket : ''), dicatat_oleh: currentUser.id, dilihat_owner: true, kas_shift_id: '00000000-0000-0000-0000-000000000000' });
   if(error){ alert('Gagal menyimpan: ' + error.message); return; }
   catatLog('Tambah Brankas', `Tambah ${fmt(jumlah)} ke Brankas${ket ? ' · ' + ket : ''}`);
   showSuccessToast('🏦', 'Masuk Brankas', fmt(jumlah));
