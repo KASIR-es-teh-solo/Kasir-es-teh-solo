@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-20.17">
+<meta name="app-version" content="2026-10-20.18">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1954,6 +1954,8 @@ let activeCabangId = null;  // cabang yang sedang dipakai untuk transaksi/stok s
 function getActiveCabangId(){
   return activeCabangId;
 }
+// 2026-10-20: menu, kategori & bahan baku milik masing-masing cabang -> query selalu disaring cabang yang dibuka
+function cabangSaring(){ return activeCabangId || '00000000-0000-0000-0000-000000000000'; }
 
 function fmt(n){ return "Rp " + Number(n).toLocaleString("id-ID"); }
 
@@ -3776,6 +3778,8 @@ function changeOwnerCabang(selectEl){
     loadDashboard();
   }
   refreshSaldoHeader();
+  // daftar bahan (dipakai form resep & beli stok) ikut cabang baru
+  try{ if(document.getElementById('settingsBahanBakuList')) loadBahanBakuList(); }catch(e){}
   // beranda ikut cabang baru (nama & angka kas)
   const bd = document.getElementById('berandaView');
   if(bd && !bd.classList.contains('hidden')) tampilkanBeranda();
@@ -5201,9 +5205,10 @@ async function ambilProdukStokOtomatis(){
     const { data: setelan, error: e1 } = await sb.from('pengaturan_sistem').select('nilai').eq('kunci', 'stok_otomatis').maybeSingle();
     if(e1 || !setelan || setelan.nilai !== 'true') return new Set();
     const { data: rows, error: e2 } = await sb.from('resep')
-      .select('produk_id, bahan_baku:bahan_baku_id!inner(dihitung_stok)')
+      .select('produk_id, bahan_baku:bahan_baku_id!inner(dihitung_stok, cabang_id)')
       .gt('jumlah', 0)
-      .eq('bahan_baku.dihitung_stok', true);
+      .eq('bahan_baku.dihitung_stok', true)
+      .eq('bahan_baku.cabang_id', cabangSaring());
     if(e2 || !rows) return new Set();
     return new Set(rows.map(r => r.produk_id));
   }catch(e){ return new Set(); }
@@ -6191,17 +6196,11 @@ async function tambahCabangBaru(){
     return;
   }
 
-  // siapkan baris stok (mulai dari 0) untuk semua produk yang sudah ada di cabang baru ini
-  const { data: semuaProduk } = await sb.from('produk').select('id');
-  if(semuaProduk && semuaProduk.length > 0){
-    const stokBaru = semuaProduk.map(p => ({ produk_id: p.id, cabang_id: newCabang.id, stok: 0 }));
-    await sb.from('stok_cabang').insert(stokBaru);
-  }
-
-  // siapkan juga baris stok bahan baku (mulai dari 0) untuk cabang baru ini
-  if(bahanBakuList.length > 0){
-    const bahanBakuStokBaru = bahanBakuList.map(b => ({ bahan_baku_id: b.id, cabang_id: newCabang.id, stok: 0 }));
-    await sb.from('bahan_baku_stok').insert(bahanBakuStokBaru);
+  // 2026-10-20: tiap cabang punya menu sendiri -> salin dari cabang yang sedang dibuka, atau mulai kosong
+  const asal = (cabangList || []).find(c => c.id === activeCabangId);
+  if(asal && confirm(`Salin menu, harga, bahan & resep dari "${asal.nama}" ke "${nama.trim()}"?\n\nOK = salin (stok mulai 0)\nBatal = cabang baru mulai kosong`)){
+    const { error: eSalin } = await sb.rpc('salin_menu_cabang', { p_dari: asal.id, p_ke: newCabang.id });
+    if(eSalin) alert('Cabang dibuat, tapi gagal menyalin menu: ' + eSalin.message);
   }
 
   await loadCabangList();
@@ -6373,6 +6372,7 @@ async function loadModalProdukList(){
     .from('produk')
     .select('id, nama, tipe_harga, harga_kecil, harga_besar, harga_modal_kecil, harga_modal_besar, produk_varian(id, kode, label, harga_modal, urutan)')
     .eq('aktif', true)
+    .eq('cabang_id', cabangSaring())
     .order('nama');
 
   const box = document.getElementById('settingsModalProdukList');
@@ -6479,7 +6479,7 @@ async function editHargaModal(produkId, nama, modalKecilSekarang, modalBesarSeka
 let bahanBakuList = [];
 
 async function loadBahanBakuList(){
-  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi, dihitung_stok').order('nama');
+  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, konversi, dihitung_stok').eq('cabang_id', cabangSaring()).order('nama');
   const box = document.getElementById('settingsBahanBakuList');
   if(error){
     box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`;
@@ -6578,6 +6578,7 @@ async function tambahProdukBaru(){
   const { data: kategoriList, error: kategoriErr } = await sb
     .from('kategori')
     .select('id, nama')
+    .eq('cabang_id', cabangSaring())
     .order('nama');
   if(kategoriErr){
     alert("Gagal memuat kategori: " + kategoriErr.message);
@@ -6635,6 +6636,7 @@ async function tambahProdukBaru(){
     const { data: np, error: prodErr } = await sb
       .from('produk')
       .insert({
+        cabang_id: activeCabangId,
         nama: nama.trim(),
         kategori_id: kategoriTerpilih.id,
         harga_kecil: 0,
@@ -6673,6 +6675,7 @@ async function tambahProdukBaru(){
     const { data: np, error } = await sb
       .from('produk')
       .insert({
+        cabang_id: activeCabangId,
         nama: nama.trim(),
         kategori_id: kategoriTerpilih.id,
         harga_kecil: hargaKecil,
@@ -6689,12 +6692,8 @@ async function tambahProdukBaru(){
     newProduk = np;
   }
 
-  // siapkan stok 0 di semua cabang yang sudah ada, biar langsung muncul di katalog Kasir semua cabang
-  if(cabangList.length > 0){
-    await sb.from('stok_cabang').insert(
-      cabangList.map(c => ({ produk_id: newProduk.id, cabang_id: c.id, stok: 0 }))
-    );
-  }
+  // menu baru cuma milik cabang yang sedang dibuka
+  await sb.from('stok_cabang').insert({ produk_id: newProduk.id, cabang_id: activeCabangId, stok: 0 });
 
   const ringkasanHarga = mode === '2'
     ? varianList.map(v => `${v.label} ${fmt(v.harga)}`).join(', ')
@@ -6705,7 +6704,7 @@ async function tambahProdukBaru(){
   await loadDashboard();
   await loadResepProdukSelect();
 
-  alert(`Menu "${nama.trim()}" berhasil ditambahkan. Stok awal 0 di semua cabang — jangan lupa isi stok & resep (BOM) bahan bakunya di tab "Resep (BOM)".`);
+  alert(`Menu "${nama.trim()}" berhasil ditambahkan. Stok awal 0 di cabang ini — jangan lupa isi stok & resep (BOM) bahan bakunya di tab "Resep (BOM)".`);
 }
 
 async function tambahBahanBaku(){
@@ -6718,7 +6717,7 @@ async function tambahBahanBaku(){
 
   const { data: newBahan, error } = await sb
     .from('bahan_baku')
-    .insert({ nama: nama.trim(), satuan: satuan.trim() || 'pcs' })
+    .insert({ cabang_id: activeCabangId, nama: nama.trim(), satuan: satuan.trim() || 'pcs' })
     .select()
     .single();
 
@@ -6727,12 +6726,8 @@ async function tambahBahanBaku(){
     return;
   }
 
-  // siapkan stok 0 di semua cabang yang sudah ada
-  if(cabangList.length > 0){
-    await sb.from('bahan_baku_stok').insert(
-      cabangList.map(c => ({ bahan_baku_id: newBahan.id, cabang_id: c.id, stok: 0 }))
-    );
-  }
+  // bahan baru cuma milik cabang yang sedang dibuka
+  await sb.from('bahan_baku_stok').insert({ bahan_baku_id: newBahan.id, cabang_id: activeCabangId, stok: 0 });
 
   await loadBahanBakuList();
   alert(`Bahan baku "${nama.trim()}" berhasil ditambahkan.`);
@@ -6765,7 +6760,7 @@ async function loadResepProdukSelect(){
 
   if(allProduk.length === 0){
     // kalau kasir/dashboard belum pernah load produk, ambil langsung dari server
-    const { data } = await sb.from('produk').select('id, nama').eq('aktif', true).order('nama');
+    const { data } = await sb.from('produk').select('id, nama').eq('aktif', true).eq('cabang_id', cabangSaring()).order('nama');
     (data||[]).forEach(p=>allProduk.push(p));
   }
 
@@ -7399,7 +7394,7 @@ function satuanBeliStok(b){
 
 async function bukaBeliStok(danaAwal){
   if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
-  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, dihitung_stok').eq('dihitung_stok', true).order('nama');
+  const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, dihitung_stok').eq('dihitung_stok', true).eq('cabang_id', cabangSaring()).order('nama');
   if(error){ alert('Gagal memuat bahan: ' + error.message); return; }
   const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
   beliStokDaftar = (data||[]).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
@@ -8701,7 +8696,8 @@ async function loadSOPData(){
 
   const { data, error } = await sb
     .from('resep')
-    .select('id, ukuran, jumlah, produk_id, produk:produk_id(nama, tipe_harga, produk_varian(kode, label, urutan)), bahan_baku:bahan_baku_id(nama, satuan)')
+    .select('id, ukuran, jumlah, produk_id, produk:produk_id!inner(nama, tipe_harga, cabang_id, produk_varian(kode, label, urutan)), bahan_baku:bahan_baku_id(nama, satuan)')
+    .eq('produk.cabang_id', cabangSaring())
     .order('ukuran');
 
   if(error){
