@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-19.5">
+<meta name="app-version" content="2026-10-20.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1195,6 +1195,26 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
 
     <!-- BRANKAS (khusus Owner) -->
+    <div class="dash-panel hidden" id="dashPanel-kastoko">
+      <div class="dash-cards" style="margin-bottom:18px;">
+        <div class="dash-card">
+          <span class="icon">💰</span>
+          <div class="label">Saldo Kas Es Teh S.O.L.O</div>
+          <div class="value" id="kasTokoSaldo">Rp 0</div>
+          <div style="font-size:12px;color:#f3e6b5;margin-top:4px;">Uang di luar laci untuk belanja kedai (setoran tutup kas masuk ke sini)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="bukaBeliStok('kas_toko')">📦 Beli Stok (cup dll)</button>
+            <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="kasTokoBiaya()">📝 Biaya Lain</button>
+            <button class="header-btn" style="background:transparent;color:#fff;border-color:#fff;font-weight:700;" onclick="kasTokoKeBrankas()">🏦 Pindah ke Brankas</button>
+            <button class="header-btn hidden" id="kasTokoAmbilBtn" style="background:transparent;color:#fff;border-color:#fff;font-weight:700;" onclick="kasTokoDariBrankas()">⬅️ Ambil dari Brankas</button>
+          </div>
+        </div>
+      </div>
+      <div class="dash-section" style="margin-bottom:0;">
+        <h3 style="margin:0 0 12px;">📒 Riwayat Kas Es Teh S.O.L.O</h3>
+        <div id="kasTokoList"><div class="empty-msg">Memuat...</div></div>
+      </div>
+    </div>
     <div class="dash-panel hidden" id="dashPanel-brankas">
       <div class="dash-cards" style="margin-bottom:18px;">
         <div class="dash-card">
@@ -1543,6 +1563,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <select id="biayaSumberDana" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;">
         <option value="tunai">💵 Kas Tunai (ambil dari laci)</option>
         <option value="non_tunai">🏦 Transfer/Non-Tunai (bukan dari laci)</option>
+        <option value="kas_toko">💰 Kas Es Teh S.O.L.O</option>
       </select>
       <div style="font-size:11px;color:#1a1a1a;margin-top:4px;">Kalau bayarnya pakai uang tunai di laci, pilih "Kas Tunai" — biar ikut kepotong pas Hitung Kas. Kalau transfer bank, pilih yang non-tunai biar kas di laci nggak keitung berkurang.</div>
     </div>
@@ -1586,6 +1607,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" id="beliStokDanaLaci" onclick="pilihDanaBeliStok('tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #2e7d32;font-weight:800;font-size:14px;cursor:pointer;">💵 Uang Laci</button>
         <button type="button" id="beliStokDanaLain" onclick="pilihDanaBeliStok('non_tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #1565c0;font-weight:800;font-size:14px;cursor:pointer;">💳 Uang Lainnya</button>
       </div>
+      <button type="button" id="beliStokDanaKas" class="hidden" onclick="pilihDanaBeliStok('kas_toko')" style="width:100%;margin-top:8px;padding:12px 8px;border-radius:10px;border:2px solid #a06000;font-weight:800;font-size:14px;cursor:pointer;">💰 Kas Es Teh S.O.L.O</button>
       <div id="beliStokDanaInfo" style="font-size:11px;opacity:.95;font-weight:600;margin-top:6px;color:var(--ink);"></div>
     </div>
     <button class="login-btn" id="beliStokSimpanBtn" onclick="simpanBeliStok()">Simpan</button>
@@ -2988,7 +3010,7 @@ function kasHitungLive(){
   al.classList.toggle('hidden', selisih === 0);
   if(!d.patenAktif){ se.innerHTML = '<div class="tk-setor">💵 Semua uang tetap di laci (setoran otomatis mulai berlaku besok).</div>'; return; }
   const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
-  se.innerHTML = `<div class="tk-setor">💼 Setor ke Owner (masuk Brankas): <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
+  se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Es Teh S.O.L.O: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
 }
 
 function kasPilihAlasan(el, a){
@@ -3141,7 +3163,7 @@ async function tampilkanLaporanKas(d){
     <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
     <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
     ${d.setoran > 0 ? `<div class="lk-judul">Setoran</div>
-    <div class="lk-row"><span>💼 Setor ke Owner (Brankas)</span><b>${fmt(d.setoran)}</b></div>
+    <div class="lk-row"><span>💼 Masuk Kas Es Teh S.O.L.O</span><b>${fmt(d.setoran)}</b></div>
     <div class="lk-row"><span>Ditinggal di laci (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
 
@@ -3164,7 +3186,7 @@ async function tampilkanLaporanKas(d){
   t += baris('SELISIH', teksSelisih);
   t += (d.selisih === 0 ? 'STATUS: KAS PAS' : d.selisih < 0 ? 'STATUS: KAS KURANG' : 'STATUS: KAS LEBIH') + '\n';
   if(d.catatan) t += 'Catatan: ' + d.catatan + '\n';
-  if(d.setoran > 0){ t += garis + baris('Setor ke Owner', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
+  if(d.setoran > 0){ t += garis + baris('Ke Kas Es Teh', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
   laporanKasTeks = t;
 
   document.getElementById('laporanKasOverlay').classList.add('show');
@@ -3268,7 +3290,7 @@ async function loadRiwayatKas(){
         <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
         <span class="time">${new Date(r.waktu_tutup).toLocaleTimeString('id-ID', { timeZone:'Asia/Jakarta' })}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
-          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Setor ke Brankas: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
+          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Ke Kas Es Teh S.O.L.O: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
@@ -3952,7 +3974,7 @@ const AKSI_MENU = {
   kasir:()=>showKasirView(), hariIni:()=>bukaPenjualanHariIni(), stempel:()=>bukaStempel(), aktif:()=>showDashPanel('aktif'),
   stok:()=>showDashPanel('stok'), stokmenipis:()=>showDashPanel('stokmenipis'), stokcup:()=>showDashPanel('stokcup'),
   pembelian:()=>showDashPanel('pembelian'), beliStok:()=>bukaBeliStok(), belanja:()=>bukaBelanjaKecil(), kas:()=>bukaKasModal(),
-  brankas:()=>showDashPanel('brankas'), brankasonline:()=>showDashPanel('brankasonline'), biaya:()=>showDashPanel('biaya'),
+  brankas:()=>showDashPanel('brankas'), brankasonline:()=>showDashPanel('brankasonline'), kastoko:()=>showDashPanel('kastoko'), biaya:()=>showDashPanel('biaya'),
   lababersih:()=>showDashPanel('lababersih'), ringkasan:()=>showDashPanel('ringkasan'),
   log:()=>showDashPanel('logaktivitas'), riwayatkas:()=>showDashPanel('riwayatkas'),
   sop:()=>showSOPView(), karyawan:()=>showDashPanel('karyawan'), pengaturan:()=>showSettingsView(),
@@ -3969,7 +3991,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
+    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['💰','Kas Es Teh S.O.L.O','kastoko'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
     profil: ['👤 Profil & Pengaturan', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   admin: {
@@ -3978,7 +4000,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
+    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['💰','Kas Es Teh S.O.L.O','kastoko'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
     profil: ['👤 Profil', [['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   kasir: {
@@ -4158,6 +4180,7 @@ const DASH_NAV_MAP = {
   biaya: 'navBiayaBtn',
   brankas: 'navBrankasBtn',
   brankasonline: 'menuLaporanBtn',
+  kastoko: 'menuLaporanBtn',
   lababersih: 'menuLaporanBtn',
   riwayatkas: 'menuLaporanBtn',
   logaktivitas: 'menuLaporanBtn'
@@ -4202,6 +4225,10 @@ function showDashPanel(panelName){
 
   if(panelName === 'brankasonline'){
     loadBrankasOnline();
+  }
+
+  if(panelName === 'kastoko'){
+    loadKasToko();
   }
 
   if(panelName === 'lababersih'){
@@ -7296,8 +7323,12 @@ function pilihDanaBeliStok(d){
   if(!laci) return;
   laci.style.background = d === 'tunai' ? '#2e7d32' : '#fff'; laci.style.color = d === 'tunai' ? '#fff' : '#2e7d32';
   lain.style.background = d === 'non_tunai' ? '#1565c0' : '#fff'; lain.style.color = d === 'non_tunai' ? '#fff' : '#1565c0';
+  const kas = document.getElementById('beliStokDanaKas');
+  if(kas){ kas.classList.toggle('hidden', !(currentProfile && ['owner','admin'].includes(currentProfile.role)));
+    kas.style.background = d === 'kas_toko' ? '#a06000' : '#fff'; kas.style.color = d === 'kas_toko' ? '#fff' : '#a06000'; }
   document.getElementById('beliStokDanaInfo').textContent = d === 'tunai'
     ? 'Uang diambil dari laci kasir. Saldo kas ikut berkurang.'
+    : d === 'kas_toko' ? 'Dibayar dari Kas Es Teh S.O.L.O. Uang laci tidak berubah.'
     : 'Uang pribadi / transfer. Saldo laci tidak berubah.';
 }
 const BELI_STOK_URUT = ['cup 18 oz','cup 22 oz','cup 16 oz','sedotan','kopi ice roast','milo','teh original'];
@@ -7309,14 +7340,14 @@ function satuanBeliStok(b){
   return b.satuan_beli || b.satuan;
 }
 
-async function bukaBeliStok(){
+async function bukaBeliStok(danaAwal){
   if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
   const { data, error } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, dihitung_stok').eq('dihitung_stok', true).order('nama');
   if(error){ alert('Gagal memuat bahan: ' + error.message); return; }
   const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
   beliStokDaftar = (data||[]).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
   beliStokDipilih = null;
-  pilihDanaBeliStok('tunai');
+  pilihDanaBeliStok(danaAwal === 'kas_toko' ? 'kas_toko' : 'tunai');
   document.getElementById('beliStokError').classList.remove('show');
   document.getElementById('beliStokJumlah').value = '';
   document.getElementById('beliStokTotal').value = '';
@@ -7368,8 +7399,9 @@ async function simpanBeliStok(){
   btn.disabled = false; btn.textContent = 'Simpan';
   if(error) return gagal('Gagal menyimpan: ' + error.message);
   tutupBeliStok();
-  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : 'uang lainnya'}). Stok sudah bertambah.`);
+  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : beliStokDana === 'kas_toko' ? 'Kas Es Teh S.O.L.O' : 'uang lainnya'}). Stok sudah bertambah.`);
   try{ await loadPembelianData(); }catch(_){}
+  if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
 
 async function bukaBelanjaKecil(){
@@ -8171,6 +8203,70 @@ async function hapusBrankas(id, jenis, jumlah){
   await loadBrankas();
 }
 
+// ================== KAS ES TEH S.O.L.O (2026-10-20) ==================
+// Saldo operasional di luar laci: setoran tutup kas masuk ke sini; belanja besar (cup dll) dibayar dari sini.
+async function loadKasToko(){
+  const list = document.getElementById('kasTokoList');
+  const role = currentProfile && currentProfile.role;
+  if(role !== 'owner' && role !== 'admin'){ list.innerHTML = '<div class="empty-msg">Khusus Owner & Admin.</div>'; return; }
+  document.getElementById('kasTokoAmbilBtn').classList.toggle('hidden', role !== 'owner');
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const [sal, kt, pb, by] = await Promise.all([
+    sb.rpc('kas_toko_saldo', { p_cabang: activeCabangId }),
+    sb.from('kas_toko').select('jenis, sumber, jumlah, keterangan, created_at, pencatat:dicatat_oleh(nama)').eq('cabang_id', activeCabangId).order('created_at', { ascending:false }).limit(60),
+    sb.from('pembelian').select('total, jumlah, created_at, bahan:bahan_baku_id(nama, satuan_beli, satuan), pencatat:dibeli_oleh(nama)').eq('cabang_id', activeCabangId).eq('sumber_dana', 'kas_toko').order('created_at', { ascending:false }).limit(60),
+    sb.from('biaya_operasional').select('kategori, deskripsi, jumlah, created_at, pencatat:dicatat_oleh(nama)').eq('cabang_id', activeCabangId).eq('sumber_dana', 'kas_toko').order('created_at', { ascending:false }).limit(60)
+  ]);
+  if(sal.error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(sal.error.message)}</div>`; return; }
+  document.getElementById('kasTokoSaldo').textContent = fmt(Number(sal.data || 0));
+  const lbl = { setoran_tutup_kas:'💵 Setoran tutup kas', ke_brankas:'🏦 Pindah ke Brankas', dari_brankas:'⬅️ Ambil dari Brankas', koreksi:'✏️ Koreksi' };
+  const rows = [
+    ...(kt.data || []).map(r => ({ w:r.created_at, masuk:r.jenis === 'masuk', judul: lbl[r.sumber] || r.sumber, ket:r.keterangan, n:Number(r.jumlah), oleh:r.pencatat && r.pencatat.nama })),
+    ...(pb.data || []).map(r => ({ w:r.created_at, masuk:false, judul:'📦 Beli ' + ((r.bahan && r.bahan.nama) || 'stok') + ' ' + Number(r.jumlah).toLocaleString('id-ID') + ' ' + ((r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''), n:Number(r.total), oleh:r.pencatat && r.pencatat.nama })),
+    ...(by.data || []).map(r => ({ w:r.created_at, masuk:false, judul:'🛍️ ' + r.kategori, ket:r.deskripsi, n:Number(r.jumlah), oleh:r.pencatat && r.pencatat.nama }))
+  ].sort((a,b) => new Date(b.w) - new Date(a.w)).slice(0, 80);
+  list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;color:#111;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
+      <span>${escTG(r.judul)}${r.ket && !/^(Setoran tutup kas|Dipindah ke Brankas|Diambil dari Brankas)$/.test(r.ket) ? ' · ' + escTG(r.ket) : ''}
+        <small style="display:block;opacity:.9;font-weight:600;font-size:11px;">${tglJamWIB(r.w)} · ${escTG(r.oleh || '-')}</small></span>
+      <span style="font-weight:800;white-space:nowrap;color:${r.masuk ? '#1b5e20' : '#c62828'};">${r.masuk ? '+' : '−'} ${fmt(r.n)}</span>
+    </div>`).join('') + `</div>` : '<div class="empty-msg">Belum ada catatan. Setoran tutup kas berikutnya otomatis masuk ke sini.</div>';
+}
+
+function kasTokoBiaya(){
+  openBiayaModal();
+  document.getElementById('biayaSumberDana').value = 'kas_toko';
+  document.getElementById('biayaKategori').value = 'Lainnya';
+}
+
+async function kasTokoKeBrankas(){
+  const role = currentProfile && currentProfile.role;
+  if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
+  const saldoTeks = document.getElementById('kasTokoSaldo').textContent.replace(/[^0-9]/g,'');
+  const a = prompt(`Pindahkan berapa ke Brankas utama?\nSaldo Kas Es Teh S.O.L.O: ${fmt(Number(saldoTeks||0))}`, saldoTeks);
+  if(a === null) return;
+  const jumlah = Number(String(a).replace(/[^0-9]/g,''));
+  if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
+  if(!confirm(`Pindahkan ${fmt(jumlah)} dari Kas Es Teh S.O.L.O ke Brankas?`)) return;
+  const { error } = await sb.rpc('kas_toko_ke_brankas', { p_cabang: activeCabangId, p_jumlah: jumlah, p_keterangan: null });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('🏦', 'Dipindah ke Brankas', fmt(jumlah));
+  await loadKasToko(); if(typeof refreshBrankasHeader === 'function') refreshBrankasHeader();
+}
+
+async function kasTokoDariBrankas(){
+  if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
+  const a = prompt('Ambil berapa dari Brankas ke Kas Es Teh S.O.L.O?', '');
+  if(a === null) return;
+  const jumlah = Number(String(a).replace(/[^0-9]/g,''));
+  if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
+  if(!confirm(`Ambil ${fmt(jumlah)} dari Brankas ke Kas Es Teh S.O.L.O?`)) return;
+  const { error } = await sb.rpc('kas_toko_dari_brankas', { p_cabang: activeCabangId, p_jumlah: jumlah, p_keterangan: null });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  showSuccessToast('⬅️', 'Masuk Kas Es Teh S.O.L.O', fmt(jumlah));
+  await loadKasToko(); if(typeof refreshBrankasHeader === 'function') refreshBrankasHeader();
+}
+
 async function ambilDariBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
   const input = prompt('Ambil uang dari Brankas berapa? (angka saja, misal 200000)');
@@ -8438,6 +8534,7 @@ async function submitBiaya(){
 
   closeBiayaModal();
   await loadBiayaData();
+  if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
 
 async function hapusBiaya(id){
@@ -8489,7 +8586,7 @@ async function loadBiayaData(){
 
   box.innerHTML = data.map(b=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${escTG(b.kategori)}${isOwner && b.cabang ? ' · '+escTG(b.cabang.nama) : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
+      <span>${escTG(b.kategori)}${isOwner && b.cabang ? ' · '+escTG(b.cabang.nama) : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : b.sumber_dana==='kas_toko' ? '<span style="font-size:10px;background:rgba(160,96,0,.14);color:#7a4a00;padding:2px 6px;border-radius:10px;font-weight:700;">💰 Kas Es Teh</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
       <span class="time">${new Date(b.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
         <span style="opacity:.9;font-weight:600;">${escTG(b.deskripsi || '-')}</span>
