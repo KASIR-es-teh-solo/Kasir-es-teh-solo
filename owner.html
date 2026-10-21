@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-21.3">
+<meta name="app-version" content="owner-2026-10-21.4">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -210,7 +210,8 @@ async function mulai(){
   document.getElementById('sapa').textContent = `Selamat ${waktu}, ${p.nama || 'Boss'}`;
   document.getElementById('inisial').textContent = String(p.nama || 'B').split(/\s+/).map(k => k[0]).join('').slice(0, 2).toUpperCase();
   const { data: cab } = await sb.from('cabang').select('id, nama').eq('aktif', true).order('nama');
-  cabangList = cab || [];
+  // cabang pusat paling kiri, lalu cabang lain
+  cabangList = (cab || []).sort((x, y) => (/pusat/i.test(y.nama) ? 1 : 0) - (/pusat/i.test(x.nama) ? 1 : 0));
   try{ const s = localStorage.getItem('ownerPilihCabang'); if(s && (s === 'semua' || cabangList.some(c => c.id === s))) pilihan = s; }catch(e){}
   gambarCabang();
   document.getElementById('muat').style.display = 'none';
@@ -219,7 +220,7 @@ async function mulai(){
 }
 
 function gambarCabang(){
-  const tombol = [['semua','Semua cabang'], ...cabangList.map(c => [c.id, rapiNama(c.nama)])];
+  const tombol = [...cabangList.map(c => [c.id, rapiNama(c.nama)]), ['semua','Semua cabang']];
   document.getElementById('cabPilih').innerHTML = tombol.map(([id, lbl]) =>
     `<button class="${id === pilihan ? 'on' : ''}" onclick="pilihCabang('${id}')">${esc(lbl)}</button>`).join('');
 }
