@@ -430,8 +430,8 @@ async function muatStok(){
     let isi = telat ? `<div class="baris"><span>Belum opname untuk jadwal ${tglOp(opJadwal)}</span><span class="kanan min">belum</span></div>` : '';
     if(o){
       const sel = (o.detail || []).filter(d => Number(d.selisih) !== 0);
-      // batas wajar kurang: barang pcs maks. 3, bahan lain maks. 5% (sama dengan aplikasi kasir)
-      const lewatBatas = d => Number(d.selisih) < 0 && (d.satuan === 'pcs' ? -Number(d.selisih) > 3 : -Number(d.selisih) > Math.max(0, Number(d.sebelum)) * 0.05);
+      // batas wajar kurang: barang pcs maks. 3, bahan lain maks. 3% (sama dengan aplikasi kasir)
+      const lewatBatas = d => Number(d.selisih) < 0 && (d.satuan === 'pcs' ? -Number(d.selisih) > 3 : -Number(d.selisih) > Math.max(0, Number(d.sebelum)) * 0.03);
       const nLewat = sel.filter(lewatBatas).length;
       isi += `<div class="baris"><span>${tglOp(o.created_at)}<small>oleh ${esc(o.nama_oleh || '-')} · ${(o.detail || []).length} barang dihitung</small></span><span class="kanan ${nLewat ? 'min' : ''}">${nLewat ? nLewat + ' lewat batas' : sel.length ? 'wajar' : 'pas'}</span></div>`
         + sel.map(d => { const k = Number(d.konversi) > 0 && d.satuan_beli ? Number(d.konversi) : 1; const v = Number(d.selisih) / k;

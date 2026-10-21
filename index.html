@@ -7370,11 +7370,11 @@ async function bukaOpname(){
   }).join('');
 }
 function tutupOpname(){ document.getElementById('opnameOverlay').classList.remove('show'); }
-// batas wajar kurang: barang pcs (cup, sedotan) maks. 3, bahan lain maks. 5% dari catatan
+// batas wajar kurang: barang pcs (cup, sedotan) maks. 3, bahan lain maks. 3% dari catatan
 function opnameLewatBatas(d){
   const sel = Number(d.selisih);
   if(!(sel < 0)) return false;
-  return d.satuan === 'pcs' ? -sel > 3 : -sel > Math.max(0, Number(d.sebelum)) * 0.05;
+  return d.satuan === 'pcs' ? -sel > 3 : -sel > Math.max(0, Number(d.sebelum)) * 0.03;
 }
 function fmtOpname(n){ return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
 async function simpanOpname(){
@@ -7410,7 +7410,7 @@ async function simpanOpname(){
           <li>Tanyakan barang <b>rusak/tumpah</b> atau <b>minum karyawan</b> yang lupa dicatat, dan beli stok yang belum sampai.</li>
           <li>Kalau tetap kurang, bicarakan dengan kasir yang bertugas: pertama <b>teguran</b> + opname tiap minggu, terulang <b>ganti rugi seharga modal</b>, masih terulang <b>surat peringatan</b>.</li>
         </ol>
-        <div style="margin-top:6px;opacity:.8;">Batas wajar: cup & barang pcs kurang maks. 3, bahan lain kurang maks. 5%.</div></div>` : '') +
+        <div style="margin-top:6px;opacity:.8;">Batas wajar: cup & barang pcs kurang maks. 3, bahan lain kurang maks. 3%.</div></div>` : '') +
       '<p style="font-size:12px;opacity:.85;">Stok aplikasi sudah disamakan dengan hitungan.</p>' +
       (sel.length ? '<button class="login-btn" onclick="bukaOpname()">Hitung ulang</button>' : '');
   }
