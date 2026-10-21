@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-21.7">
+<meta name="app-version" content="2026-10-21.8">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1605,7 +1605,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <select id="biayaSumberDana" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;">
         <option value="tunai">💵 Kas Tunai (ambil dari laci)</option>
         <option value="non_tunai">🏦 Transfer/Non-Tunai (bukan dari laci)</option>
-        <option value="kas_toko">💰 Kas Es Teh S.O.L.O</option>
       </select>
       <div style="font-size:11px;color:#1a1a1a;margin-top:4px;">Kalau bayarnya pakai uang tunai di laci, pilih "Kas Tunai" — biar ikut kepotong pas Hitung Kas. Kalau transfer bank, pilih yang non-tunai biar kas di laci nggak keitung berkurang.</div>
     </div>
@@ -3034,15 +3033,15 @@ function kasLangkah(n){
   if(n === 2){
     document.getElementById('kasModalTitle').textContent = '🧮 Rincian Kas';
     const isOwner = currentProfile && currentProfile.role === 'owner';
-    const ketAwal = !d.patenAktif ? (d.adaKasLalu ? 'semua uang outlet dari tutup kas terakhir' : 'cabang baru, mulai dari nol') : d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
+    const ketAwal = !d.patenAktif ? (d.adaKasLalu ? 'uang outlet dari tutup kas terakhir' : 'cabang baru, mulai dari nol') : d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
     body.innerHTML = strip + `
       <div class="tk-sub">Dihitung otomatis oleh aplikasi</div>
       <div class="tk-list">
-        <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Kas sebelumnya'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
+        <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Saldo Kas Outlet'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
         <div class="tk-row"><span>− Uang keluar laci<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
-      <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di laci' : 'Seharusnya semua uang outlet'}</small><b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di laci' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
       <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
     return;
@@ -3051,7 +3050,7 @@ function kasLangkah(n){
   const alasan = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
   body.innerHTML = strip + `
     <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
-    <div style="font-weight:800;font-size:14px;color:#111;">${d.patenAktif ? 'Jumlah uang di laci sekarang' : 'Jumlah semua uang outlet sekarang'}</div>
+    <div style="font-weight:800;font-size:14px;color:#111;">${d.patenAktif ? 'Jumlah uang di laci sekarang' : 'Jumlah uang outlet yang dihitung sekarang'}</div>
     <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
     <div id="tkStatus"></div>
     <div id="tkAlasan" class="hidden">
@@ -4080,7 +4079,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['💰','Kas Es Teh S.O.L.O','kastoko'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
+    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
     profil: ['👤 Profil & Pengaturan', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   admin: {
@@ -4089,7 +4088,7 @@ const MENU_PER_ROLE = {
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['💰','Kas Es Teh S.O.L.O','kastoko'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
+    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
     profil: ['👤 Profil', [['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   kasir: {
@@ -4262,7 +4261,6 @@ const ADM_MODUL = {
   laporan: ['Laporan', [
     ['laporan','Ringkasan','Penjualan per hari','ringkasan'],
     ['uang','Biaya','Pengeluaran outlet','biaya'],
-    ['uang','Kas Es Teh S.O.L.O','Saldo kas toko','kastoko'],
     ['online','Brankas Online','Grab / Shopee belum cair','brankasonline'],
     ['pesanan','Riwayat Tutup Kas','Hitung kas tiap malam','riwayatkas']]],
   pelanggan: ['Pelanggan & SOP', [
@@ -4275,7 +4273,7 @@ const ADM_MODUL = {
 const ADM_BERANDA = [
   ['pesanan','Pesanan hari ini','Daftar transaksi & batal','hariIni'],
   ['stok','Stok & Belanja','Tambah stok, cek stok, belanja','#stokbelanja'],
-  ['laporan','Laporan','Ringkasan, biaya, kas, tutup kas','#laporan'],
+  ['laporan','Laporan','Ringkasan, biaya, tutup kas','#laporan'],
   ['stempel','Pelanggan & SOP','Stempel pelanggan, SOP menu','#pelanggan'],
   ['karyawan','Karyawan','Akun kasir & yang aktif','karyawan'],
   ['profil','Profil','Ganti password, keluar','#profil']
@@ -7622,7 +7620,8 @@ function pilihDanaBeliStok(d){
   laci.style.background = d === 'tunai' ? '#2e7d32' : '#fff'; laci.style.color = d === 'tunai' ? '#fff' : '#2e7d32';
   lain.style.background = d === 'non_tunai' ? '#1565c0' : '#fff'; lain.style.color = d === 'non_tunai' ? '#fff' : '#1565c0';
   const kas = document.getElementById('beliStokDanaKas');
-  if(kas){ kas.classList.toggle('hidden', !(currentProfile && ['owner','admin'].includes(currentProfile.role)));
+  // 2026-10-21: Kas Es Teh S.O.L.O dilebur ke Kas Outlet (satu saldo), pilihan ini disembunyikan
+  if(kas){ kas.classList.add('hidden');
     kas.style.background = d === 'kas_toko' ? '#a06000' : '#fff'; kas.style.color = d === 'kas_toko' ? '#fff' : '#a06000'; }
   document.getElementById('beliStokDanaInfo').textContent = d === 'tunai'
     ? 'Uang diambil dari laci kasir. Saldo kas ikut berkurang.'
@@ -7645,7 +7644,7 @@ async function bukaBeliStok(danaAwal){
   const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
   beliStokDaftar = (data||[]).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
   beliStokDipilih = null;
-  pilihDanaBeliStok(danaAwal === 'kas_toko' ? 'kas_toko' : 'tunai');
+  pilihDanaBeliStok('tunai');
   document.getElementById('beliStokError').classList.remove('show');
   document.getElementById('beliStokJumlah').value = '';
   document.getElementById('beliStokTotal').value = '';
