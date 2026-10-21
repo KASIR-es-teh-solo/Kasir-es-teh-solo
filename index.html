@@ -7370,6 +7370,12 @@ async function bukaOpname(){
   }).join('');
 }
 function tutupOpname(){ document.getElementById('opnameOverlay').classList.remove('show'); }
+// batas wajar kurang: barang pcs (cup, sedotan) maks. 3, bahan lain maks. 5% dari catatan
+function opnameLewatBatas(d){
+  const sel = Number(d.selisih);
+  if(!(sel < 0)) return false;
+  return d.satuan === 'pcs' ? -sel > 3 : -sel > Math.max(0, Number(d.sebelum)) * 0.05;
+}
 function fmtOpname(n){ return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
 async function simpanOpname(){
   const errBox = document.getElementById('opnameError');
@@ -7388,21 +7394,23 @@ async function simpanOpname(){
   const hasil = document.getElementById('opnameHasil');
   if(data && data.detail){
     const sel = data.detail.filter(d => Number(d.selisih) !== 0);
-    hasil.innerHTML = `<p style="margin-top:0;"><b>${sel.length ? sel.length + ' barang selisih' : 'Semua pas ✓'}</b></p>` +
+    const lewat = sel.filter(opnameLewatBatas);
+    hasil.innerHTML = `<p style="margin-top:0;"><b>${!sel.length ? 'Semua pas ✓' : lewat.length ? lewat.length + ' barang kurang melewati batas wajar' : 'Ada selisih, masih dalam batas wajar ✓'}</b></p>` +
       (sel.length ? '<ul style="margin:0 0 10px;padding-left:18px;line-height:1.6;">' + sel.map(d => {
         const k = Number(d.konversi) > 0 && d.satuan_beli ? Number(d.konversi) : 1;
         const satuan = k !== 1 ? d.satuan_beli : d.satuan;
         const s = Number(d.selisih) / k;
-        return `<li>${escOp(d.nama)}: <b>${s < 0 ? 'kurang' : 'lebih'} ${fmtOpname(Math.abs(s))}</b> ${escOp(satuan)}</li>`;
+        const tanda = opnameLewatBatas(d) ? ' <span style="color:#c0392b;font-weight:700;">lewat batas</span>' : (s < 0 ? ' <span style="opacity:.75;">wajar</span>' : '');
+        return `<li>${escOp(d.nama)}: <b>${s < 0 ? 'kurang' : 'lebih'} ${fmtOpname(Math.abs(s))}</b> ${escOp(satuan)}${tanda}</li>`;
       }).join('') + '</ul>' : '') +
-      (sel.some(d => Number(d.selisih) < 0) ? `<div style="background:#fff7e0;border:1px solid #e8b923;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.5;">
-        <b>Kalau ada yang kurang:</b>
+      (lewat.length ? `<div style="background:#fff7e0;border:1px solid #e8b923;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.5;">
+        <b>Langkah kalau kurang lewat batas:</b>
         <ol style="margin:6px 0 0;padding-left:18px;">
-          <li>Minta kasir <b>hitung ulang</b> barang yang kurang saja. Kalau ternyata salah hitung, tekan <b>Hitung ulang</b> di bawah dan isi barang itu saja.</li>
-          <li>Tanyakan apakah ada barang <b>rusak/tumpah</b> atau <b>dipakai sendiri</b> yang lupa dicatat.</li>
-          <li>Cek apakah ada <b>beli stok</b> yang tercatat tapi barangnya belum sampai.</li>
-          <li>Kalau tetap kurang, bicarakan dengan kasir yang bertugas. Selisih ini sudah tercatat dan terlihat oleh Owner.</li>
-        </ol></div>` : '') +
+          <li>Minta kasir <b>hitung ulang</b> barang itu hari ini juga dan kirim fotonya. Kalau ternyata salah hitung, tekan <b>Hitung ulang</b> dan isi barang itu saja.</li>
+          <li>Tanyakan barang <b>rusak/tumpah</b> atau <b>minum karyawan</b> yang lupa dicatat, dan beli stok yang belum sampai.</li>
+          <li>Kalau tetap kurang, bicarakan dengan kasir yang bertugas: pertama <b>teguran</b> + opname tiap minggu, terulang <b>ganti rugi seharga modal</b>, masih terulang <b>surat peringatan</b>.</li>
+        </ol>
+        <div style="margin-top:6px;opacity:.8;">Batas wajar: cup & barang pcs kurang maks. 3, bahan lain kurang maks. 5%.</div></div>` : '') +
       '<p style="font-size:12px;opacity:.85;">Stok aplikasi sudah disamakan dengan hitungan.</p>' +
       (sel.length ? '<button class="login-btn" onclick="bukaOpname()">Hitung ulang</button>' : '');
   }
