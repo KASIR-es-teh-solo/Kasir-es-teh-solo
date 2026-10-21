@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-21.8">
+<meta name="app-version" content="2026-10-21.9">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1470,6 +1470,21 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   </div>
 </div>
 
+<!-- STOK OPNAME: 2 minggu sekali tiap Jumat; kasir aktif / Admin isi jumlah fisik tanpa melihat angka stok -->
+<div class="overlay" id="opnameOverlay">
+  <div class="modal" style="max-width:380px;">
+    <h3>📋 Stok Opname</h3>
+    <div id="opnameIsi">
+      <p style="margin-top:0;">Ketik jumlah barang yang ada sekarang. Yang tidak dihitung biarkan kosong.</p>
+      <div class="login-error" id="opnameError"></div>
+      <div id="opnameList" style="display:grid;gap:6px;margin-bottom:12px;"></div>
+      <button class="login-btn" id="opnameSimpanBtn" onclick="simpanOpname()">Simpan</button>
+    </div>
+    <div id="opnameHasil" class="hidden"></div>
+    <button class="modal-close" id="opnameTutupBtn" onclick="tutupOpname()">Batal</button>
+  </div>
+</div>
+
 <!-- ABSEN MASUK: selfie + QR mesin sealer + GPS + senyum (khusus kasir) -->
 <div id="absenGate" class="hidden" style="position:fixed;inset:0;z-index:9999;background:rgba(8,22,14,.94);overflow-y:auto;display:flex;justify-content:center;align-items:flex-start;padding:14px;">
   <div class="modal" style="max-width:380px;max-height:none;overflow:visible;">
@@ -2220,6 +2235,7 @@ async function loadProfileAndEnter(){
     });
     setTimeout(()=>cekStokCup(true), 2500);
   }
+  if(profile.role !== 'owner') setTimeout(()=>cekJadwalOpname(), 4000);
 
   const savedKey = 'activeCabang_' + currentUser.id;
   const savedCabang = localStorage.getItem(savedKey);
@@ -4067,7 +4083,7 @@ const AKSI_MENU = {
   log:()=>showDashPanel('logaktivitas'), riwayatkas:()=>showDashPanel('riwayatkas'),
   sop:()=>showSOPView(), karyawan:()=>showDashPanel('karyawan'), pengaturan:()=>showSettingsView(),
   pengaturanKasir:()=>bukaPengaturanKasir(), password:()=>openGantiPasswordModal(), izin:()=>bukaIzinKeluarModal(),
-  teh:()=>bukaTehSiap(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
+  teh:()=>bukaTehSiap(), opname:()=>bukaOpname(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
 };
 function jalankanMenu(k){ const f = AKSI_MENU[k]; if(f) f(); }
 // [ikon, nama, aksi]
@@ -4257,7 +4273,8 @@ const ADM_MODUL = {
     ['warn','Stok Menipis','Bahan yang hampir habis','stokmenipis'],
     ['cup','Stok Cup','Sisa cup & perkiraan habis','stokcup'],
     ['belanja','Belanja','Catat belanja dari laci','belanja'],
-    ['pesanan','Riwayat Beli Stok','Catatan belanja bahan yang sudah masuk','pembelian']]],
+    ['pesanan','Riwayat Beli Stok','Catatan belanja bahan yang sudah masuk','pembelian'],
+    ['stok','Stok Opname','Hitung barang tiap 2 minggu (Jumat)','opname']]],
   laporan: ['Laporan', [
     ['laporan','Ringkasan','Penjualan per hari','ringkasan'],
     ['uang','Biaya','Pengeluaran outlet','biaya'],
@@ -4401,6 +4418,7 @@ function tampilkanModulAdmin(key){
     ${key === 'stokbelanja' ? `<button class="a-besar" style="margin:0 0 12px;" onclick="bukaBeliStok()">${admIc('masuk')} Tambah stok${cab ? ' ' + escTG(cab) : ''}</button>` : ''}
     ${m[1].map(it => admItem(it)).join('')}
   </div></div>`;
+  if(key === 'stokbelanja') cekJadwalOpname();
 }
 async function isiRingkasBeranda(role){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
@@ -7287,6 +7305,111 @@ async function tambahStokBahanBaku(bahanBakuId, nama, stokSekarang, cabangId){
 // Tombol − di Stok Bahan Baku sekarang lewat form Barang Rusak (tercatat + ada alasan)
 async function kurangiStokBahanBaku(bahanBakuId, nama, stokSekarang, cabangId){
   await openRusakModal(bahanBakuId);
+}
+
+// ================== STOK OPNAME ==================
+// 2 minggu sekali tiap Jumat, mulai Jumat 23 Okt 2026. Kasir menghitung barang, Admin yang memasukkan ke aplikasi.
+// Kasir cuma diingatkan (tanpa menu), selisih cuma terlihat Admin/Owner.
+const OPNAME_MULAI = new Date(2026, 9, 23);
+function jadwalOpnameTerakhir(){
+  const hariIni = new Date(); hariIni.setHours(0,0,0,0);
+  if(hariIni < OPNAME_MULAI) return null;
+  const putaran = Math.floor((hariIni - OPNAME_MULAI) / (14 * 864e5));
+  const d = new Date(OPNAME_MULAI); d.setDate(d.getDate() + putaran * 14); return d;
+}
+function jadwalOpnameBerikut(){
+  const t = jadwalOpnameTerakhir();
+  if(!t) return new Date(OPNAME_MULAI);
+  const d = new Date(t); d.setDate(d.getDate() + 14); return d;
+}
+// true kalau jadwal opname sudah tiba dan cabang ini belum opname sejak jadwal itu
+async function opnamePerlu(cabangId){
+  const jadwal = jadwalOpnameTerakhir();
+  if(!jadwal || !cabangId) return false;
+  const { data, error } = await sb.rpc('opname_terakhir', { p_cabang: cabangId });
+  if(error) return false;
+  return !data || new Date(data) < jadwal;
+}
+let opnameSudahDiingatkan = false;
+async function cekJadwalOpname(){
+  if(!navigator.onLine || !currentProfile || currentProfile.role === 'owner') return;
+  try{
+    const perlu = await opnamePerlu(getActiveCabangId());
+    const el = document.querySelector('.v[data-v="opname"]');
+    if(el) el.innerHTML = (perlu ? '<span style="color:#e8b923;font-weight:700;">Hari ini</span>' : '') + '<em>›</em>';
+    if(perlu && !opnameSudahDiingatkan){
+      opnameSudahDiingatkan = true;
+      showSuccessToast('📋', 'Hari ini jadwal stok opname', currentProfile.role === 'admin'
+        ? 'Minta kasir menghitung barang, lalu ketik hasilnya di menu Stok Opname.'
+        : 'Hitung semua barang (cup, sedotan, teh, bubuk), lalu serahkan hasilnya ke Admin.');
+    }
+  }catch(e){}
+}
+let opnameBarang = [];
+function escOp(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+async function bukaOpname(){
+  const cabangId = getActiveCabangId();
+  if(!cabangId){ alert('Belum ada cabang aktif.'); return; }
+  document.getElementById('opnameIsi').classList.remove('hidden');
+  document.getElementById('opnameHasil').classList.add('hidden');
+  document.getElementById('opnameError').classList.remove('show');
+  document.getElementById('opnameTutupBtn').textContent = 'Batal';
+  const list = document.getElementById('opnameList');
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  document.getElementById('opnameOverlay').classList.add('show');
+  const { data, error } = await sb.rpc('opname_daftar', { p_cabang: cabangId });
+  if(error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escOp(error.message)}</div>`; return; }
+  opnameBarang = data || [];
+  if(!opnameBarang.length){ list.innerHTML = '<div class="empty-msg">Belum ada barang yang dihitung stoknya di cabang ini.</div>'; return; }
+  list.innerHTML = opnameBarang.map((b, i) => {
+    const satuan = Number(b.konversi) > 0 && b.satuan_beli ? b.satuan_beli : b.satuan;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px;">
+      <span style="min-width:0;"><b>${escOp(b.nama)}</b><div style="font-size:12px;opacity:.8;">${escOp(satuan)}</div></span>
+      <input type="text" inputmode="decimal" class="input-rupiah" id="opname_${i}" placeholder="—" style="width:96px;text-align:right;">
+    </div>`;
+  }).join('');
+}
+function tutupOpname(){ document.getElementById('opnameOverlay').classList.remove('show'); }
+function fmtOpname(n){ return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 2 }); }
+async function simpanOpname(){
+  const errBox = document.getElementById('opnameError');
+  errBox.classList.remove('show');
+  const items = [];
+  opnameBarang.forEach((b, i) => {
+    const v = angkaRupiah('opname_' + i);
+    if(!isNaN(v)) items.push({ id: b.id, jumlah: v });
+  });
+  if(!items.length){ errBox.textContent = 'Isi minimal satu barang dulu.'; errBox.classList.add('show'); return; }
+  const btn = document.getElementById('opnameSimpanBtn');
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const { data, error } = await sb.rpc('simpan_stok_opname', { p_cabang: getActiveCabangId(), p_items: items });
+  btn.disabled = false; btn.textContent = 'Simpan';
+  if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
+  const hasil = document.getElementById('opnameHasil');
+  if(data && data.detail){
+    const sel = data.detail.filter(d => Number(d.selisih) !== 0);
+    hasil.innerHTML = `<p style="margin-top:0;"><b>${sel.length ? sel.length + ' barang selisih' : 'Semua pas ✓'}</b></p>` +
+      (sel.length ? '<ul style="margin:0 0 10px;padding-left:18px;line-height:1.6;">' + sel.map(d => {
+        const k = Number(d.konversi) > 0 && d.satuan_beli ? Number(d.konversi) : 1;
+        const satuan = k !== 1 ? d.satuan_beli : d.satuan;
+        const s = Number(d.selisih) / k;
+        return `<li>${escOp(d.nama)}: <b>${s < 0 ? 'kurang' : 'lebih'} ${fmtOpname(Math.abs(s))}</b> ${escOp(satuan)}</li>`;
+      }).join('') + '</ul>' : '') +
+      (sel.some(d => Number(d.selisih) < 0) ? `<div style="background:#fff7e0;border:1px solid #e8b923;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.5;">
+        <b>Kalau ada yang kurang:</b>
+        <ol style="margin:6px 0 0;padding-left:18px;">
+          <li>Minta kasir <b>hitung ulang</b> barang yang kurang saja. Kalau ternyata salah hitung, tekan <b>Hitung ulang</b> di bawah dan isi barang itu saja.</li>
+          <li>Tanyakan apakah ada barang <b>rusak/tumpah</b> atau <b>dipakai sendiri</b> yang lupa dicatat.</li>
+          <li>Cek apakah ada <b>beli stok</b> yang tercatat tapi barangnya belum sampai.</li>
+          <li>Kalau tetap kurang, bicarakan dengan kasir yang bertugas. Selisih ini sudah tercatat dan terlihat oleh Owner.</li>
+        </ol></div>` : '') +
+      '<p style="font-size:12px;opacity:.85;">Stok aplikasi sudah disamakan dengan hitungan.</p>' +
+      (sel.length ? '<button class="login-btn" onclick="bukaOpname()">Hitung ulang</button>' : '');
+  }
+  document.getElementById('opnameIsi').classList.add('hidden');
+  hasil.classList.remove('hidden');
+  document.getElementById('opnameTutupBtn').textContent = 'Selesai';
+  cekJadwalOpname();
 }
 
 // ================== BARANG RUSAK / TERBUANG ==================
