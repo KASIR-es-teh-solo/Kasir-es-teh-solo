@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-21.2">
+<meta name="app-version" content="owner-2026-10-21.3">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -120,7 +120,7 @@
         <svg class="spark" id="aSpark" viewBox="0 0 100 26" preserveAspectRatio="none"></svg>
         <div class="r">
           <div><span style="font-size:11.5px;opacity:1;margin:0;font-weight:700;" id="aKasLbl">Kas outlet</span><b id="aKas">…</b><span id="aKasRinci"></span></div>
-          <div><span style="font-size:11.5px;opacity:1;margin:0;font-weight:700;">🔒 Brankas</span><b id="aBrankas">…</b><span>khusus Owner</span></div>
+          <div onclick="buka('brankas')" style="cursor:pointer;"><span style="font-size:11.5px;opacity:1;margin:0;font-weight:700;">🔒 Brankas</span><b id="aBrankas">…</b><span>khusus Owner</span></div>
         </div>
       </div>
       <div class="al" id="aWarn" style="display:none;" onclick="buka('stok')"></div>
@@ -131,6 +131,7 @@
     </div>
 
     <div class="panel" id="p-uang"><div id="uangIsi"></div></div>
+    <div class="panel" id="p-brankas"><div id="brankasIsi"></div></div>
     <div class="panel" id="p-stok"><div id="stokIsi"></div></div>
     <div class="panel" id="p-menu"><div id="menuIsi"></div></div>
     <div class="panel" id="p-karyawan"><div id="karyawanIsi"></div></div>
@@ -178,11 +179,13 @@ const IKON = {
   back:'<path d="M15 5l-7 7 7 7"/>',
   refresh:'<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
   kasir:'<path d="M4 4h2l2 11h11l2-8H7"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/>',
+  brankas:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5V7M12 17v-1.5M7 20v1.5M17 20v1.5"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'
 };
 const ic = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const MODUL = [
-  ['uang', 'Uang', 'Kas, Brankas, laba'],
+  ['uang', 'Uang', 'Kas, Brankas Online, laba'],
+  ['brankas', 'Brankas', 'Saldo, tambah, ambil, riwayat'],
   ['stok', 'Stok', 'Bahan & cup tiap cabang'],
   ['menu', 'Menu & Harga', 'Harga jual & modal'],
   ['karyawan', 'Karyawan', 'Aktif, absen, izin'],
@@ -233,12 +236,13 @@ function buka(p){
   document.getElementById('topPanel').style.display = p === 'beranda' ? 'none' : '';
   const m = MODUL.find(x => x[0] === p);
   document.getElementById('judulPanel').textContent = m ? m[1] : '';
+  document.getElementById('cabPilih').style.display = p === 'brankas' ? 'none' : '';
   window.scrollTo(0, 0);
   muatPanel();
 }
 function muatSemua(){ muatBeranda(); if(panelAktif !== 'beranda') muatPanel(); }
 function muatPanel(){
-  ({ uang: muatUang, stok: muatStok, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
+  ({ uang: muatUang, brankas: muatBrankas, stok: muatStok, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
 }
 function keKasir(){
   // ke aplikasi kasir tanpa dilempar balik ke sini
@@ -350,7 +354,7 @@ async function muatBeranda(){
     el.textContent = `${t('trx')} transaksi`;
     try{ await grafikPenjualan(ids, t('jual')); if(el.dataset.banding) el.textContent = `${el.dataset.banding} · ${t('trx')} transaksi`; }catch(e){}
   }catch(e){ document.getElementById('aJual').textContent = '-'; document.getElementById('aKas').textContent = '-'; }
-  try{ document.getElementById('aBrankas').textContent = fmt(await saldoBrankas()); }catch(e){ document.getElementById('aBrankas').textContent = '-'; }
+  try{ const sb_ = await saldoBrankas(); document.getElementById('aBrankas').textContent = fmt(sb_); info.brankas = fmt(sb_); }catch(e){ document.getElementById('aBrankas').textContent = '-'; }
   try{
     const habis = await barangHampirHabis();
     const w = document.getElementById('aWarn');
@@ -375,10 +379,8 @@ async function muatUang(){
   const box = document.getElementById('uangIsi');
   box.innerHTML = '<div class="muat">Memuat…</div>';
   const cabs = cabDipilih();
-  const [per, saldo, riwayat, online, laba, biaya] = await Promise.all([
+  const [per, online, laba, biaya] = await Promise.all([
     Promise.all(cabs.map(kasCabang)),
-    saldoBrankas(),
-    sb.from('brankas').select('jenis, jumlah, keterangan, created_at, cabang_id, pencatat:dicatat_oleh(nama)').order('created_at', { ascending:false }).limit(30),
     Promise.all(cabs.map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
     Promise.all(cabs.map(c => sb.rpc('laba_bersih', { p_cabang: c.id, p_hari: 30 }).then(r => ({ c, d: r.data })))),
     sb.from('biaya_operasional').select('kategori, deskripsi, jumlah, sumber_dana, created_at, cabang_id, pencatat:dicatat_oleh(nama)')
@@ -392,15 +394,6 @@ async function muatUang(){
     <div class="sec"><h3>Kas & penjualan hari ini <small>per cabang</small></h3>
       ${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · Pengeluaran ${fmt(r.keluarHari)} · ${r.trx} transaksi</small><small>Tutup kas terakhir: ${r.tutup ? jamWIB(r.tutup) : 'belum pernah'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}
       ${per.length > 1 ? `<div class="baris"><span><b>Total</b><small>Penjualan ${fmt(tot('jual'))} · Pengeluaran ${fmt(tot('keluarHari'))}</small></span><span class="kanan" style="color:var(--emas)">${fmt(tot('kas'))}</span></div>` : ''}
-    </div>
-
-    <div class="gold" style="padding:14px;margin-bottom:10px;"><small>🔒 Brankas</small><b class="n" style="font-size:26px">${fmt(saldo)}</b>
-      <div style="display:flex;gap:8px;margin-top:8px;"><button class="gbtn gelap" onclick="brankasTambah()">${ic('plus')} Tambah uang</button><button class="gbtn terang" onclick="brankasAmbil()">${ic('minus')} Ambil</button></div></div>
-
-    <div class="sec"><h3>Riwayat Brankas <small>terbaru</small></h3>
-      ${(riwayat.data || []).map(r => `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Ambil'))}
-        <small>${jamWIB(r.created_at)} · ${esc((r.pencatat && r.pencatat.nama) || '-')}${r.cabang_id ? ' · ' + esc(namaCab(r.cabang_id)) : ''}</small></span>
-        <span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada catatan.</div>'}
     </div>
 
     <div class="sec"><h3>Brankas Online <small>Grab / Shopee, belum cair</small></h3>
@@ -538,7 +531,44 @@ async function muatLaporan(){
     </div>`;
 }
 
-// ---------- brankas ----------
+// ---------- brankas (satu untuk semua cabang, khusus Owner) ----------
+let brankasFilter = 'semua', brankasBatas = 50;
+function filterBrankas(f){ brankasFilter = f; brankasBatas = 50; muatBrankas(); }
+function brankasLagi(){ brankasBatas += 50; muatBrankas(); }
+async function muatBrankas(){
+  const box = document.getElementById('brankasIsi');
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  const awalBulan = new Date(); awalBulan.setHours(0,0,0,0); awalBulan.setDate(1);
+  let q = sb.from('brankas').select('jenis, jumlah, keterangan, created_at, cabang_id, pencatat:dicatat_oleh(nama)').order('created_at', { ascending:false }).limit(brankasBatas + 1);
+  if(brankasFilter !== 'semua') q = q.eq('jenis', brankasFilter);
+  const [semua, riwayat] = await Promise.all([sb.from('brankas').select('jenis, jumlah, created_at'), q]);
+  const rows = semua.data || [];
+  const saldo = rows.reduce((a, r) => a + (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah), 0);
+  const bulanIni = rows.filter(r => new Date(r.created_at) >= awalBulan);
+  const jml = j => bulanIni.filter(r => r.jenis === j).reduce((a, r) => a + Number(r.jumlah), 0);
+  const daftar = (riwayat.data || []).slice(0, brankasBatas);
+  const adaLagi = (riwayat.data || []).length > brankasBatas;
+  const namaBulan = awalBulan.toLocaleDateString('id-ID', { month:'long' });
+  // kelompokkan per tanggal supaya mudah dibaca
+  let tglLalu = '';
+  const isi = daftar.map(r => {
+    const tgl = new Date(r.created_at).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+    const kepala = tgl !== tglLalu ? `<div class="sub">${esc(tgl.toUpperCase())}</div>` : '';
+    tglLalu = tgl;
+    return kepala + `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Ambil'))}
+      <small>${new Date(r.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc((r.pencatat && r.pencatat.nama) || '-')}${r.cabang_id ? ' · ' + esc(namaCab(r.cabang_id)) : ''}</small></span>
+      <span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="gold" style="margin-bottom:10px;"><small>🔒 Saldo Brankas · khusus Owner</small><b class="n">${fmt(saldo)}</b>
+      <div style="display:flex;gap:8px;margin-top:8px;"><button class="gbtn gelap" onclick="brankasTambah()">${ic('plus')} Tambah uang</button><button class="gbtn terang" onclick="brankasAmbil()">${ic('minus')} Ambil</button></div>
+      <div class="r"><div>Masuk ${esc(namaBulan)}<b>${fmt(jml('masuk'))}</b></div><div>Diambil ${esc(namaBulan)}<b>${fmt(jml('keluar'))}</b></div></div></div>
+    <div class="seg">${[['semua','Semua'],['masuk','Masuk'],['keluar','Diambil']].map(([k, l]) => `<button class="${k === brankasFilter ? 'on' : ''}" onclick="filterBrankas('${k}')">${l}</button>`).join('')}</div>
+    <div class="sec"><h3>Riwayat Brankas <small>terbaru di atas</small></h3>
+      ${isi || '<div class="kosong">Belum ada catatan.</div>'}
+      ${adaLagi ? '<button class="btn" style="width:100%;margin-top:8px;" onclick="brankasLagi()">Tampilkan lebih banyak</button>' : ''}
+    </div>`;
+}
 async function brankasTambah(){
   const r = await mintaNominal('Tambah uang ke Brankas berapa?', '', true);
   if(!r) return;
