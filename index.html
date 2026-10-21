@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-21.1">
+<meta name="app-version" content="2026-10-21.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -754,6 +754,46 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .success-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .success-toast .toast-icon{ font-size:22px; }
   .success-toast .toast-sub{ font-weight:500; font-size:12px; opacity:.85; }
+  /* 2026-10-21: Beranda Admin bergaya Pusat Kendali Owner (gelap profesional + kartu emas) — akses tetap fitur Admin */
+  .dash.adm-on{padding:0 !important;max-width:none !important;}
+  body.adm-halaman #topbarUtama{display:none !important;} /* beranda admin sudah punya judul & pilih cabang sendiri */
+  .adm-w{max-width:720px;margin:0 auto;}
+  .adm{margin:0;min-height:calc(100vh - 60px);padding:18px 16px 110px;color:#e8efe9;font-family:Inter,"Segoe UI",system-ui,sans-serif;font-weight:400;
+    background:linear-gradient(180deg,rgba(8,20,13,.62),rgba(8,20,13,.93) 420px,rgba(8,20,13,.96)),url(latar.jpg) center/cover fixed;}
+  body.role-admin .dash.adm-on{zoom:1;font-weight:400;}
+  .adm *{box-sizing:border-box;} .adm button{font-family:inherit;}
+  .adm svg.ic{width:1em;height:1em;flex:none;}
+  .adm .a-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;}
+  .adm .a-t{font-size:10.5px;letter-spacing:1.6px;color:#c9a94a;font-weight:700;}
+  .adm .a-top h1{margin:3px 0 0;font-size:19px;font-weight:700;color:#e8efe9;text-shadow:none;}
+  .adm .a-d{font-size:12px;color:#9fb3a6;margin-top:2px;}
+  .adm .a-ib{width:38px;height:38px;border-radius:10px;border:1px solid rgba(201,169,74,.55);background:transparent;color:#c9a94a;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex:none;}
+  .adm .a-ib.polos{border-color:rgba(255,255,255,.2);color:#e8efe9;}
+  .adm .a-seg{display:flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:3px;margin-bottom:14px;}
+  .adm .a-seg button{flex:1;min-width:0;border:0;background:transparent;font-size:12.5px;font-weight:600;padding:9px 4px;border-radius:8px;color:#9fb3a6;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .adm .a-seg button.on{background:#c9a94a;color:#10140c;}
+  .adm .a-gold{border-radius:18px;padding:16px;background:linear-gradient(135deg,#e2c05c,#a87d1e);color:#1a1300;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .adm .a-gold small{font-size:12px;font-weight:700;opacity:.8;}
+  .adm .a-gold .n{display:block;font-size:30px;font-weight:800;letter-spacing:-.5px;margin:2px 0;}
+  .adm .a-naik{font-size:12px;font-weight:700;color:#1d4d1f;} .adm .a-turun{font-size:12px;font-weight:700;color:#7a1d12;}
+  .adm .a-spark{width:100%;height:32px;margin-top:6px;display:block;}
+  .adm .a-r{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+  .adm .a-r div{background:rgba(255,255,255,.32);border-radius:11px;padding:9px 11px;font-size:11.5px;font-weight:700;display:flex;flex-direction:column;}
+  .adm .a-r b{font-size:16px;margin-top:2px;} .adm .a-r span{font-weight:600;font-size:10.5px;opacity:.75;margin-top:1px;}
+  .adm .a-al{display:flex;gap:10px;align-items:center;font-size:12.5px;font-weight:600;color:#f1d27a;background:rgba(241,210,122,.08);border:1px solid rgba(241,210,122,.25);border-radius:11px;padding:10px 12px;margin-top:12px;cursor:pointer;}
+  .adm .a-al svg{font-size:18px;}
+  .adm .a-besar{width:100%;display:flex;justify-content:center;align-items:center;gap:8px;margin-top:12px;padding:13px;border-radius:12px;border:0;background:#c9a94a;color:#10140c;font-weight:700;font-size:15px;cursor:pointer;}
+  .adm .a-besar svg{font-size:18px;}
+  .adm .a-h{font-size:11px;letter-spacing:1.4px;color:#9fb3a6;font-weight:700;margin:18px 0 8px;}
+  .adm .a-it{width:100%;display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:13px;margin-bottom:7px;color:#e8efe9;text-align:left;cursor:pointer;}
+  .adm .a-it:hover{background:rgba(255,255,255,.08);}
+  .adm .a-it i{display:flex;width:38px;height:38px;border-radius:10px;background:rgba(201,169,74,.14);color:#c9a94a;align-items:center;justify-content:center;flex:none;font-size:19px;}
+  .adm .a-it b{display:block;font-size:14.5px;font-weight:600;} .adm .a-it small{font-size:11.5px;color:#8ea596;font-weight:400;}
+  .adm .a-it .v{margin-left:auto;text-align:right;font-size:12.5px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:4px;}
+  .adm .a-it .v em{font-style:normal;color:#5d7466;font-size:18px;}
+  .adm .a-it.merah i{background:rgba(239,138,128,.14);color:#ef8a80;}
+  .adm .bd{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .adm .bd.kn{background:rgba(241,210,122,.15);color:#f1d27a;} .adm .bd.hj{background:rgba(95,211,138,.15);color:#5fd38a;} .adm .bd.mr{background:rgba(239,138,128,.15);color:#ef8a80;}
 </style>
 </head>
 <body>
@@ -4035,7 +4075,7 @@ const MENU_PER_ROLE = {
   },
   admin: {
     kategori: [
-      ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📥','Pembelian','pembelian'],['🛍️','Beli Stok Bahan','beliStok'],['🧊','Belanja','belanja']]],
+      ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['🛍️','Beli Stok','pembelian'],['🧊','Belanja','belanja']]],
       ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
@@ -4089,7 +4129,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }).observe(el, { attributes:true, attributeFilter:['class'] });
   });
 });
-function sembunyikanHalamanBaru(){ tutupHalamanOverlay(); ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
+function sembunyikanHalamanBaru(){ document.body.classList.remove('adm-halaman'); tutupHalamanOverlay(); ['berandaView','halamanGridView'].forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
 function tandaiNavBawah(k){
   document.querySelectorAll('#navBawah .nb').forEach(b=>b.classList.toggle('on', b.dataset.k === k));
   // halaman Kasir: tombol bawah diciutkan (☰ di kiri bawah untuk memunculkan lagi); halaman lain: tombol bawah tampil
@@ -4140,6 +4180,7 @@ function tampilkanBeranda(){
   tampilkanHalamanBaru('berandaView');
   tandaiNavBawah('beranda');
   const role = (currentProfile && currentProfile.role) || 'kasir';
+  if(role === 'admin'){ tampilkanBerandaAdmin(); return; }
   const nama = (currentProfile && currentProfile.nama) || '';
   const peranLabel = ({ owner:'Owner', admin:'Admin', kasir:'Kasir' })[role] || role;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
@@ -4161,6 +4202,7 @@ function tampilkanBeranda(){
 }
 // Beranda cuma menampilkan folder kategori; ketuk folder = satu halaman berisi menu kategori itu
 function tampilkanKategori(i){
+  if(currentProfile && currentProfile.role === 'admin'){ tampilkanModulAdmin('stokbelanja'); return; }
   const kat = menuRoleIni().kategori[i]; if(!kat){ tampilkanBeranda(); return; }
   tampilkanHalamanBaru('halamanGridView');
   tandaiNavBawah('beranda');
@@ -4168,11 +4210,189 @@ function tampilkanKategori(i){
     `<button class="bd-kembali" onclick="tampilkanBeranda()">◀ Beranda</button><div class="bd-kats">${htmlKotakMenu(kat[0], kat[1])}</div>`;
 }
 function tampilkanGrid(jenis){
+  if(currentProfile && currentProfile.role === 'admin' && ADM_MODUL[jenis]){ tampilkanModulAdmin(jenis); return; }
   const cfg = menuRoleIni()[jenis];
   if(!cfg){ tampilkanBeranda(); return; }
   tampilkanHalamanBaru('halamanGridView');
   tandaiNavBawah(jenis);
   document.getElementById('halamanGridView').innerHTML = `<div class="bd-kats bd-utama">${htmlKotakMenu(cfg[0], cfg[1])}</div>`;
+}
+// ================== 2026-10-21: BERANDA ADMIN gaya Pusat Kendali Owner ==================
+// Tampilan disamakan dengan halaman Owner (gelap profesional + kartu emas), tapi isinya TETAP fitur Admin saja
+// (tanpa Brankas utama, Laba Bersih, Log, Pengaturan). Ada pindah cabang supaya Admin gampang kontrol & tambah stok tiap cabang.
+const ADM_IKON = {
+  stok:'<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  cup:'<path d="M6 4h12l-2 17H8z"/><path d="M5 8h14"/>',
+  masuk:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
+  belanja:'<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
+  uang:'<path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
+  laporan:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>',
+  pesanan:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  online:'<circle cx="7" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M7 17h5l3-7h3M10 10h4"/>',
+  stempel:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12" stroke-dasharray="2 2"/><path d="M12 10h5M12 14h3"/>',
+  sop:'<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h4"/>',
+  karyawan:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.3"/><path d="M16 14c3 0 5 2.2 5 5"/>',
+  profil:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',
+  kunci:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
+  keluar:'<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+  kasir:'<path d="M4 4h2l2 11h11l2-8H7"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>',
+  refresh:'<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>'
+};
+const admIc = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ADM_IKON[k] || ''}</svg>`;
+// [ikon, judul, keterangan, aksi]
+const ADM_MODUL = {
+  stokbelanja: ['Stok & Belanja', [
+    ['stok','Stok','Stok bahan cabang ini','stok'],
+    ['warn','Stok Menipis','Bahan yang hampir habis','stokmenipis'],
+    ['cup','Stok Cup','Sisa cup & perkiraan habis','stokcup'],
+    ['masuk','Beli Stok','Tambah stok & riwayat pembelian','pembelian'],
+    ['belanja','Belanja','Catat belanja dari laci','belanja']]],
+  laporan: ['Laporan', [
+    ['laporan','Ringkasan','Penjualan per hari','ringkasan'],
+    ['uang','Biaya','Pengeluaran outlet','biaya'],
+    ['uang','Kas Es Teh S.O.L.O','Saldo kas toko','kastoko'],
+    ['online','Brankas Online','Grab / Shopee belum cair','brankasonline'],
+    ['pesanan','Riwayat Tutup Kas','Hitung kas tiap malam','riwayatkas']]],
+  pelanggan: ['Pelanggan & SOP', [
+    ['stempel','Stempel Pelanggan','Kartu stempel & tukar gratis','stempel'],
+    ['sop','SOP Menu','Takaran & cara membuat','sop']]],
+  profil: ['Profil', [
+    ['kunci','Ganti Password','Ubah password akun ini','password'],
+    ['keluar','Keluar','Keluar dari akun','keluar']]]
+};
+const ADM_BERANDA = [
+  ['pesanan','Pesanan hari ini','Daftar transaksi & batal','hariIni'],
+  ['stok','Stok & Belanja','Stok, cup, beli stok, belanja','#stokbelanja'],
+  ['laporan','Laporan','Ringkasan, biaya, kas, tutup kas','#laporan'],
+  ['stempel','Pelanggan & SOP','Stempel pelanggan, SOP menu','#pelanggan'],
+  ['karyawan','Karyawan','Akun kasir & yang aktif','karyawan'],
+  ['profil','Profil','Ganti password, keluar','#profil']
+];
+const admNamaCabang = id => { const c = (userAllowedCabang || []).find(x => x.id === id); let s = String((c && c.nama) || '').replace(/^cabang\s+/i, ''); const t = s.replace(/^es teh solo\s+/i, ''); if(t.length > 2) s = t; return s.replace(/\b\w/g, x => x.toUpperCase()); };
+function admJalankan(aksi){
+  if(aksi.startsWith('#')) return tampilkanModulAdmin(aksi.slice(1));
+  if(aksi === 'hariIni') return navKe('hariIni');
+  jalankanMenu(aksi);
+}
+function admItem([ik, judul, ket, aksi], nilai){
+  return `<button class="a-it${aksi === 'keluar' ? ' merah' : ''}" onclick="admJalankan('${aksi}')"><i>${admIc(ik)}</i><div><b>${judul}</b><small>${ket}</small></div><span class="v" data-v="${aksi}">${nilai || ''}<em>›</em></span></button>`;
+}
+function admSegCabang(){
+  const list = userAllowedCabang || [];
+  if(list.length < 2) return '';
+  return `<div class="a-seg">${list.map(c => `<button class="${c.id === activeCabangId ? 'on' : ''}" onclick="pindahCabangAdmin('${c.id}')">${escTG(admNamaCabang(c.id))}</button>`).join('')}</div>`;
+}
+let admModulAktif = null;
+function pindahCabangAdmin(id){
+  if(id === activeCabangId) return;
+  const sel = document.getElementById('ownerCabangSelector');
+  sel.value = id;
+  changeOwnerCabang(sel); // beranda ikut diperbarui otomatis
+  if(admModulAktif && !document.getElementById('halamanGridView').classList.contains('hidden')) tampilkanModulAdmin(admModulAktif);
+}
+function tampilkanBerandaAdmin(){
+  admModulAktif = null;
+  const v = document.getElementById('berandaView');
+  v.classList.add('adm-on'); document.body.classList.add('adm-halaman');
+  const nama = (currentProfile && currentProfile.nama) || '';
+  const inisial = nama.replace(/\(.*?\)/g, '').trim().split(/\s+/).map(k => k[0] || '').join('').slice(0, 2).toUpperCase() || 'A';
+  const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const cab = admNamaCabang(activeCabangId);
+  v.innerHTML = `<div class="adm"><div class="adm-w">
+    <div class="a-top"><div><div class="a-t">PANEL ADMIN · ES TEH S.O.L.O</div><h1>${salamWaktu()}, ${escTG(nama.replace(/\s*\(Admin\)\s*/i, ''))}</h1><div class="a-d">${tgl}${(userAllowedCabang || []).length < 2 && cab ? ' · ' + escTG(cab) : ''}</div></div>
+      <div style="display:flex;gap:8px;"><button class="a-ib" onclick="tampilkanBeranda()" title="Perbarui">${admIc('refresh')}</button><button class="a-ib" style="font-size:13px;font-weight:700;" onclick="tampilkanModulAdmin('profil')">${escTG(inisial)}</button></div></div>
+    ${admSegCabang()}
+    <div class="a-gold"><small>Penjualan hari ini${cab ? ' · ' + escTG(cab) : ''}</small><b class="n" id="admJual">…</b><span class="a-naik" id="admBanding"></span>
+      <svg class="a-spark" id="admSpark" viewBox="0 0 100 26" preserveAspectRatio="none"></svg>
+      <div class="a-r"><div>${escTG(cab ? 'Kas ' + cab : 'Kas outlet')}<b id="admKas">…</b><span id="admKasRinci"></span></div><div>Online belum cair<b id="admOnline">…</b><span id="admOnlineRinci">Grab / Shopee</span></div></div></div>
+    <div class="a-al" id="admWarn" style="display:none;" onclick="tampilkanModulAdmin('stokbelanja')"></div>
+    <button class="a-besar" onclick="navKe('kasir')">${admIc('kasir')} Buka Kasir</button>
+    <div class="a-h">MENU ADMIN</div>
+    ${ADM_BERANDA.map(m => admItem(m)).join('')}
+  </div></div>`;
+  simpanViewState({ type:'beranda' });
+  isiBerandaAdmin();
+}
+function admSetV(aksi, html){ const el = document.querySelector(`#berandaView .v[data-v="${aksi}"]`); if(el) el.innerHTML = html + '<em>›</em>'; }
+async function isiBerandaAdmin(){
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  const cabangId = getActiveCabangId();
+  if(!cabangId) return;
+  const awalHari = new Date(); awalHari.setHours(0,0,0,0);
+  // penjualan hari ini + grafik 7 hari + dibanding kemarin jam yang sama
+  try{
+    const awal7 = new Date(awalHari); awal7.setDate(awal7.getDate() - 6);
+    const { data, error } = await sb.from('transaksi').select('total, created_at').eq('cabang_id', cabangId).eq('status','selesai').gte('created_at', awal7.toISOString()).limit(20000);
+    if(error) throw error;
+    const hari = Array(7).fill(0); let trx = 0, kemarin = 0;
+    const kemarinAwal = new Date(awalHari); kemarinAwal.setDate(kemarinAwal.getDate() - 1);
+    const kemarinJamIni = new Date(Date.now() - 864e5);
+    (data || []).forEach(r => {
+      const t = new Date(r.created_at), n = Number(r.total || 0);
+      const i = Math.floor((t - awal7) / 864e5);
+      if(i >= 0 && i < 7) hari[i] += n;
+      if(t >= awalHari) trx++;
+      if(t >= kemarinAwal && t <= kemarinJamIni) kemarin += n;
+    });
+    set('admJual', fmt(hari[6]));
+    const maks = Math.max(...hari, 1);
+    const sp = document.getElementById('admSpark');
+    if(sp) sp.innerHTML = `<polyline fill="none" stroke="#1a1300" stroke-opacity=".55" stroke-width="2" vector-effect="non-scaling-stroke" points="${hari.map((v, i) => `${(i * 100 / 6).toFixed(1)},${(23 - v / maks * 20).toFixed(1)}`).join(' ')}"/>`;
+    const el = document.getElementById('admBanding');
+    if(el){
+      if(kemarin > 0){ const pr = Math.round((hari[6] - kemarin) / kemarin * 100); el.className = pr >= 0 ? 'a-naik' : 'a-turun'; el.textContent = `${pr >= 0 ? '▲' : '▼'} ${Math.abs(pr)}% dari kemarin jam segini · ${trx} transaksi`; }
+      else el.textContent = `${trx} transaksi`;
+    }
+    admSetV('hariIni', trx + ' pesanan');
+  }catch(e){ set('admJual', '-'); }
+  // kas cabang = uang fisik (sudah dikurangi pengeluaran), sama dengan kotak kas lama
+  try{
+    const { total, tunai, keluar, tabungan } = await hitungKasPenjualan([{ id: cabangId }]);
+    set('admKas', fmt(total));
+    set('admKasRinci', `Penjualan ${fmt(tunai)} · Pengeluaran ${fmt(keluar + tabungan)}`);
+  }catch(e){ set('admKas', '-'); }
+  try{
+    const { data } = await sb.rpc('brankas_online_data', { p_cabang: cabangId });
+    const pp = (data && data.per_platform) || {};
+    set('admOnline', fmt((data && data.saldo) || 0));
+    set('admOnlineRinci', `Grab ${fmt((pp.grab || {}).saldo || 0)} · Shopee ${fmt((pp.shopee || {}).saldo || 0)}`);
+  }catch(e){ set('admOnline', '-'); }
+  // barang hampir habis: cup ≤ batas + bahan yang stoknya habis
+  try{
+    const habis = [];
+    try{ (await ambilStokCup()).filter(r => hitungCup(r).menipis).forEach(r => habis.push(`${r.nama} (${Number(r.stok)})`)); }catch(e){}
+    const { data: bh } = await sb.from('bahan_baku_stok').select('stok, bahan:bahan_baku_id(nama, dihitung_stok)').eq('cabang_id', cabangId).lte('stok', 0);
+    (bh || []).filter(r => r.bahan && r.bahan.dihitung_stok && !/^cup/i.test(r.bahan.nama)).forEach(r => habis.push(`${r.bahan.nama} (${Number(r.stok)})`));
+    const w = document.getElementById('admWarn');
+    if(w && habis.length){
+      w.innerHTML = admIc('warn') + `<span>${habis.length} barang hampir habis: ${escTG(habis.slice(0, 3).join(', '))}${habis.length > 3 ? ', …' : ''}</span>`;
+      w.style.display = '';
+    }
+    admSetV('#stokbelanja', habis.length ? `<span class="bd kn">${habis.length} menipis</span>` : '<span class="bd hj">aman</span>');
+  }catch(e){}
+  try{
+    const { data } = await sb.from('user_presence').select('user_id, cabang_id, user:user_id(role)').eq('cabang_id', cabangId);
+    const n = (data || []).filter(r => (r.user || {}).role !== 'owner').length;
+    admSetV('karyawan', n ? `<span class="bd hj">● ${n} aktif</span>` : '');
+  }catch(e){}
+}
+function tampilkanModulAdmin(key){
+  const m = ADM_MODUL[key]; if(!m){ tampilkanBeranda(); return; }
+  admModulAktif = key;
+  tampilkanHalamanBaru('halamanGridView');
+  tandaiNavBawah(key === 'laporan' || key === 'profil' ? key : 'beranda');
+  const v = document.getElementById('halamanGridView');
+  v.classList.add('adm-on'); document.body.classList.add('adm-halaman');
+  const cab = admNamaCabang(activeCabangId);
+  v.innerHTML = `<div class="adm"><div class="adm-w">
+    <div class="a-top"><div style="display:flex;gap:10px;align-items:center;"><button class="a-ib polos" onclick="tampilkanBeranda()" title="Kembali">${admIc('back')}</button>
+      <div><div class="a-t">MENU ADMIN</div><h1 style="margin:0;">${m[0]}</h1></div></div></div>
+    ${key === 'profil' ? '' : admSegCabang()}
+    ${key === 'stokbelanja' ? `<button class="a-besar" style="margin:0 0 12px;" onclick="bukaBeliStok()">${admIc('masuk')} Tambah stok${cab ? ' ' + escTG(cab) : ''}</button>` : ''}
+    ${m[1].map(it => admItem(it)).join('')}
+  </div></div>`;
 }
 async function isiRingkasBeranda(role){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
