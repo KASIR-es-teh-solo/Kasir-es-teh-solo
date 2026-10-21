@@ -28,13 +28,29 @@ begin
     order by case when b.nama ilike 'cup%' or b.nama ilike 'sedotan%' then 0 when b.nama ilike 'teh%' then 1 else 2 end, b.nama;
 end $$;
 
--- waktu opname terakhir cabang ini (untuk pengingat jadwal)
-create or replace function public.opname_terakhir(p_cabang uuid)
-returns timestamptz
+-- on/off stok opname per cabang (diatur Owner di Pusat Kendali)
+alter table public.cabang add column if not exists opname_aktif boolean not null default true;
+
+-- status opname cabang ini: aktif? + waktu opname terakhir (untuk pengingat jadwal)
+create or replace function public.opname_status(p_cabang uuid)
+returns jsonb
 language plpgsql stable security definer set search_path to 'public' as $$
 begin
   if not (public.is_admin_or_owner() or public.user_di_cabang(p_cabang)) then raise exception 'Bukan cabang kamu' using errcode = '42501'; end if;
-  return (select max(created_at) from stok_opname where cabang_id = p_cabang);
+  return jsonb_build_object(
+    'aktif', coalesce((select opname_aktif from cabang where id = p_cabang), true),
+    'terakhir', (select max(created_at) from stok_opname where cabang_id = p_cabang));
+end $$;
+
+-- Owner menyalakan / mematikan stok opname satu cabang
+create or replace function public.atur_opname_cabang(p_cabang uuid, p_aktif boolean)
+returns void
+language plpgsql security definer set search_path to 'public' as $$
+begin
+  if not exists (select 1 from users where id = auth.uid() and role = 'owner') then raise exception 'Hanya Owner.' using errcode = '42501'; end if;
+  update cabang set opname_aktif = p_aktif where id = p_cabang;
+  insert into log_aktivitas(cabang_id, user_id, aksi, keterangan)
+  values (p_cabang, auth.uid(), 'Stok Opname', case when p_aktif then 'Stok opname dinyalakan' else 'Stok opname dimatikan' end);
 end $$;
 
 -- simpan hitungan: p_items = [{id, jumlah}] (jumlah dalam satuan_beli kalau ada konversi, selain itu satuan stok)
@@ -44,6 +60,7 @@ language plpgsql security definer set search_path to 'public' as $$
 declare it jsonb; v_b record; v_sebelum numeric; v_sesudah numeric; v_detail jsonb := '[]'::jsonb; v_selisih int := 0; v_nama text; v_id uuid;
 begin
   if not public.is_admin_or_owner() then raise exception 'Stok opname hanya untuk Admin/Owner.' using errcode = '42501'; end if;
+  if not coalesce((select opname_aktif from cabang where id = p_cabang), true) then raise exception 'Stok opname cabang ini sedang dimatikan Owner.' using errcode = '42501'; end if;
   if p_items is null or jsonb_array_length(p_items) = 0 then raise exception 'Belum ada barang yang diisi.' using errcode = '22023'; end if;
 
   for it in select * from jsonb_array_elements(p_items) loop
@@ -67,5 +84,5 @@ begin
   return jsonb_build_object('id', v_id, 'detail', v_detail);
 end $$;
 
-revoke all on function public.opname_daftar(uuid), public.opname_terakhir(uuid), public.simpan_stok_opname(uuid, jsonb) from public, anon;
-grant execute on function public.opname_daftar(uuid), public.opname_terakhir(uuid), public.simpan_stok_opname(uuid, jsonb) to authenticated;
+revoke all on function public.opname_daftar(uuid), public.opname_status(uuid), public.atur_opname_cabang(uuid, boolean), public.simpan_stok_opname(uuid, jsonb) from public, anon;
+grant execute on function public.opname_daftar(uuid), public.opname_status(uuid), public.atur_opname_cabang(uuid, boolean), public.simpan_stok_opname(uuid, jsonb) to authenticated;

@@ -411,6 +411,12 @@ async function muatUang(){
 }
 
 // ---------- stok (cuma lihat; tambah stok tetap di aplikasi kasir oleh Admin) ----------
+// on/off stok opname per cabang (dimatikan: menu & pengingat opname hilang di aplikasi kasir cabang itu)
+async function aturOpname(cabangId, aktif){
+  const { error } = await sb.rpc('atur_opname_cabang', { p_cabang: cabangId, p_aktif: aktif });
+  if(error){ alert('Gagal mengubah: ' + error.message); return; }
+  muatStok();
+}
 async function muatStok(){
   const box = document.getElementById('stokIsi');
   box.innerHTML = '<div class="muat">Memuat…</div>';
@@ -420,11 +426,16 @@ async function muatStok(){
   // stok opname terakhir tiap cabang (2 minggu sekali tiap Jumat, mulai 23 Okt 2026)
   let opname = [];
   try{ const r = await sb.from('stok_opname').select('cabang_id, created_at, nama_oleh, detail').in('cabang_id', cabs.map(c => c.id)).order('created_at', { ascending: false }).limit(100); opname = r.data || []; }catch(e){}
+  let opAktif = {};
+  try{ const r = await sb.from('cabang').select('id, opname_aktif').in('id', cabs.map(c => c.id)); (r.data || []).forEach(x => opAktif[x.id] = x.opname_aktif !== false); }catch(e){}
   const OP_MULAI = new Date(2026, 9, 23), hariIni = new Date(); hariIni.setHours(0,0,0,0);
   const opJadwal = hariIni < OP_MULAI ? null : new Date(OP_MULAI.getTime() + Math.floor((hariIni - OP_MULAI) / (14 * 864e5)) * 14 * 864e5);
   const opBerikut = opJadwal ? new Date(opJadwal.getTime() + 14 * 864e5) : OP_MULAI;
   const tglOp = d => new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const htmlOpname = c => {
+    const aktif = opAktif[c.id] !== false;
+    const tombol = `<button class="btn" style="padding:3px 10px;font-size:11.5px;${aktif ? '' : 'color:var(--redup);border-color:rgba(255,255,255,.2);'}" onclick="aturOpname('${c.id}', ${!aktif})">${aktif ? 'ON' : 'OFF'}</button>`;
+    if(!aktif) return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME ${tombol}</div><div class="kosong">Stok opname dimatikan untuk cabang ini.</div>`;
     const o = opname.find(x => x.cabang_id === c.id);
     const telat = opJadwal && (!o || new Date(o.created_at) < opJadwal);
     let isi = telat ? `<div class="baris"><span>Belum opname untuk jadwal ${tglOp(opJadwal)}</span><span class="kanan min">belum</span></div>` : '';
@@ -437,7 +448,7 @@ async function muatStok(){
         + sel.map(d => { const k = Number(d.konversi) > 0 && d.satuan_beli ? Number(d.konversi) : 1; const v = Number(d.selisih) / k;
           return `<div class="baris"><span>${esc(d.nama)}<small>${lewatBatas(d) ? 'lewat batas wajar' : v < 0 ? 'masih wajar' : ''}</small></span><span class="kanan ${lewatBatas(d) ? 'min' : ''}">${v < 0 ? 'kurang' : 'lebih'} ${Math.abs(v).toLocaleString('id-ID', { maximumFractionDigits: 2 })} ${esc(k !== 1 && d.satuan_beli ? d.satuan_beli : (d.satuan || ''))}</span></div>`; }).join('');
     } else if(!telat) isi += '<div class="kosong">Belum pernah opname.</div>';
-    return `<div class="sub">STOK OPNAME · berikutnya ${tglOp(opBerikut)}</div>` + isi;
+    return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME · berikutnya ${tglOp(opBerikut)} ${tombol}</div>` + isi;
   };
   const bahan = await Promise.all(cabs.map(c => sb.from('bahan_baku_stok')
     .select('stok, bahan:bahan_baku_id(nama, satuan, dihitung_stok)').eq('cabang_id', c.id).then(r => ({ c, rows: (r.data || []).filter(x => x.bahan && x.bahan.dihitung_stok) }))));

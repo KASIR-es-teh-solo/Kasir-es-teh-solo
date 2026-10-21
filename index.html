@@ -7322,21 +7322,24 @@ function jadwalOpnameBerikut(){
   if(!t) return new Date(OPNAME_MULAI);
   const d = new Date(t); d.setDate(d.getDate() + 14); return d;
 }
-// true kalau jadwal opname sudah tiba dan cabang ini belum opname sejak jadwal itu
-async function opnamePerlu(cabangId){
+// { aktif, perlu }: aktif = Owner menyalakan opname di cabang ini; perlu = jadwal sudah tiba & belum opname sejak itu
+async function opnameStatus(cabangId){
+  if(!cabangId) return { aktif: false, perlu: false };
+  const { data, error } = await sb.rpc('opname_status', { p_cabang: cabangId });
+  if(error || !data) return { aktif: true, perlu: false };
   const jadwal = jadwalOpnameTerakhir();
-  if(!jadwal || !cabangId) return false;
-  const { data, error } = await sb.rpc('opname_terakhir', { p_cabang: cabangId });
-  if(error) return false;
-  return !data || new Date(data) < jadwal;
+  return { aktif: data.aktif !== false, perlu: data.aktif !== false && !!jadwal && (!data.terakhir || new Date(data.terakhir) < jadwal) };
 }
 let opnameSudahDiingatkan = false;
 async function cekJadwalOpname(){
   if(!navigator.onLine || !currentProfile || currentProfile.role === 'owner') return;
   try{
-    const perlu = await opnamePerlu(getActiveCabangId());
+    const { aktif, perlu } = await opnameStatus(getActiveCabangId());
     const el = document.querySelector('.v[data-v="opname"]');
-    if(el) el.innerHTML = (perlu ? '<span style="color:#e8b923;font-weight:700;">Hari ini</span>' : '') + '<em>›</em>';
+    if(el){
+      el.innerHTML = (perlu ? '<span style="color:#e8b923;font-weight:700;">Hari ini</span>' : '') + '<em>›</em>';
+      el.closest('button').classList.toggle('hidden', !aktif); // dimatikan Owner -> menu disembunyikan
+    }
     if(perlu && !opnameSudahDiingatkan){
       opnameSudahDiingatkan = true;
       showSuccessToast('📋', 'Hari ini jadwal stok opname', currentProfile.role === 'admin'
