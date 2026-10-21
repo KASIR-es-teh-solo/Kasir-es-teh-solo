@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-21.6">
+<meta name="app-version" content="2026-10-21.7">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -2973,7 +2973,16 @@ async function ambilDataTutupKas(){
   // hitung mulai jam 00:00 hari ini, ATAU sejak tutup kas terakhir kalau itu juga hari ini (cegah penjualan pagi terhitung 2x)
   const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
   if(lastKas && lastKas.waktu_tutup && new Date(lastKas.waktu_tutup) > startOfDay) startOfDay.setTime(new Date(lastKas.waktu_tutup).getTime());
-  const kasAwal = lastKas ? Number(lastKas.kas_ditinggal ?? lastKas.kas_fisik) : (patenAktif ? paten : 0);
+  let kasAwal = lastKas ? Number(lastKas.kas_ditinggal ?? lastKas.kas_fisik) : (patenAktif ? paten : 0);
+  // 2026-10-21: kas awal paten dihapus -> semua uang outlet satu angka. Saldo Kas Es Teh S.O.L.O ikut dihitung
+  // (saat simpan, fungsi kas_tutup menolkan saldo itu supaya tidak terhitung dua kali).
+  let kasToko = 0;
+  if(!patenAktif){
+    const kt = await sb.rpc('kas_toko_saldo_tutup', { p_cabang: activeCabangId });
+    if(kt.error) throw new Error('Gagal mengambil Kas Es Teh S.O.L.O: ' + kt.error.message);
+    kasToko = Number(kt.data || 0);
+    kasAwal += kasToko;
+  }
   const [txRes, byRes] = await Promise.all([
     sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','tunai').gt('created_at', startOfDay.toISOString()),
     sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() })
@@ -2983,7 +2992,7 @@ async function ambilDataTutupKas(){
   const biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
   const totalTunai = (txRes.data || []).reduce((a,t)=>a+Number(t.total),0);
   const totalBiaya = biaya.reduce((a,b)=>a+Number(b.jumlah),0);
-  return { paten, patenAktif, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
+  return { paten, patenAktif, kasToko, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
            jumlahTx: (txRes.data || []).length, totalTunai, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya };
 }
 
@@ -3025,15 +3034,15 @@ function kasLangkah(n){
   if(n === 2){
     document.getElementById('kasModalTitle').textContent = '🧮 Rincian Kas';
     const isOwner = currentProfile && currentProfile.role === 'owner';
-    const ketAwal = !d.patenAktif ? (d.adaKasLalu ? 'sisa uang dari tutup kas terakhir' : 'cabang baru, mulai dari nol') : d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
+    const ketAwal = !d.patenAktif ? (d.adaKasLalu ? 'semua uang outlet dari tutup kas terakhir' : 'cabang baru, mulai dari nol') : d.kasAwalPaten ? 'uang kembalian tiap pagi' : (d.adaKasLalu ? 'dari tutup kas terakhir' : 'uang kembalian tiap pagi');
     body.innerHTML = strip + `
       <div class="tk-sub">Dihitung otomatis oleh aplikasi</div>
       <div class="tk-list">
-        <div class="tk-row"><span>Kas awal<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
+        <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Kas sebelumnya'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
         <div class="tk-row"><span>− Uang keluar laci<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
-      <div class="tk-big"><small>Seharusnya ada di laci</small><b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di laci' : 'Seharusnya semua uang outlet'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
       <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
     return;
@@ -3042,7 +3051,7 @@ function kasLangkah(n){
   const alasan = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
   body.innerHTML = strip + `
     <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
-    <div style="font-weight:800;font-size:14px;color:#111;">Jumlah uang di laci sekarang</div>
+    <div style="font-weight:800;font-size:14px;color:#111;">${d.patenAktif ? 'Jumlah uang di laci sekarang' : 'Jumlah semua uang outlet sekarang'}</div>
     <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
     <div id="tkStatus"></div>
     <div id="tkAlasan" class="hidden">
