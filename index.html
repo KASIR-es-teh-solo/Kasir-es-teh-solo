@@ -4344,10 +4344,10 @@ function tampilkanBerandaAdmin(){
       <svg class="a-spark" id="admSpark" viewBox="0 0 100 26" preserveAspectRatio="none"></svg>
       <div class="a-r"><div>${escTG(cab ? 'Kas ' + cab : 'Kas outlet')}<b id="admKas">…</b><span id="admKasRinci"></span></div><div>Online belum cair<b id="admOnline">…</b><span id="admOnlineRinci">Grab / Shopee</span></div></div></div>
     <div class="a-al" id="admWarn" style="display:none;" onclick="tampilkanModulAdmin('persediaan')"></div>
-    <button class="a-besar" onclick="navKe('kasir')">${admIc('kasir')} Buka Kasir</button>
-    <button class="a-besar" style="margin-top:8px;background:transparent;color:#e2c05c;border:1.5px solid #c9a94a;" onclick="bukaBeliStok()">${admIc('beli')} Beli Stok</button>
+    <button class="a-besar" onclick="bukaBeliStok()">${admIc('beli')} Beli Stok</button>
     <div class="a-h">MODUL KENDALI</div>
     ${ADM_BERANDA.map(m => admItem(m)).join('')}
+    <button class="a-besar" style="margin-top:14px;background:transparent;color:#e2c05c;border:1px solid rgba(201,169,74,.55);" onclick="navKe('kasir')">${admIc('kasir')} Buka Kasir</button>
   </div></div>`;
   simpanViewState({ type:'beranda' });
   isiBerandaAdmin();
