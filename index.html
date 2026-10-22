@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-22.1">
+<meta name="app-version" content="2026-10-22.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -4289,7 +4289,7 @@ const ADM_MODUL = {
 };
 const ADM_BERANDA = [
   ['pesanan','Pesanan hari ini','Daftar transaksi & batal','hariIni'],
-  ['stok','Stok & Belanja','Tambah stok, cek stok, belanja','#stokbelanja'],
+  ['stok','Stok & Belanja','Cek stok, belanja, opname','#stokbelanja'],
   ['laporan','Laporan','Ringkasan, biaya, tutup kas','#laporan'],
   ['stempel','Pelanggan & SOP','Stempel pelanggan, SOP menu','#pelanggan'],
   ['karyawan','Karyawan','Akun kasir & yang aktif','karyawan'],
@@ -4416,7 +4416,6 @@ function tampilkanModulAdmin(key){
     <div class="a-top"><div style="display:flex;gap:10px;align-items:center;"><button class="a-ib polos" onclick="tampilkanBeranda()" title="Kembali">${admIc('back')}</button>
       <div><div class="a-t">MENU ADMIN</div><h1 style="margin:0;">${m[0]}</h1></div></div></div>
     ${key === 'profil' ? '' : admSegCabang()}
-    ${key === 'stokbelanja' ? `<button class="a-besar" style="margin:0 0 12px;" onclick="bukaBeliStok()">${admIc('masuk')} Tambah stok${cab ? ' ' + escTG(cab) : ''}</button>` : ''}
     ${m[1].map(it => admItem(it)).join('')}
   </div></div>`;
   if(key === 'stokbelanja') cekJadwalOpname();
@@ -4481,6 +4480,8 @@ function showDashPanel(panelName){
   if(panelName === 'brankas' && !(currentProfile && currentProfile.role === 'owner')) return;
   if(panelName === 'laporan' || panelName === 'menuoutlet'){ tampilkanLaporanTertutup(); return; }
   if(panelName === 'cekstok'){ tampilkanStokTertutup(); return; }
+  // Admin: tombol Beli Stok cukup satu di Beranda (2026-10-22)
+  { const b = document.getElementById('catatPembelianBtn'); if(b) b.classList.toggle('hidden', !!(currentProfile && currentProfile.role === 'admin')); }
   sembunyikanHalamanBaru(); tandaiNavBawah(panelName === 'brankasonline' && currentProfile && currentProfile.role === 'admin' ? 'brankasonline' : '');
   document.getElementById('kasirView').classList.add('hidden');
   document.getElementById('settingsView').classList.add('hidden');
