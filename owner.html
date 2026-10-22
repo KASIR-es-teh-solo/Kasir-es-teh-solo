@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-22.3">
+<meta name="app-version" content="owner-2026-10-22.4">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -48,7 +48,7 @@
   .it{width:100%;display:flex;align-items:center;gap:12px;padding:12px;background:var(--kaca);border:1px solid var(--garis);border-radius:13px;
     margin-bottom:7px;color:var(--teks);text-align:left;cursor:pointer;}
   .it:hover{background:rgba(255,255,255,.08);}
-  .it i{display:flex;width:38px;height:38px;border-radius:10px;background:rgba(201,169,74,.14);color:var(--emas);align-items:center;justify-content:center;flex:none;font-size:19px;}
+  .it i{display:flex;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,rgba(226,192,92,.26),rgba(168,125,30,.08));border:1px solid rgba(201,169,74,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);color:var(--emas1);align-items:center;justify-content:center;flex:none;font-size:20px;}
   .it b{display:block;font-size:14.5px;font-weight:600;}
   .it small{font-size:11.5px;color:var(--redup2);}
   .it .v{margin-left:auto;text-align:right;font-size:12.5px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:4px;}
@@ -144,7 +144,7 @@
       <div class="al" id="aWarn" style="display:none;" onclick="buka('stok')"></div>
       <div class="h">MODUL KENDALI</div>
       <div id="daftarModul"></div>
-      <button class="kasir" onclick="keKasir()"><span data-ic="kasir" style="display:flex;font-size:18px;"></span>Buka aplikasi kasir</button>
+      <button class="kasir" onclick="keKasir()"><span data-ic="kasir" style="display:flex;font-size:18px;"></span>Buka Kasir</button>
       <button class="keluar" onclick="keluar()">Keluar dari akun</button>
     </div>
 
@@ -188,29 +188,30 @@ const rapiNama = n => { let s = String(n || '').replace(/^cabang\s+/i, ''); cons
 const namaCab = id => { const c = cabangList.find(x => x.id === id); return c ? rapiNama(c.nama) : '-'; };
 // ikon garis (tanpa emoji) supaya tampilan rapi & profesional
 const IKON = {
-  uang:'<path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
-  stok:'<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
-  menu:'<path d="M7 3h10l-1 18H8z"/><path d="M6 8h12"/>',
-  karyawan:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.3"/><path d="M16 14c3 0 5 2.2 5 5"/>',
-  cabang:'<path d="M3 10l2-6h14l2 6"/><path d="M4 10v10h16V10"/><path d="M3 10h18M10 20v-5h4v5"/>',
-  laporan:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>',
+  uang:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  stok:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/>',
+  menu:'<path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/>',
+  karyawan:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  cabang:'<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>',
+  laporan:'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
   refresh:'<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
-  kasir:'<path d="M4 4h2l2 11h11l2-8H7"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/>',
-  brankas:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5V7M12 17v-1.5M7 20v1.5M17 20v1.5"/>',
-  beli:'<path d="M6 7h12l-1 13H7z"/><path d="M9 7a3 3 0 016 0"/>',
+  kasir:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  brankas:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m7.9 7.9 2.7 2.7"/><path d="m13.4 10.6 2.7-2.7"/><path d="m7.9 16.1 2.7-2.7"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/>',
+  beli:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'
 };
+const icTebal = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const ic = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const MODUL = [
-  ['uang', 'Uang', 'Kas, Brankas Online, laba'],
-  ['brankas', 'Brankas', 'Saldo, tambah, ambil, riwayat'],
-  ['stok', 'Stok', 'Bahan & cup tiap cabang'],
-  ['beli', 'Pembelian', 'Belanja & beli stok tiap cabang'],
-  ['menu', 'Menu & Harga', 'Harga jual & modal'],
-  ['karyawan', 'Karyawan', 'Aktif, absen, izin'],
-  ['cabang', 'Cabang', 'Daftar cabang'],
+  ['uang', 'Keuangan', 'Kas outlet, Brankas Online & laba bersih'],
+  ['brankas', 'Brankas', 'Saldo, tambah uang, ambil & riwayat'],
+  ['stok', 'Persediaan', 'Stok bahan & cup per cabang'],
+  ['beli', 'Pembelian', 'Belanja harian & beli stok per cabang'],
+  ['menu', 'Menu & Harga', 'Harga jual & harga modal'],
+  ['karyawan', 'Karyawan', 'Aktif, absensi & izin'],
+  ['cabang', 'Cabang', 'Data cabang & pengaturan'],
   ['laporan', 'Laporan', 'Tutup kas & log aktivitas']
 ];
 const cabDipilih = () => pilihan === 'semua' ? cabangList : cabangList.filter(c => c.id === pilihan);
@@ -337,7 +338,7 @@ async function barangHampirHabis(){
 function gambarModul(info){
   // Brankas tidak di daftar: cukup satu tombol di pojok kanan atas
   document.getElementById('daftarModul').innerHTML = MODUL.filter(m => m[0] !== 'brankas').map(([k, judul, ket]) =>
-    `<button class="it" onclick="buka('${k}')"><i>${ic(k)}</i><div><b>${judul}</b><small>${ket}</small></div><span class="v">${(info || {})[k] || ''}<em>›</em></span></button>`).join('');
+    `<button class="it" onclick="buka('${k}')"><i>${icTebal(k)}</i><div><b>${judul}</b><small>${ket}</small></div><span class="v">${(info || {})[k] || ''}<em>›</em></span></button>`).join('');
 }
 // grafik kecil penjualan 7 hari + perbandingan dengan kemarin di jam yang sama
 async function grafikPenjualan(ids, jualHariIni){
