@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-22.2">
+<meta name="app-version" content="2026-10-22.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -788,7 +788,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .adm .a-h{font-size:11px;letter-spacing:1.4px;color:#9fb3a6;font-weight:700;margin:18px 0 8px;}
   .adm .a-it{width:100%;display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:13px;margin-bottom:7px;color:#e8efe9;text-align:left;cursor:pointer;}
   .adm .a-it:hover{background:rgba(255,255,255,.08);}
-  .adm .a-it i{display:flex;width:38px;height:38px;border-radius:10px;background:rgba(201,169,74,.14);color:#c9a94a;align-items:center;justify-content:center;flex:none;font-size:19px;}
+  .adm .a-it i{display:flex;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,rgba(226,192,92,.26),rgba(168,125,30,.08));border:1px solid rgba(201,169,74,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);color:#e2c05c;align-items:center;justify-content:center;flex:none;font-size:20px;}
   .adm .a-it b{display:block;font-size:14.5px;font-weight:600;} .adm .a-it small{font-size:11.5px;color:#8ea596;font-weight:400;}
   .adm .a-it .v{margin-left:auto;text-align:right;font-size:12.5px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:4px;}
   .adm .a-it .v em{font-style:normal;color:#5d7466;font-size:18px;}
@@ -848,32 +848,32 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div class="side-nav-sub">Kasir Online</div>
       </div>
     </div>
-    <button class="side-btn" id="kasirBtn" onclick="showKasirView()"><span class="side-icon">🧾</span><span class="side-label">Kasir (POS)</span></button>
+    <button class="side-btn" id="kasirBtn" onclick="showKasirView()"><span class="side-icon">🧾</span><span class="side-label">Kasir</span></button>
     <button class="side-btn hidden" id="menuOutletBtn" onclick="bukaMenuOutlet()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
     <button class="side-btn" id="sopBtn" onclick="showSOPView()"><span class="side-icon">📋</span><span class="side-label">SOP Menu</span></button>
     <button class="side-btn cart-toggle" id="cartToggleBtn" onclick="toggleCart()"><span class="side-icon">🛒</span><span class="side-label">Keranjang (<span id="cartCountBadge">0</span>)</span></button>
-    <button class="side-btn hidden" id="uangLaciBtn" onclick="bukaUangLaci()"><span class="side-icon">💰</span><span class="side-label">Uang Laci</span></button>
-    <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Kas</span></button>
-    <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja</span></button>
-    <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Hari Ini</span></button>
-    <button class="side-btn hidden" id="stempelBtn" onclick="bukaStempel()"><span class="side-icon">🎟️</span><span class="side-label">Stempel</span></button>
+    <button class="side-btn hidden" id="uangLaciBtn" onclick="bukaUangLaci()"><span class="side-icon">💵</span><span class="side-label">Kas Outlet</span></button>
+    <button class="side-btn hidden" id="kasBtn" onclick="bukaKasModal()"><span class="side-icon">💵</span><span class="side-label">Tutup Kas</span></button>
+    <button class="side-btn hidden" id="belanjaKecilBtn" onclick="bukaBelanjaKecil()"><span class="side-icon">🧊</span><span class="side-label">Belanja Harian</span></button>
+    <button class="side-btn hidden" id="penjualanHariIniBtn" onclick="bukaPenjualanHariIni()"><span class="side-icon">📈</span><span class="side-label">Pesanan Hari Ini</span></button>
+    <button class="side-btn hidden" id="stempelBtn" onclick="bukaStempel()"><span class="side-icon">🎟️</span><span class="side-label">Stempel Pelanggan</span></button>
     <button class="side-btn hidden" id="kasirPengaturanBtn" onclick="bukaPengaturanKasir()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <button class="side-btn hidden" id="izinKeluarBtn" onclick="bukaIzinKeluarModal()"><span class="side-icon">🚶</span><span class="side-label" id="izinKeluarLabel">Izin Keluar</span></button>
     <button class="side-btn hidden" id="transaksiJamBtn" onclick="bukaTransaksiJam()"><span class="side-icon">🧾</span><span class="side-label">Transaksi</span></button>
     <button class="side-btn hidden" id="menuLaporanBtn" onclick="bukaMenuLaporan()"><span class="side-icon">🏪</span><span class="side-label">Menu Outlet</span></button>
-    <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan</span></button>
+    <button class="side-btn hidden" id="navRingkasanBtn" onclick="showDashPanel('ringkasan')"><span class="side-icon">📊</span><span class="side-label">Ringkasan Penjualan</span></button>
     <button class="side-btn hidden" id="navAktifBtn" onclick="showDashPanel('aktif')"><span class="side-icon">🟢</span><span class="side-label">Aktif Sekarang</span></button>
-    <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok</span></button>
+    <button class="side-btn hidden" id="navStokBtn" onclick="showDashPanel('stok')"><span class="side-icon">📦</span><span class="side-label">Stok Bahan</span></button>
     <button class="side-btn hidden" id="navCekStokBtn" onclick="tampilkanStokTertutup()" style="position:relative;"><span class="side-icon">📦</span><span class="side-label">Cek Stok</span><span id="cekStokDot" class="hidden" style="position:absolute;top:6px;right:10px;width:10px;height:10px;border-radius:50%;background:#e53935;"></span></button>
     <button class="side-btn hidden" id="navStokMenipisBtn" onclick="showDashPanel('stokmenipis')"><span class="side-icon">⚠️</span><span class="side-label">Stok Menipis</span></button>
     <button class="side-btn hidden" id="navStokCupBtn" onclick="showDashPanel('stokcup')" style="position:relative;"><span class="side-icon">🥤</span><span class="side-label">Stok Cup</span><span id="stokCupDot" class="hidden" style="position:absolute;top:6px;right:10px;width:10px;height:10px;border-radius:50%;background:#e53935;"></span></button>
     <button class="side-btn hidden" id="navKaryawanBtn" onclick="showDashPanel('karyawan')"><span class="side-icon">👥</span><span class="side-label">Karyawan</span></button>
-    <button class="side-btn hidden" id="navPembelianBtn" onclick="showDashPanel('pembelian')"><span class="side-icon">📥</span><span class="side-label">Pembelian</span></button>
-    <button class="side-btn hidden" id="navBiayaBtn" onclick="showDashPanel('biaya')"><span class="side-icon">💸</span><span class="side-label">Biaya</span></button>
+    <button class="side-btn hidden" id="navPembelianBtn" onclick="showDashPanel('pembelian')"><span class="side-icon">📥</span><span class="side-label">Riwayat Pembelian</span></button>
+    <button class="side-btn hidden" id="navBiayaBtn" onclick="showDashPanel('biaya')"><span class="side-icon">💸</span><span class="side-label">Pengeluaran</span></button>
     <button class="side-btn hidden" id="navBrankasBtn" onclick="showDashPanel('brankas')"><span class="side-icon">🔒</span><span class="side-label">Brankas</span></button>
     <button class="side-btn hidden" id="settingsBtn" onclick="showSettingsView()"><span class="side-icon">⚙️</span><span class="side-label">Pengaturan</span></button>
     <div class="side-spacer"></div>
-    <button class="side-btn" id="sidebarPasswordBtn" onclick="openGantiPasswordModal()"><span class="side-icon">🔑</span><span class="side-label">Password</span></button>
+    <button class="side-btn" id="sidebarPasswordBtn" onclick="openGantiPasswordModal()"><span class="side-icon">🔑</span><span class="side-label">Ganti Password</span></button>
       <button class="side-btn" id="sidebarPusatKendaliBtn" style="display:none" onclick="kePusatKendali()"><span class="side-icon">👑</span><span class="side-label">Pusat Kendali</span></button>
   <button class="side-btn" onclick="doLogout()"><span class="side-icon">🚪</span><span class="side-label">Keluar</span></button>
   </aside>
@@ -1096,7 +1096,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div class="dash-panel hidden" id="dashPanel-stok">
       <div class="tabs" style="margin-bottom:16px;">
         <button class="tab active" id="stokTab-produk" onclick="switchStokTab('produk')">📦 Stok Produk</button>
-        <button class="tab" id="stokTab-bahan" onclick="switchStokTab('bahan')">🧪 Stok Bahan Baku</button>
+        <button class="tab" id="stokTab-bahan" onclick="switchStokTab('bahan')">🧪 Stok Bahan</button>
         <button class="tab" id="stokTab-kelola" onclick="switchStokTab('kelola')">🗂️ Kelola Bahan Baku</button>
         <button class="tab" id="stokTab-resep" onclick="switchStokTab('resep')">📋 Resep (BOM)</button>
         <button class="tab" id="stokTab-rusak" onclick="switchStokTab('rusak')">🗑️ Barang Rusak</button>
@@ -1115,7 +1115,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 
       <div class="stok-tab-content hidden" id="stokTabContent-bahan">
         <div class="dash-section" style="margin-bottom:0;">
-          <h3>🧪 Stok Bahan Baku</h3>
+          <h3>🧪 Stok Bahan</h3>
           <div id="dashBahanBakuStockList"><div class="empty-msg">Memuat...</div></div>
         </div>
       </div>
@@ -1220,8 +1220,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;">🧾 Riwayat Pembelian Bahan Baku</h3>
-          <button class="header-btn gold" id="catatPembelianBtn" onclick="bukaBeliStok()">📦 Beli Stok Bahan</button>
+          <h3 style="margin:0;">🧾 Riwayat Pembelian</h3>
+          <button class="header-btn gold" id="catatPembelianBtn" onclick="bukaBeliStok()">🛍️ Beli Stok</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;">
           <div>
@@ -1244,7 +1244,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div class="dash-cards" style="margin-bottom:18px;">
         <div class="dash-card">
           <span class="icon">💰</span>
-          <div class="label">Saldo Kas Es Teh S.O.L.O</div>
+          <div class="label">Saldo Kas Outlet</div>
           <div class="value" id="kasTokoSaldo">Rp 0</div>
           <div style="font-size:12px;color:#f3e6b5;margin-top:4px;">Uang di luar laci untuk belanja kedai (setoran tutup kas masuk ke sini)</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
@@ -1255,7 +1255,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         </div>
       </div>
       <div class="dash-section" style="margin-bottom:0;">
-        <h3 style="margin:0 0 12px;">📒 Riwayat Kas Es Teh S.O.L.O</h3>
+        <h3 style="margin:0 0 12px;">📒 Riwayat Kas Outlet</h3>
         <div id="kasTokoList"><div class="empty-msg">Memuat...</div></div>
       </div>
     </div>
@@ -1350,7 +1350,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;">💸 Riwayat Biaya Operasional</h3>
+          <h3 style="margin:0;">🧾 Pengeluaran</h3>
           <button class="header-btn gold" onclick="openBiayaModal()">+ Catat Biaya</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;">
@@ -1526,7 +1526,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <!-- belanja kecil dari laci (kasir) -->
 <div class="overlay" id="belanjaKecilOverlay">
   <div class="modal">
-    <h3>🧊 Belanja dari Laci</h3>
+    <h3>🧊 Belanja Harian</h3>
     <p>Catat uang tunai yang diambil dari laci untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas.</p>
     <div class="login-error" id="belanjaKecilError"></div>
     <div class="field">
@@ -1567,7 +1567,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <!-- Hari Ini (kasir & owner, cabang aktif): Penjualan Hari Ini + Transaksi Hari Ini jadi satu, dipisah sekat -->
 <div class="overlay" id="penjualanHariIniOverlay">
   <div class="modal hari-ini-modal">
-    <h3>📈 Hari Ini</h3>
+    <h3>🧾 Pesanan Hari Ini</h3>
     <p id="phiSubjudul" style="font-size:12px;opacity:.95;font-weight:600;">-</p>
     <span id="tjSubjudul" class="hidden"></span>
     <div class="hari-ini-grid">
@@ -1591,7 +1591,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <!-- catat / edit biaya operasional -->
 <div class="overlay" id="biayaOverlay">
   <div class="modal">
-    <h3 id="biayaModalTitle">Catat Biaya Operasional</h3>
+    <h3 id="biayaModalTitle">Catat Pengeluaran</h3>
     <p>Catat pengeluaran non-bahan baku (sewa, listrik, gaji, dll).</p>
     <div class="login-error" id="biayaError"></div>
     <div class="field">
@@ -1632,10 +1632,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <!-- Uang Laci (kasir): Belanja + Hitung/Tutup Kas jadi satu menu -->
 <div class="overlay" id="uangLaciOverlay">
   <div class="modal">
-    <h3>💰 Uang Laci</h3>
+    <h3>💵 Kas Outlet</h3>
     <p>Catat uang yang keluar dari laci, atau hitung kas saat tutup.</p>
-    <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaBelanjaKecil();">🧊 Catat Belanja</button>
-    <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaKasModal();">💵 Hitung / Tutup Kas</button>
+    <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaBelanjaKecil();">🧊 Belanja Harian</button>
+    <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaKasModal();">💵 Tutup Kas</button>
     <button class="modal-close" onclick="tutupUangLaci()">Tutup</button>
   </div>
 </div>
@@ -1643,7 +1643,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <!-- Beli stok bahan (admin & owner, pengganti Catat Pembelian): bahan yang berkurang otomatis saat transaksi -->
 <div class="overlay" id="beliStokOverlay">
   <div class="modal" style="max-width:440px;max-height:92vh;overflow-y:auto;">
-    <h3>📦 Beli Stok Bahan</h3>
+    <h3>🛍️ Beli Stok</h3>
     <p style="margin-bottom:10px;">Pilih bahan yang dibeli.</p>
     <div class="login-error" id="beliStokError"></div>
     <div id="beliStokPilihan" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
@@ -1663,7 +1663,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" id="beliStokDanaLaci" onclick="pilihDanaBeliStok('tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #2e7d32;font-weight:800;font-size:14px;cursor:pointer;">💵 Uang Laci</button>
         <button type="button" id="beliStokDanaLain" onclick="pilihDanaBeliStok('non_tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #1565c0;font-weight:800;font-size:14px;cursor:pointer;">💳 Uang Lainnya</button>
       </div>
-      <button type="button" id="beliStokDanaKas" class="hidden" onclick="pilihDanaBeliStok('kas_toko')" style="width:100%;margin-top:8px;padding:12px 8px;border-radius:10px;border:2px solid #a06000;font-weight:800;font-size:14px;cursor:pointer;">💰 Kas Es Teh S.O.L.O</button>
+      <button type="button" id="beliStokDanaKas" class="hidden" onclick="pilihDanaBeliStok('kas_toko')" style="width:100%;margin-top:8px;padding:12px 8px;border-radius:10px;border:2px solid #a06000;font-weight:800;font-size:14px;cursor:pointer;">💰 Kas Outlet</button>
       <div id="beliStokDanaInfo" style="font-size:11px;opacity:.95;font-weight:600;margin-top:6px;color:var(--ink);"></div>
     </div>
     <button class="login-btn" id="beliStokSimpanBtn" onclick="simpanBeliStok()">Simpan</button>
@@ -2994,7 +2994,7 @@ async function ambilDataTutupKas(){
   let kasToko = 0;
   if(!patenAktif){
     const kt = await sb.rpc('kas_toko_saldo_tutup', { p_cabang: activeCabangId });
-    if(kt.error) throw new Error('Gagal mengambil Kas Es Teh S.O.L.O: ' + kt.error.message);
+    if(kt.error) throw new Error('Gagal mengambil Kas Outlet: ' + kt.error.message);
     kasToko = Number(kt.data || 0);
     kasAwal += kasToko;
   }
@@ -3100,7 +3100,7 @@ function kasHitungLive(){
   al.classList.toggle('hidden', selisih === 0);
   if(!d.patenAktif){ se.innerHTML = '<div class="tk-setor">💵 Semua uang tetap jadi ' + escTG(namaKasCabang()) + '.</div>'; return; }
   const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
-  se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Es Teh S.O.L.O: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
+  se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Outlet: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
 }
 
 function kasPilihAlasan(el, a){
@@ -3253,7 +3253,7 @@ async function tampilkanLaporanKas(d){
     <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
     <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
     ${d.setoran > 0 ? `<div class="lk-judul">Setoran</div>
-    <div class="lk-row"><span>💼 Masuk Kas Es Teh S.O.L.O</span><b>${fmt(d.setoran)}</b></div>
+    <div class="lk-row"><span>💼 Masuk Kas Outlet</span><b>${fmt(d.setoran)}</b></div>
     <div class="lk-row"><span>Ditinggal di laci (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
 
@@ -3383,7 +3383,7 @@ async function loadRiwayatKas(){
         <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
         <span class="time">${new Date(r.waktu_tutup).toLocaleTimeString('id-ID', { timeZone:'Asia/Jakarta' })}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
-          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Ke Kas Es Teh S.O.L.O: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
+          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Ke Kas Outlet: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
@@ -4091,33 +4091,36 @@ function jalankanMenu(k){ const f = AKSI_MENU[k]; if(f) f(); }
 const MENU_PER_ROLE = {
   owner: {
     kategori: [
-      ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📥','Pembelian','pembelian'],['🧊','Belanja','belanja']]],
-      ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
+      ['📦 Persediaan', [['📦','Stok Bahan','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📋','Stok Opname','opname']]],
+      ['🛍️ Pembelian', [['🛍️','Beli Stok','beliStok'],['🧊','Belanja Harian','belanja'],['🧾','Riwayat Pembelian','pembelian']]],
+      ['🎟️ Pelanggan & SOP', [['🎟️','Stempel Pelanggan','stempel'],['📖','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan & Keuangan', [['💵','Kas','kas'],['📊','Ringkasan','ringkasan'],['💰','Laba Bersih','lababersih'],['💸','Biaya','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
-    profil: ['👤 Profil & Pengaturan', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
+    laporan: ['📊 Keuangan & Laporan', [['💵','Tutup Kas','kas'],['📊','Ringkasan Penjualan','ringkasan'],['💰','Laba Bersih','lababersih'],['🧾','Pengeluaran','biaya'],['🔒','Brankas','brankas'],['🛵','Brankas Online','brankasonline'],['💵','Riwayat Tutup Kas','riwayatkas'],['📜','Log Aktivitas','log']]],
+    profil: ['👤 Profil', [['⚙️','Pengaturan','pengaturan'],['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   admin: {
     kategori: [
-      ['📦 Stok & Belanja', [['📦','Stok','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['🧾','Riwayat Beli Stok','pembelian'],['🧊','Belanja','belanja']]],
-      ['👥 Pelanggan & Tim', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop']]]
+      ['📦 Persediaan', [['📦','Stok Bahan','stok'],['⚠️','Stok Menipis','stokmenipis'],['🥤','Stok Cup','stokcup'],['📋','Stok Opname','opname']]],
+      ['🛍️ Pembelian', [['🛍️','Beli Stok','beliStok'],['🧊','Belanja Harian','belanja'],['🧾','Riwayat Pembelian','pembelian']]],
+      ['🎟️ Pelanggan & SOP', [['🎟️','Stempel Pelanggan','stempel'],['📖','SOP Menu','sop']]]
     ],
     nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['laporan','📊','Laporan'],['profil','👤','Profil']],
-    laporan: ['📊 Laporan', [['📊','Ringkasan','ringkasan'],['💸','Biaya','biaya'],['🛵','Brankas Online','brankasonline'],['🧾','Riwayat Tutup Kas','riwayatkas']]],
+    laporan: ['📊 Laporan', [['📊','Ringkasan Penjualan','ringkasan'],['🧾','Pengeluaran','biaya'],['🛵','Brankas Online','brankasonline'],['💵','Riwayat Tutup Kas','riwayatkas']]],
     profil: ['👤 Profil', [['👥','Karyawan','karyawan'],['🔑','Ganti Password','password'],['🚪','Keluar','keluar']]]
   },
   kasir: {
     // cuma 1 kategori -> kotaknya langsung tampil di Beranda (tanpa folder)
     kategori: [
-      ['📋 Menu Lainnya', [['🎟️','Stempel Pelanggan','stempel'],['📋','SOP Menu','sop'],['🫖','Teh Siap Saji','teh']]]
+      ['📋 Menu Lainnya', [['🎟️','Stempel Pelanggan','stempel'],['📖','SOP Menu','sop'],['🫖','Teh Siap Saji','teh']]]
     ],
-    nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['uangLaci','💰','Uang Laci'],['profil','👤','Profil']],
+    nav: [['beranda','🏠','Beranda'],['hariIni','🧾','Pesanan'],['kasir','🛒','Kasir',true],['uangLaci','💵','Kas Outlet'],['profil','👤','Profil']],
     laporan: null,
-    uangLaci: ['💰 Uang Laci', [['🧊','Catat Belanja','belanja'],['💵','Hitung / Tutup Kas','kas']]],
+    uangLaci: ['💵 Kas Outlet', [['🧊','Belanja Harian','belanja'],['💵','Tutup Kas','kas']]],
     profil: ['👤 Profil', [['🔑','Ganti Password','password'],['🚶','Izin Keluar','izin'],['🚪','Keluar','keluar']]]
   }
 };
+
 function menuRoleIni(){ return MENU_PER_ROLE[(currentProfile && currentProfile.role) || 'kasir'] || MENU_PER_ROLE.kasir; }
 function htmlKotakMenu(judul, items){
   return `<div class="bd-kat"><h3>${judul}</h3><div class="bd-grid">` + items.map(([ic, nama, k]) =>
@@ -4227,7 +4230,7 @@ function tampilkanBeranda(){
 }
 // Beranda cuma menampilkan folder kategori; ketuk folder = satu halaman berisi menu kategori itu
 function tampilkanKategori(i){
-  if(currentProfile && currentProfile.role === 'admin'){ tampilkanModulAdmin('stokbelanja'); return; }
+  if(currentProfile && currentProfile.role === 'admin'){ tampilkanModulAdmin('persediaan'); return; }
   const kat = menuRoleIni().kategori[i]; if(!kat){ tampilkanBeranda(); return; }
   tampilkanHalamanBaru('halamanGridView');
   tandaiNavBawah('beranda');
@@ -4246,40 +4249,46 @@ function tampilkanGrid(jenis){
 // Tampilan disamakan dengan halaman Owner (gelap profesional + kartu emas), tapi isinya TETAP fitur Admin saja
 // (tanpa Brankas utama, Laba Bersih, Log, Pengaturan). Ada pindah cabang supaya Admin gampang kontrol & tambah stok tiap cabang.
 const ADM_IKON = {
-  stok:'<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
-  warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
-  cup:'<path d="M6 4h12l-2 17H8z"/><path d="M5 8h14"/>',
+  tutupkas:'<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+  opname:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1"/><path d="m9 14 2 2 4-4"/>',
+  pengeluaran:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
+  beli:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  stok:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/>',
+  warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  cup:'<path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/>',
   masuk:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>',
-  belanja:'<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 016 0v2"/>',
-  uang:'<path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 10v4M18 10v4"/>',
-  laporan:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>',
-  pesanan:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
-  online:'<circle cx="7" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M7 17h5l3-7h3M10 10h4"/>',
-  stempel:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12" stroke-dasharray="2 2"/><path d="M12 10h5M12 14h3"/>',
-  sop:'<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h4"/>',
-  karyawan:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.3"/><path d="M16 14c3 0 5 2.2 5 5"/>',
-  profil:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',
-  kunci:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
-  keluar:'<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
-  kasir:'<path d="M4 4h2l2 11h11l2-8H7"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/>',
+  belanja:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M12 10v6M9 13h6"/>',
+  uang:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  laporan:'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  pesanan:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/>',
+  online:'<circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
+  stempel:'<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+  sop:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  karyawan:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  profil:'<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
+  kunci:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  keluar:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  kasir:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
   refresh:'<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>'
 };
 const admIc = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ADM_IKON[k] || ''}</svg>`;
 // [ikon, judul, keterangan, aksi]
 const ADM_MODUL = {
-  stokbelanja: ['Stok & Belanja', [
-    ['stok','Stok','Stok bahan cabang ini','stok'],
+  keuangan: ['Keuangan', [
+    ['pengeluaran','Pengeluaran','Belanja & biaya outlet','biaya'],
+    ['online','Brankas Online','Grab / Shopee belum cair','brankasonline']]],
+  persediaan: ['Persediaan', [
+    ['stok','Stok Bahan','Stok bahan & cup cabang ini','stok'],
     ['warn','Stok Menipis','Bahan yang hampir habis','stokmenipis'],
     ['cup','Stok Cup','Sisa cup & perkiraan habis','stokcup'],
-    ['belanja','Belanja','Catat belanja dari laci','belanja'],
-    ['pesanan','Riwayat Beli Stok','Catatan belanja bahan yang sudah masuk','pembelian'],
-    ['stok','Stok Opname','Hitung barang tiap 2 minggu (Jumat)','opname']]],
+    ['opname','Stok Opname','Hitung barang tiap 2 minggu (Jumat)','opname']]],
+  pembelian: ['Pembelian', [
+    ['belanja','Belanja Harian','Catat belanja dari laci','belanja'],
+    ['pesanan','Riwayat Pembelian','Beli stok yang sudah masuk','pembelian']]],
   laporan: ['Laporan', [
-    ['laporan','Ringkasan','Penjualan per hari','ringkasan'],
-    ['uang','Biaya','Pengeluaran outlet','biaya'],
-    ['online','Brankas Online','Grab / Shopee belum cair','brankasonline'],
-    ['pesanan','Riwayat Tutup Kas','Hitung kas tiap malam','riwayatkas']]],
+    ['laporan','Ringkasan Penjualan','Penjualan per hari','ringkasan'],
+    ['tutupkas','Riwayat Tutup Kas','Tutup kas tiap malam','riwayatkas']]],
   pelanggan: ['Pelanggan & SOP', [
     ['stempel','Stempel Pelanggan','Kartu stempel & tukar gratis','stempel'],
     ['sop','SOP Menu','Takaran & cara membuat','sop']]],
@@ -4288,12 +4297,14 @@ const ADM_MODUL = {
     ['keluar','Keluar','Keluar dari akun','keluar']]]
 };
 const ADM_BERANDA = [
-  ['pesanan','Pesanan hari ini','Daftar transaksi & batal','hariIni'],
-  ['stok','Stok & Belanja','Cek stok, belanja, opname','#stokbelanja'],
-  ['laporan','Laporan','Ringkasan, biaya, tutup kas','#laporan'],
-  ['stempel','Pelanggan & SOP','Stempel pelanggan, SOP menu','#pelanggan'],
-  ['karyawan','Karyawan','Akun kasir & yang aktif','karyawan'],
-  ['profil','Profil','Ganti password, keluar','#profil']
+  ['pesanan','Pesanan Hari Ini','Daftar transaksi & batal','hariIni'],
+  ['uang','Keuangan','Pengeluaran & Brankas Online','#keuangan'],
+  ['stok','Persediaan','Stok bahan & cup, stok opname','#persediaan'],
+  ['beli','Pembelian','Beli stok & belanja harian','#pembelian'],
+  ['stempel','Pelanggan & SOP','Stempel pelanggan & SOP menu','#pelanggan'],
+  ['karyawan','Karyawan','Aktif, absensi & izin','karyawan'],
+  ['laporan','Laporan','Ringkasan penjualan & tutup kas','#laporan'],
+  ['profil','Profil','Ganti password & keluar','#profil']
 ];
 const admNamaCabang = id => { const c = (userAllowedCabang || []).find(x => x.id === id); let s = String((c && c.nama) || '').replace(/^cabang\s+/i, ''); const t = s.replace(/^es teh solo\s+/i, ''); if(t.length > 2) s = t; return s.replace(/\b\w/g, x => x.toUpperCase()); };
 function admJalankan(aksi){
@@ -4327,20 +4338,23 @@ function tampilkanBerandaAdmin(){
   const cab = admNamaCabang(activeCabangId);
   v.innerHTML = `<div class="adm"><div class="adm-w">
     <div class="a-top"><div><div class="a-t">PANEL ADMIN · ES TEH S.O.L.O</div><h1>${salamWaktu()}, Boss ${escTG(nama.replace(/\s*\(Admin\)\s*/i, '').replace(/^boss\s+/i, ''))}</h1><div class="a-d">${tgl}${(userAllowedCabang || []).length < 2 && cab ? ' · ' + escTG(cab) : ''}</div></div>
-      <div style="display:flex;gap:8px;"><button class="a-ib" onclick="tampilkanBeranda()" title="Perbarui">${admIc('refresh')}</button><button class="a-ib" style="font-size:13px;font-weight:700;" onclick="tampilkanModulAdmin('profil')">${escTG(inisial)}</button></div></div>
+</div>
     ${admSegCabang()}
     <div class="a-gold"><small>Penjualan hari ini${cab ? ' · ' + escTG(cab) : ''}</small><b class="n" id="admJual">…</b><span class="a-naik" id="admBanding"></span>
       <svg class="a-spark" id="admSpark" viewBox="0 0 100 26" preserveAspectRatio="none"></svg>
       <div class="a-r"><div>${escTG(cab ? 'Kas ' + cab : 'Kas outlet')}<b id="admKas">…</b><span id="admKasRinci"></span></div><div>Online belum cair<b id="admOnline">…</b><span id="admOnlineRinci">Grab / Shopee</span></div></div></div>
-    <div class="a-al" id="admWarn" style="display:none;" onclick="tampilkanModulAdmin('stokbelanja')"></div>
+    <div class="a-al" id="admWarn" style="display:none;" onclick="tampilkanModulAdmin('persediaan')"></div>
     <button class="a-besar" onclick="navKe('kasir')">${admIc('kasir')} Buka Kasir</button>
-    <button class="a-besar" style="margin-top:8px;background:transparent;color:#e2c05c;border:1.5px solid #c9a94a;" onclick="bukaBeliStok()">${admIc('masuk')} Catat Beli Stok Bahan</button>
-    <div class="a-h">MENU ADMIN</div>
+    <button class="a-besar" style="margin-top:8px;background:transparent;color:#e2c05c;border:1.5px solid #c9a94a;" onclick="bukaBeliStok()">${admIc('beli')} Beli Stok</button>
+    <div class="a-h">MODUL KENDALI</div>
     ${ADM_BERANDA.map(m => admItem(m)).join('')}
   </div></div>`;
   simpanViewState({ type:'beranda' });
   isiBerandaAdmin();
 }
+// ikon Perbarui dihapus (ikut Pusat Kendali Owner): Beranda Admin diperbarui otomatis tiap 1 menit & saat aplikasi dibuka lagi
+setInterval(() => { const v = document.getElementById('berandaView'); if(document.visibilityState === 'visible' && v && v.classList.contains('adm-on') && !v.classList.contains('hidden') && currentProfile && currentProfile.role === 'admin') isiBerandaAdmin(); }, 60000);
+document.addEventListener('visibilitychange', () => { const v = document.getElementById('berandaView'); if(document.visibilityState === 'visible' && v && v.classList.contains('adm-on') && !v.classList.contains('hidden') && currentProfile && currentProfile.role === 'admin') isiBerandaAdmin(); });
 function admSetV(aksi, html){ const el = document.querySelector(`#berandaView .v[data-v="${aksi}"]`); if(el) el.innerHTML = html + '<em>›</em>'; }
 async function isiBerandaAdmin(){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
@@ -4396,7 +4410,7 @@ async function isiBerandaAdmin(){
       w.innerHTML = admIc('warn') + `<span>${habis.length} barang hampir habis: ${escTG(habis.slice(0, 3).join(', '))}${habis.length > 3 ? ', …' : ''}</span>`;
       w.style.display = '';
     }
-    admSetV('#stokbelanja', habis.length ? `<span class="bd kn">${habis.length} menipis</span>` : '<span class="bd hj">aman</span>');
+    admSetV('#persediaan', habis.length ? `<span class="bd kn">${habis.length} menipis</span>` : '<span class="bd hj">aman</span>');
   }catch(e){}
   try{
     const { data } = await sb.from('user_presence').select('user_id, cabang_id, user:user_id(role)').eq('cabang_id', cabangId);
@@ -4414,11 +4428,11 @@ function tampilkanModulAdmin(key){
   const cab = admNamaCabang(activeCabangId);
   v.innerHTML = `<div class="adm"><div class="adm-w">
     <div class="a-top"><div style="display:flex;gap:10px;align-items:center;"><button class="a-ib polos" onclick="tampilkanBeranda()" title="Kembali">${admIc('back')}</button>
-      <div><div class="a-t">MENU ADMIN</div><h1 style="margin:0;">${m[0]}</h1></div></div></div>
+      <div><div class="a-t">MODUL</div><h1 style="margin:0;">${m[0]}</h1></div></div></div>
     ${key === 'profil' ? '' : admSegCabang()}
     ${m[1].map(it => admItem(it)).join('')}
   </div></div>`;
-  if(key === 'stokbelanja') cekJadwalOpname();
+  if(key === 'persediaan') cekJadwalOpname();
 }
 async function isiRingkasBeranda(role){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
@@ -7761,7 +7775,7 @@ function pilihDanaBeliStok(d){
     kas.style.background = d === 'kas_toko' ? '#a06000' : '#fff'; kas.style.color = d === 'kas_toko' ? '#fff' : '#a06000'; }
   document.getElementById('beliStokDanaInfo').textContent = d === 'tunai'
     ? 'Uang diambil dari laci kasir. Saldo kas ikut berkurang.'
-    : d === 'kas_toko' ? 'Dibayar dari Kas Es Teh S.O.L.O. Uang laci tidak berubah.'
+    : d === 'kas_toko' ? 'Dibayar dari Kas Outlet. Uang laci tidak berubah.'
     : 'Uang pribadi / transfer. Saldo laci tidak berubah.';
 }
 const BELI_STOK_URUT = ['cup 18 oz','cup 22 oz','cup 16 oz','sedotan','kopi ice roast','milo','teh original'];
@@ -7832,7 +7846,7 @@ async function simpanBeliStok(){
   btn.disabled = false; btn.textContent = 'Simpan';
   if(error) return gagal('Gagal menyimpan: ' + error.message);
   tutupBeliStok();
-  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : beliStokDana === 'kas_toko' ? 'Kas Es Teh S.O.L.O' : 'uang lainnya'}). Stok sudah bertambah.`);
+  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : beliStokDana === 'kas_toko' ? 'Kas Outlet' : 'uang lainnya'}). Stok sudah bertambah.`);
   try{ await loadPembelianData(); }catch(_){}
   if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
@@ -8372,7 +8386,7 @@ function pakaiMenuToggle(){ if(document.body.classList.contains('ui-baru')) retu
 const STOK_LIPAT = [['stokmenipis','⚠️ Stok Menipis'],['stokcup','🥤 Stok Cup']];
 const grupLipat = p => LAPORAN_LIPAT.some(([x])=>x===p) ? 'laporan' : (STOK_LIPAT.some(([x])=>x===p) ? 'stok' : null);
 // [judul, aksi, khusus owner?] — admin tidak boleh kas/belanja/transaksi kasir
-const OUTLET_DI_LAPORAN = [['🎟️ Stempel Pelanggan', ()=>bukaStempel(), false],['📋 SOP Menu', ()=>showSOPView(), false],['💵 Kas', ()=>bukaKasModal(), true],['🧊 Belanja', ()=>bukaBelanjaKecil(), true],['📈 Hari Ini', ()=>bukaPenjualanHariIni(), true]];
+const OUTLET_DI_LAPORAN = [['🎟️ Stempel Pelanggan', ()=>bukaStempel(), false],['📖 SOP Menu', ()=>showSOPView(), false],['💵 Tutup Kas', ()=>bukaKasModal(), true],['🧊 Belanja Harian', ()=>bukaBelanjaKecil(), true],['🧾 Pesanan Hari Ini', ()=>bukaPenjualanHariIni(), true]];
 function siapkanBarLaporan(){
   if(!document.getElementById('laporanOutletBars')){
     const pertama = document.getElementById('dashPanel-' + LAPORAN_LIPAT[0][0]);
@@ -8675,14 +8689,14 @@ function kasTokoBiaya(){
 
 async function kasTokoDariBrankas(){
   if(!(currentProfile && currentProfile.role === 'owner')){ alert('Khusus Owner.'); return; }
-  const a = await mintaRupiah('Ambil berapa dari Brankas ke Kas Es Teh S.O.L.O?', '');
+  const a = await mintaRupiah('Ambil berapa dari Brankas ke Kas Outlet?', '');
   if(a === null) return;
   const jumlah = Number(String(a).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0){ alert('Isi jumlah yang valid.'); return; }
-  if(!confirm(`Ambil ${fmt(jumlah)} dari Brankas ke Kas Es Teh S.O.L.O?`)) return;
+  if(!confirm(`Ambil ${fmt(jumlah)} dari Brankas ke Kas Outlet?`)) return;
   const { error } = await sb.rpc('kas_toko_dari_brankas', { p_cabang: activeCabangId, p_jumlah: jumlah, p_keterangan: null });
   if(error){ alert('Gagal: ' + error.message); return; }
-  showSuccessToast('⬅️', 'Masuk Kas Es Teh S.O.L.O', fmt(jumlah));
+  showSuccessToast('⬅️', 'Masuk Kas Outlet', fmt(jumlah));
   await loadKasToko(); if(typeof refreshBrankasHeader === 'function') refreshBrankasHeader();
 }
 
@@ -8899,7 +8913,7 @@ let editingBiayaId = null;
 
 function openBiayaModal(){
   editingBiayaId = null;
-  document.getElementById('biayaModalTitle').textContent = 'Catat Biaya Operasional';
+  document.getElementById('biayaModalTitle').textContent = 'Catat Pengeluaran';
   document.getElementById('biayaKategori').value = 'Sewa';
   document.getElementById('biayaDeskripsi').value = '';
   document.getElementById('biayaJumlah').value = '';
@@ -8910,7 +8924,7 @@ function openBiayaModal(){
 
 function openEditBiayaModal(b){
   editingBiayaId = b.id;
-  document.getElementById('biayaModalTitle').textContent = 'Edit Biaya Operasional';
+  document.getElementById('biayaModalTitle').textContent = 'Edit Pengeluaran';
   document.getElementById('biayaKategori').value = b.kategori;
   document.getElementById('biayaDeskripsi').value = b.deskripsi || '';
   setInputRupiah('biayaJumlah', b.jumlah);
