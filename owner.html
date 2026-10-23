@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-23.1">
+<meta name="app-version" content="owner-2026-10-23.2">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -430,7 +430,7 @@ async function muatUang(){
 
     ${dana}
     <div class="sec"><h3>Brankas Online <small>Grab / Shopee, belum cair</small></h3>
-      ${online.map(o => `<div class="baris"><span><b>${esc(namaCab(o.c.id))}</b><small>Grab ${fmt(((o.d.per_platform || {}).grab || {}).saldo)} · Shopee ${fmt(((o.d.per_platform || {}).shopee || {}).saldo)}</small></span><span class="kanan">${fmt(o.d.saldo)}</span></div>`).join('')}
+      ${online.map(o => htmlBrankasOnline(o)).join('')}
     </div>
 
     <div class="sec"><h3>Laba bersih 30 hari <small>perkiraan</small></h3>
@@ -529,6 +529,34 @@ function folderPengeluaran(rows){
       ${g.isi.map(b => `<div class="baris"><span>${esc(b.kategori)} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'Kas Outlet' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
     </details>`;
   }).join('');
+}
+
+// ---------- Brankas Online di Pusat Kendali: saldo per platform + 1 tombol Cairkan ke Kas Outlet + riwayat ----------
+const BO_PF = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain' };
+let boBuka = {};
+function htmlBrankasOnline(o){
+  const pp = o.d.per_platform || {}, id = o.c.id;
+  const pfs = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo) !== 0);
+  const riw = (o.d.riwayat || []).slice(0, 15);
+  const lbl = r => r.jenis === 'masuk' ? `${BO_PF[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
+    : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_PF[r.platform] || ''}`
+    : r.jenis === 'cair' ? `🏦 ${BO_PF[r.platform] || ''} cair ke rekening`
+    : `💵 ${BO_PF[r.platform] || ''} dicairkan ke Kas Outlet`;
+  return `<div class="sub">${esc(namaCab(id).toUpperCase())} · TOTAL ${fmt(o.d.saldo)}</div>
+    ${pfs.map(pf => `<div class="baris"><span>${BO_PF[pf]}<small>Bulan ini ${Number((pp[pf] || {}).pesanan_bulan || 0)} pesanan · belum cair</small></span>
+      <span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt((pp[pf] || {}).saldo || 0)}
+      ${Number((pp[pf] || {}).saldo) > 0 ? `<button class="btn" onclick="boCairkan('${id}','${pf}',${Number((pp[pf] || {}).saldo)})">💵 Cairkan</button>` : ''}</span></div>`).join('')}
+    <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatUang()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>
+    ${boBuka[id] ? (riw.map(r => `<div class="baris"><span>${lbl(r)}<small>${r.jenis === 'masuk' ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }) : jamWIB(r.waktu) + ' · ' + esc(r.pencatat || '-')}</small></span><span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada riwayat.</div>') : ''}`;
+}
+async function boCairkan(cabangId, pf, saldo){
+  const r = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan belum cair ${fmt(saldo)}.\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, saldo, false);
+  if(!r) return;
+  if(r.jumlah > saldo){ alert('Uang diterima tidak boleh lebih dari ' + fmt(saldo)); return; }
+  const { data, error } = await sb.rpc('brankas_online_cairkan', { p_cabang: cabangId, p_platform: pf, p_diterima: r.jumlah });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  alert(`✅ ${BO_PF[pf]} dicairkan.\nMasuk Kas Outlet ${fmt(data.diterima)} · potongan komisi ${fmt(data.komisi)}`);
+  muatSemua();
 }
 
 // ---------- amplop: Dana Stok & Dana Operasional (disisihkan tiap tutup kas) ----------
