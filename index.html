@@ -3123,7 +3123,7 @@ function htmlAmplopTK(d, fisik){
   const r = d.danaRincian || {};
   const ketOp = [r.sewa ? 'sewa' : '', r.listrik ? 'listrik' : '', r.gaji ? 'gaji' : ''].filter(Boolean).join(', ');
   return `<div class="tk-setor" style="line-height:1.55;">✉️ <b style="font-size:15px;">Masukkan ke amplop:</b><br>
-    📦 Dana Stok: <b>${fmt(a.ds)}</b><br><span>cup, teh, bubuk rasa, dll. sesuai yang laku${r.gas ? ' + gas' : ''}</span><br>
+    📦 Dana Stok: <b>${fmt(a.ds)}</b><br><span>cup, teh, bubuk rasa, dll. sesuai yang laku (tunai + Grab/Shopee)${r.gas ? ' + gas' : ''}</span><br>
     🏠 Dana Operasional: <b>${fmt(a.dop)}</b>${ketOp ? '<br><span>' + ketOp + '</span>' : ''}<br>
     💵 Sisa di Kas Outlet (laci): <b>${fmt(a.sisa)}</b>${(a.ds < (d.danaStok||0) || a.dop < (d.danaOperasional||0)) ? '<br><span style="color:#c0392b;">Uang laci kurang, amplop diisi semampunya.</span>' : ''}</div>`;
 }
