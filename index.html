@@ -8896,16 +8896,15 @@ async function loadBrankasOnline(){
       <div class="bo-nama">${BO_NAMA[pf]} · belum cair</div>
       <div class="bo-saldo">${fmt(d.saldo || 0)}</div>
       <div class="bo-info">Bulan ini: <b>${d.pesanan_bulan || 0}</b> pesanan · ${fmt(d.masuk_bulan || 0)} (harga outlet)<br>
-        Cair ke rekening: ${fmt(d.cair_bulan || 0)}${Number(d.ke_laci_bulan) > 0 ? ' · ke Kas Outlet: ' + fmt(d.ke_laci_bulan) : ''}</div>
-      <div class="bo-btn"><button class="b1" onclick="brankasOnlineCair('${pf}')">🏦 Sudah cair ke rekening</button>
-        <button class="b2" onclick="brankasOnlineKeLaci('${pf}')">➡️ Masukkan ke Kas Outlet</button></div>
+        Sudah dicairkan ke Kas Outlet: ${fmt(Number(d.ke_laci_bulan || 0) + Number(d.cair_bulan || 0))}</div>
+      <div class="bo-btn"><button class="b1" style="flex:1;font-size:15px;padding:11px;" onclick="brankasOnlineCairkan('${pf}')">💵 Cairkan ke Kas Outlet</button></div>
     </div>`;
   }).join('');
   const rows = data.riwayat || [];
   const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
     : r.jenis === 'cair' ? `🏦 ${BO_NAMA[r.platform] || 'Online'} cair ke rekening · diterima ${fmt(r.diterima || 0)}`
-    : r.jenis === 'selisih' ? '🧹 Sisa dikosongkan (tidak masuk Kas Outlet)'
-    : `➡️ ${BO_NAMA[r.platform] || 'Online'} dimasukkan ke Kas Outlet`;
+    : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_NAMA[r.platform] || 'Online'}`
+    : `💵 ${BO_NAMA[r.platform] || 'Online'} dicairkan ke Kas Outlet`;
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>{
     const tgl = new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
     const masuk = r.jenis === 'masuk';
@@ -8917,41 +8916,21 @@ async function loadBrankasOnline(){
   }).join('') + `</div>` : '<div class="empty-msg">Belum ada pesanan online.</div>';
 }
 
-// Uang Grab/Shopee sudah ditransfer ke rekening -> saldo platform dikosongkan, laci TIDAK berubah
-async function brankasOnlineCair(pf){
+// 2026-10-23: 1 tombol "Cairkan" (permintaan Boss Leo): seluruh saldo platform cair, uang yang diterima langsung masuk Kas Outlet,
+// selisihnya otomatis tercatat sebagai potongan komisi. Kas Outlet langsung bertambah tanpa menunggu tutup kas.
+async function brankasOnlineCairkan(pf){
   const role = currentProfile && currentProfile.role;
   if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
   const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
   if(saldo <= 0){ alert(`${BO_NAMA[pf]} belum ada yang perlu dicairkan.`); return; }
-  const a = await mintaRupiah(`${BO_NAMA[pf]}\nPesanan yang cair (harga outlet). Belum cair sekarang ${fmt(saldo)}:`, String(saldo));
-  if(a === null) return;
-  const jumlah = Number(String(a).replace(/[^0-9]/g,''));
-  if(!jumlah || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
-  const b = await mintaRupiah(`Uang yang benar-benar MASUK ke rekening ${BO_NAMA[pf]} (setelah potongan komisi):`, '');
+  const b = await mintaRupiah(`Cairkan ${BO_NAMA[pf]}\nPesanan belum cair: ${fmt(saldo)}\n\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, String(saldo));
   if(b === null) return;
   const diterima = Number(String(b).replace(/[^0-9]/g,''));
-  if(isNaN(diterima) || String(b).trim() === ''){ alert('Isi jumlah uang yang masuk rekening.'); return; }
-  if(!confirm(`${BO_NAMA[pf]} cair ke rekening:\nPesanan ${fmt(jumlah)} · diterima ${fmt(diterima)} · potongan ${fmt(jumlah - diterima)}\n\nKas Outlet tidak berubah. Simpan?`)) return;
-  const { error } = await sb.rpc('brankas_online_catat', { p_cabang: activeCabangId, p_platform: pf, p_jenis: 'cair', p_jumlah: jumlah, p_diterima: diterima, p_keterangan: null });
+  if(String(b).trim() === '' || isNaN(diterima) || diterima > saldo){ alert(`Isi antara 0 sampai ${fmt(saldo)}.`); return; }
+  if(!confirm(`${BO_NAMA[pf]} dicairkan:\nPesanan ${fmt(saldo)}\nMasuk Kas Outlet ${fmt(diterima)}\nPotongan komisi ${fmt(saldo - diterima)}\n\nPastikan uangnya benar-benar dimasukkan ke Kas Outlet. Simpan?`)) return;
+  const { error } = await sb.rpc('brankas_online_cairkan', { p_cabang: activeCabangId, p_platform: pf, p_diterima: diterima });
   if(error){ alert('Gagal: ' + error.message); return; }
-  showSuccessToast('🏦', 'Tercatat cair ke rekening', `${BO_NAMA[pf]} diterima ${fmt(diterima)}`);
-  await loadBrankasOnline();
-}
-
-// uangnya dimasukkan ke laci kasir -> hitungan kas laci ikut bertambah
-async function brankasOnlineKeLaci(pf){
-  const role = currentProfile && currentProfile.role;
-  if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
-  const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
-  if(saldo <= 0){ alert(`${BO_NAMA[pf]} masih kosong.`); return; }
-  const a = await mintaRupiah(`Masukkan berapa ke Kas Outlet?\n${BO_NAMA[pf]} belum cair: ${fmt(saldo)}`, String(saldo));
-  if(a === null) return;
-  const jumlah = Number(String(a).replace(/[^0-9]/g,''));
-  if(!jumlah || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
-  if(!confirm(`Pindahkan ${fmt(jumlah)} dari ${BO_NAMA[pf]} ke Kas Outlet?\n\nPastikan uangnya benar-benar dimasukkan ke Kas Outlet.`)) return;
-  const { error } = await sb.rpc('brankas_online_catat', { p_cabang: activeCabangId, p_platform: pf, p_jenis: 'ke_laci', p_jumlah: jumlah, p_diterima: null, p_keterangan: null });
-  if(error){ alert('Gagal: ' + error.message); return; }
-  showSuccessToast('➡️', 'Masuk ke Kas Outlet', `${fmt(jumlah)} dari ${BO_NAMA[pf]}`);
+  showSuccessToast('💵', 'Masuk Kas Outlet', `${fmt(diterima)} dari ${BO_NAMA[pf]}`);
   await loadBrankasOnline();
   if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader();
 }
