@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-23.3">
+<meta name="app-version" content="owner-2026-10-23.4">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -173,6 +173,9 @@
 </div>
 
 <script>
+// Nama tampilan kategori (data tetap Tabungan / KUR BRI)
+const LABEL_KAT = { 'Tabungan': 'Simpanan Harian', 'KUR BRI': 'Setoran Harian' };
+const labelKat = k => LABEL_KAT[k] || k;
 const SUPABASE_URL = "https://ywoytgapbshpzrdwdtel.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -485,7 +488,7 @@ async function muatBeli(){
   // riwayat gabungan per tanggal
   const riwayat = [
     ...beli.map(r => ({ t: r.created_at, cab: r.cabang_id, judul: `📦 Beli ${(r.bahan && r.bahan.nama) || '-'} ${Number(r.jumlah).toLocaleString('id-ID')} ${(r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''}`, oleh: r.oleh && r.oleh.nama, dana: r.sumber_dana, n: r.total, ket: r.harga_satuan ? '@' + rp(r.harga_satuan) : '' })),
-    ...belanja.map(r => ({ t: r.created_at, cab: r.cabang_id, judul: `🧾 ${r.kategori}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, oleh: r.oleh && r.oleh.nama, dana: r.sumber_dana, n: r.jumlah, ket: '' }))
+    ...belanja.map(r => ({ t: r.created_at, cab: r.cabang_id, judul: `🧾 ${labelKat(r.kategori)}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, oleh: r.oleh && r.oleh.nama, dana: r.sumber_dana, n: r.jumlah, ket: '' }))
   ].sort((a, b) => new Date(b.t) - new Date(a.t));
   let tglLalu = '';
   const isiRiwayat = riwayat.map(r => {
@@ -526,7 +529,7 @@ function folderPengeluaran(rows){
     const hari = g.d.toLocaleDateString('id-ID', { weekday:'long' });
     const tgl = g.d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
     return `<details class="fold"><summary><span class="fic">📁</span><span class="ft"><b>${esc(hari)}, ${esc(tgl)}</b><small>${g.isi.length} pengeluaran</small></span><span class="kanan min">− ${fmt(tot)}</span><span class="pan">▾</span></summary>
-      ${g.isi.map(b => `<div class="baris"><span>${esc(b.kategori)} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'Kas Outlet' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
+      ${g.isi.map(b => `<div class="baris"><span>${esc(labelKat(b.kategori))} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'Kas Outlet' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
     </details>`;
   }).join('');
 }
@@ -583,7 +586,7 @@ async function muatDana(cabs){
   const rows = [
     ...(masuk.data || []).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.pos], judul: r.sumber === 'tutup_kas' ? 'Disisihkan saat tutup kas' : (r.keterangan || (r.jenis === 'masuk' ? 'Tambah manual' : 'Ambil manual')), n: (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah) })),
     ...(beli.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `Beli ${(r.bahan && r.bahan.nama) || '-'} ${Number(r.jumlah).toLocaleString('id-ID')} ${(r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''}`, n: -Number(r.total) })),
-    ...(keluar.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `${r.kategori}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, n: -Number(r.jumlah) }))
+    ...(keluar.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `${labelKat(r.kategori)}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, n: -Number(r.jumlah) }))
   ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 30);
   const satu = cabs.length === 1 ? cabs[0] : null;
   const cfg = satu ? ((bt.data || []).find(x => x.cabang_id === satu.id) || { gaji_aktif:false, gas_per_hari:1650 }) : null;

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-23.3">
+<meta name="app-version" content="2026-10-23.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1021,7 +1021,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">📈</span>
           <div class="label">Laba Bersih Hari Ini</div>
           <div class="value" id="dashLabaHariIni">Rp 0</div>
-          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Tabungan, bayar hutang bahan &amp; es batu (sudah di modal) tidak memotong laba</div>
+          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bayar hutang bahan &amp; es batu (sudah di modal) tidak memotong laba</div>
         </div>
         <div class="dash-card hidden" id="dashKasCard">
           <span class="icon">💵</span>
@@ -1272,7 +1272,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
       <div class="dash-section" style="margin-bottom:0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;">📒 Riwayat Tabungan</h3>
+          <h3 style="margin:0;">📒 Riwayat Simpanan</h3>
           <div style="display:flex;gap:8px;">
             <button class="header-btn" style="background:#fff;color:#1b5e20;border-color:#fff;" onclick="tambahUangBrankas()">+ Tambah Uang</button>
             <button class="header-btn" style="background:#fff;color:#c62828;border-color:#fff;" onclick="ambilDariBrankas()">− Ambil</button>
@@ -1539,18 +1539,18 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" class="metode-bayar-btn" data-kat="Gas" onclick="pilihKategoriBelanja(this)">🔥 Gas</button>
         <button type="button" class="metode-bayar-btn" data-kat="Kebersihan" onclick="pilihKategoriBelanja(this)">🧽 Kebersihan</button>
         <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
-        <button type="button" class="metode-bayar-btn" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Tabungan</button>
-        <button type="button" class="metode-bayar-btn" id="btnKurBri" data-kat="KUR BRI" onclick="pilihKategoriBelanja(this)">💳 KUR BRI</button>
+        <button type="button" class="metode-bayar-btn" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Simpanan Harian</button>
+        <button type="button" class="metode-bayar-btn" id="btnKurBri" data-kat="KUR BRI" onclick="pilihKategoriBelanja(this)">📥 Setoran Harian</button>
         <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
       </div>
       <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         🧾 Untuk <b>bayar bahan yang sudah diantar sebelumnya</b> (misal gula). Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        💰 Uang tabungan diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
+        💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
       <div id="belanjaInfoKur" class="hidden" style="margin-top:8px;background:#e3f2fd;border:1px solid #42a5f5;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#0d47a1;">
-        💳 Setoran harian KUR BRI. Uang diambil dari Kas Outlet lalu dimasukkan ke tandon KUR, dan otomatis tercatat di Tandon Dollar. <b>Tidak mengurangi laba</b> (diganti Owner).
+        📥 Setoran harian diambil dari Kas Outlet lalu disimpan terpisah. <b>Tidak mengurangi laba</b> (diganti Owner).
       </div>
     </div>
     <div class="field">
@@ -1611,7 +1611,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <option value="Perawatan Alat">Perawatan Alat</option>
         <option value="Lainnya">Lainnya</option>
         <option value="Bayar Hutang Bahan">Bayar Hutang Bahan (tidak mengurangi laba)</option>
-        <option value="KUR BRI">KUR BRI (masuk tandon KUR, tidak mengurangi laba)</option>
+        <option value="KUR BRI">Setoran Harian (tidak mengurangi laba)</option>
       </select>
     </div>
     <div class="field">
@@ -3043,8 +3043,8 @@ function kasLangkah(n){
   const d = kasTK; if(!d) return;
   const body = document.getElementById('kasModalBody');
   const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
-  const namaB = b => escTG((b.deskripsi || b.kategori || 'Belanja').split(' · dicatat')[0]);
-  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'💳','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
+  const namaB = b => escTG((b.deskripsi || labelKat(b.kategori) || 'Belanja').split(' · dicatat')[0]);
+  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
   const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
   if(n === 1){
@@ -3052,12 +3052,12 @@ function kasLangkah(n){
     body.innerHTML = strip + `
       <div class="tk-sub">${tgl} · cek dulu semua uang keluar Kas Outlet hari ini</div>
       <div class="tk-list">
-        ${d.biaya.length ? d.biaya.map(b=>`<div class="tk-row"><span>${ikon(b.kategori)} ${escTG(b.kategori)}<small>${namaB(b)} · ${jam(b.created_at)}</small></span><b>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</b></div>`).join('')
+        ${d.biaya.length ? d.biaya.map(b=>`<div class="tk-row"><span>${ikon(b.kategori)} ${escTG(labelKat(b.kategori))}<small>${namaB(b)} · ${jam(b.created_at)}</small></span><b>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</b></div>`).join('')
           : '<div class="tk-row"><span>Belum ada uang keluar Kas Outlet hari ini</span><b>Rp0</b></div>'}
         <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
       ${htmlPengingatSetoranTK()}
-      <div class="tk-q">Semua belanja, es batu, tabungan &amp; KUR BRI hari ini sudah dicatat?</div>
+      <div class="tk-q">Semua belanja, es batu, simpanan &amp; setoran harian sudah dicatat?</div>
       <button class="login-btn" onclick="kasLangkah(2)">✅ Sudah semua, lanjut</button>
       <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada yang lupa, catat dulu</button>`;
     return;
@@ -3071,7 +3071,7 @@ function kasLangkah(n){
       <div class="tk-list">
         <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Saldo Kas Outlet'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
-        <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
+        <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja + simpanan</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
       <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di Kas Outlet' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
@@ -3261,7 +3261,7 @@ async function tampilkanLaporanKas(d){
   const jamStr = sekarang.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   const esc = t => String(t||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const namaBiaya = b => (b.deskripsi || b.kategori || 'Belanja').split(' · dicatat')[0];
+  const namaBiaya = b => { const d = String(b.deskripsi || '').split(' · dicatat')[0].replace(/^dicatat di kasir$/, ''); return LABEL_KAT[b.kategori] ? labelKat(b.kategori) + (d ? ' · ' + d : '') : (d || b.kategori || 'Belanja'); };
 
   let biaya = [];
   const { data: rows, error } = await sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: d.sejak });
@@ -7799,6 +7799,9 @@ async function submitGantiPassword(){
 const KATEGORI_BAYAR_HUTANG = 'Bayar Hutang Bahan';
 // Tabungan: uang laci pindah ke Brankas (tabel brankas, hanya Owner yang bisa lihat) -> kas laci berkurang, laba TIDAK terpotong
 const KATEGORI_TABUNGAN = 'Tabungan';
+// Nama tampilan (data di database tetap 'Tabungan' & 'KUR BRI')
+const LABEL_KAT = { 'Tabungan': 'Simpanan Harian', 'KUR BRI': 'Setoran Harian' };
+function labelKat(k){ return LABEL_KAT[k] || k; }
 // KUR BRI: setoran harian angsuran KUR (ditanggung Owner). Kas Outlet berkurang, laba TIDAK terpotong, otomatis masuk tandon KUR (trigger trg_kur_dari_kasir)
 const KATEGORI_KUR = 'KUR BRI';
 function pilihKategoriBelanja(btn){
@@ -7828,8 +7831,8 @@ function setoranKurang(st){
   st = st || window.__setoranStatus;
   if(!st || !st.wajib) return [];
   const out = [];
-  if(Number(st.tabungan) <= 0) out.push({ kat: 'Tabungan', ikon: '💰', nama: 'Tabungan', target: Number(st.tabungan_target) });
-  if(Number(st.kur) <= 0) out.push({ kat: 'KUR BRI', ikon: '💳', nama: 'KUR BRI', target: Number(st.kur_target) });
+  if(Number(st.tabungan) <= 0) out.push({ kat: 'Tabungan', ikon: '💰', nama: 'Simpanan Harian', target: Number(st.tabungan_target) });
+  if(Number(st.kur) <= 0) out.push({ kat: 'KUR BRI', ikon: '📥', nama: 'Setoran Harian', target: Number(st.kur_target) });
   return out;
 }
 async function cekPengingatSetoran(){
@@ -7996,7 +7999,7 @@ async function submitBelanjaKecil(){
   const ket = document.getElementById('belanjaKecilKet').value.trim();
 
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
-  if(!confirm(`Ambil ${fmt(jumlah)} dari Kas Outlet untuk ${kategori}?`)) return;
+  if(!confirm(`Ambil ${fmt(jumlah)} dari Kas Outlet untuk ${labelKat(kategori)}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   const { error } = kategori === KATEGORI_TABUNGAN
@@ -8021,7 +8024,7 @@ async function submitBelanjaKecil(){
   document.getElementById('belanjaKecilJumlah').value = '';
   document.getElementById('belanjaKecilJumlah').dataset.otomatis = '';
   document.getElementById('belanjaKecilKet').value = '';
-  if(kategori === KATEGORI_KUR) showSuccessToast('💳', 'KUR BRI tersimpan', `${fmt(jumlah)} · masuk tandon KUR di Tandon Dollar`);
+  if(kategori === KATEGORI_KUR) showSuccessToast('📥', 'Setoran Harian tersimpan', fmt(jumlah));
   cekPengingatSetoran();
   await loadBelanjaKecilHariIni();
 }
@@ -8678,9 +8681,9 @@ async function loadBelanjaKecilHariIni(){
     const id = bolehBatal && !batal ? idBiaya[new Date(r.created_at).getTime() + '|' + r.kategori] : null;
     return `
     <div class="tx-row"${batal ? ' style="opacity:.55;"' : ''}>
-      <span>${escTG(r.kategori)}${r.deskripsi ? ' <span class="bk-sub">· '+escTG(r.deskripsi)+'</span>' : ''}${batal ? ' <span style="color:var(--danger);font-weight:800;">🚫 Dibatalkan</span>' : ''}</span>
+      <span>${escTG(labelKat(r.kategori))}${r.deskripsi ? ' <span class="bk-sub">· '+escTG(r.deskripsi)+'</span>' : ''}${batal ? ' <span style="color:var(--danger);font-weight:800;">🚫 Dibatalkan</span>' : ''}</span>
       <span style="text-align:right;"><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span class="bk-sub">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>
-      ${id ? `<br><button type="button" class="bk-batal" style="margin-top:6px;font-size:13px;padding:5px 12px;border-radius:14px;border:1px solid #e53935;background:#fdecea;color:#c62828;font-weight:800;cursor:pointer;" onclick="batalkanBelanja('${id}', '${escTG(r.kategori).replace(/'/g,"\\'")}', ${Number(r.jumlah)})">🚫 Batalkan</button>` : ''}</span>
+      ${id ? `<br><button type="button" class="bk-batal" style="margin-top:6px;font-size:13px;padding:5px 12px;border-radius:14px;border:1px solid #e53935;background:#fdecea;color:#c62828;font-weight:800;cursor:pointer;" onclick="batalkanBelanja('${id}', '${escTG(labelKat(r.kategori)).replace(/'/g,"\\'")}', ${Number(r.jumlah)})">🚫 Batalkan</button>` : ''}</span>
     </div>`;
   }).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar Kas Outlet hari ini.</div>';
 }
@@ -8713,7 +8716,7 @@ async function loadNotifTabungan(){
   window.__notifTabunganIds = data.map(r=>r.id);
   box.innerHTML = `
     <div style="background:rgba(232,245,233,.97);border:1px solid #43a047;color:#1b5e20;padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;">
-      💰 <b style="font-size:15px;">Tabungan masuk ${fmt(total)}</b>${data.length > 1 ? ` <span style="opacity:.8;">(${data.length} kali)</span>` : ''}
+      💰 <b style="font-size:15px;">Simpanan Harian masuk ${fmt(total)}</b>${data.length > 1 ? ` <span style="opacity:.8;">(${data.length} kali)</span>` : ''}
       ${data.map(r=>`<div style="margin-top:4px;">${fmt(r.jumlah)} dari <b>${escTG(r.pencatat?.nama || '-')}</b> · ${escTG(r.cabang?.nama || '-')} · ${tglJamWIB(r.created_at)}${r.keterangan ? `<br><span style="opacity:.8;">Ket: ${escTG(r.keterangan)}</span>` : ''}</div>`).join('')}
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         <button onclick="tandaiTabunganDilihat(true)" style="padding:6px 12px;border-radius:14px;border:1px solid #43a047;background:#43a047;color:#fff;font-weight:700;font-size:12px;cursor:pointer;">🔒 Lihat Brankas</button>
@@ -8751,11 +8754,11 @@ async function loadBrankas(){
   document.getElementById('brankasInfoBulan').textContent = `Masuk bulan ini ${fmt(masukBln)} · Keluar ${fmt(keluarBln)}`;
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>`
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
-      <span>${r.jenis === 'masuk' ? '💰 Tabungan' : '💼 Ambil'}${r.keterangan ? ' · ' + escTG(r.keterangan) : ''}
+      <span>${r.jenis === 'masuk' ? '💰 Simpanan' : '💼 Ambil'}${r.keterangan ? ' · ' + escTG(r.keterangan) : ''}
         <small style="display:block;opacity:.9;font-weight:600;font-size:11px;">${tglJamWIB(r.created_at)} · ${escTG(r.pencatat?.nama || '-')}${r.cabang?.nama ? ' · ' + escTG(r.cabang.nama) : ''}</small></span>
       <span style="display:flex;align-items:center;gap:8px;"><span style="font-weight:800;white-space:nowrap;color:${r.jenis === 'masuk' ? '#1b5e20' : '#c62828'};">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span>
         <button title="Hapus" onclick="hapusBrankas('${r.id}', '${r.jenis}', ${Number(r.jumlah)})" style="border:1px solid #c62828;background:#fdecea;color:#c62828;border-radius:10px;padding:4px 8px;font-size:13px;cursor:pointer;">🗑️</button></span>
-    </div>`).join('') + `</div>` : '<div class="empty-msg">Belum ada tabungan.</div>';
+    </div>`).join('') + `</div>` : '<div class="empty-msg">Belum ada simpanan.</div>';
   // buka menu Brankas = notifikasi dianggap sudah dilihat
   const belum = rows.filter(r => r.jenis === 'masuk' && !r.dilihat_owner).map(r => r.id);
   if(belum.length){ await sb.from('brankas').update({ dilihat_owner: true }).in('id', belum); }
@@ -8795,7 +8798,7 @@ async function loadKasToko(){
   const rows = [
     ...(kt.data || []).map(r => ({ w:r.created_at, masuk:r.jenis === 'masuk', judul: lbl[r.sumber] || r.sumber, ket:r.keterangan, n:Number(r.jumlah), oleh:r.pencatat && r.pencatat.nama })),
     ...(pb.data || []).map(r => ({ w:r.created_at, masuk:false, judul:'📦 Beli ' + ((r.bahan && r.bahan.nama) || 'stok') + ' ' + Number(r.jumlah).toLocaleString('id-ID') + ' ' + ((r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''), n:Number(r.total), oleh:r.pencatat && r.pencatat.nama })),
-    ...(by.data || []).map(r => ({ w:r.created_at, masuk:false, judul:'🛍️ ' + r.kategori, ket:r.deskripsi, n:Number(r.jumlah), oleh:r.pencatat && r.pencatat.nama }))
+    ...(by.data || []).map(r => ({ w:r.created_at, masuk:false, judul:'🛍️ ' + labelKat(r.kategori), ket:r.deskripsi, n:Number(r.jumlah), oleh:r.pencatat && r.pencatat.nama }))
   ].sort((a,b) => new Date(b.w) - new Date(a.w)).slice(0, 80);
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>`
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;font-size:13px;color:#111;${i < rows.length-1 ? 'border-bottom:1px solid var(--line-soft);' : ''}">
@@ -9139,7 +9142,7 @@ async function loadBiayaData(){
 
   box.innerHTML = data.map(b=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${escTG(b.kategori)}${isOwner && b.cabang ? ' · '+escTG(b.cabang.nama) : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : b.sumber_dana==='kas_toko' ? '<span style="font-size:10px;background:rgba(160,96,0,.14);color:#7a4a00;padding:2px 6px;border-radius:10px;font-weight:700;">💰 Kas Outlet</span>' : b.sumber_dana==='dana_operasional' ? '<span style="font-size:10px;background:rgba(21,101,192,.12);color:#0d47a1;padding:2px 6px;border-radius:10px;font-weight:700;">🏠 Dana Operasional</span>' : b.sumber_dana==='dana_stok' ? '<span style="font-size:10px;background:rgba(109,59,31,.12);color:#6d3b1f;padding:2px 6px;border-radius:10px;font-weight:700;">📦 Dana Stok</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
+      <span>${escTG(labelKat(b.kategori))}${isOwner && b.cabang ? ' · '+escTG(b.cabang.nama) : ''} ${b.sumber_dana==='tunai' ? '<span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Tunai</span>' : b.sumber_dana==='kas_toko' ? '<span style="font-size:10px;background:rgba(160,96,0,.14);color:#7a4a00;padding:2px 6px;border-radius:10px;font-weight:700;">💰 Kas Outlet</span>' : b.sumber_dana==='dana_operasional' ? '<span style="font-size:10px;background:rgba(21,101,192,.12);color:#0d47a1;padding:2px 6px;border-radius:10px;font-weight:700;">🏠 Dana Operasional</span>' : b.sumber_dana==='dana_stok' ? '<span style="font-size:10px;background:rgba(109,59,31,.12);color:#6d3b1f;padding:2px 6px;border-radius:10px;font-weight:700;">📦 Dana Stok</span>' : '<span style="font-size:10px;background:rgba(12,31,20,.08);color:var(--ink);padding:2px 6px;border-radius:10px;font-weight:700;">🏦 Non-Tunai</span>'}</span>
       <span class="time">${new Date(b.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
         <span style="opacity:.9;font-weight:600;">${escTG(b.deskripsi || '-')}</span>
