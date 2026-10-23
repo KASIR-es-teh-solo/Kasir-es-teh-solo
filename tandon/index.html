@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="app-version" content="tandon-2026-10-23.1">
+<meta name="theme-color" content="#0b1a12">
+<title>Tandon Dollar</title>
+<link rel="icon" href="ikon-192.png">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
+<style>
+  /* Tandon Dollar: aplikasi terpisah dari kasir. Gaya sama dengan Pusat Kendali Owner (gelap + emas). */
+  :root{ --emas:#c9a94a; --emas1:#e2c05c; --emas2:#a87d1e; --teks:#e8efe9; --redup:#9fb3a6; --redup2:#8ea596;
+    --kaca:rgba(255,255,255,.05); --garis:rgba(255,255,255,.09); --hijau:#5fd38a; --merah:#ef8a80; --kuning:#f1d27a; }
+  *{box-sizing:border-box;}
+  html,body{margin:0;min-height:100%;}
+  body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;-webkit-font-smoothing:antialiased;color:var(--teks);
+    background:#0b1a12 url(../latar.jpg) center/cover fixed;}
+  .layar{min-height:100vh;background:linear-gradient(180deg,rgba(8,20,13,.66),rgba(8,20,13,.94) 380px,rgba(8,20,13,.96));}
+  .wrap{max-width:640px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) 40px max(16px, env(safe-area-inset-left,0px));}
+  button{font-family:inherit;}
+  .t{font-size:10.5px;letter-spacing:1.6px;color:var(--emas);font-weight:700;}
+  h1{margin:3px 0 0;font-size:21px;font-weight:700;}
+  .d{font-size:12px;color:var(--redup);margin-top:2px;}
+  .kaleng{background:var(--kaca);border:1px solid var(--garis);border-radius:16px;padding:14px;margin-top:12px;}
+  .kaleng.utama{background:linear-gradient(135deg,var(--emas1),var(--emas2));color:#1a1300;border:0;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .k-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .k-nama{font-weight:700;font-size:14px;}
+  .k-ket{font-size:11.5px;opacity:.78;font-weight:600;margin-top:1px;}
+  .k-saldo{font-size:26px;font-weight:800;letter-spacing:-.4px;margin-top:4px;font-variant-numeric:tabular-nums;}
+  .bar{height:9px;border-radius:9px;background:rgba(0,0,0,.18);overflow:hidden;margin-top:8px;}
+  .bar i{display:block;height:100%;background:#1a1300;border-radius:9px;}
+  .kaleng:not(.utama) .bar{background:rgba(255,255,255,.1);} .kaleng:not(.utama) .bar i{background:var(--emas);}
+  .info{font-size:12.5px;font-weight:600;margin-top:8px;line-height:1.45;}
+  .info b{font-weight:800;}
+  .warn{color:var(--kuning);} .bahaya{color:var(--merah);} .aman{color:var(--hijau);}
+  .kaleng.utama .warn,.kaleng.utama .bahaya,.kaleng.utama .aman{color:#5a1208;}
+  .aksi{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .btn{flex:1;min-width:0;border:1px solid rgba(201,169,74,.55);background:transparent;color:var(--emas1);border-radius:11px;padding:10px 8px;font-weight:700;font-size:13.5px;cursor:pointer;}
+  .kaleng.utama .btn{border-color:rgba(26,19,0,.5);color:#1a1300;}
+  .kaleng.utama .btn.isi{background:#1a1300;color:var(--emas1);border-color:#1a1300;}
+  .btn.isi{background:var(--emas);color:#10140c;border-color:var(--emas);}
+  .besar{display:flex;gap:10px;margin-top:14px;}
+  .besar button{flex:1;padding:13px;border-radius:13px;font-weight:800;font-size:14.5px;cursor:pointer;border:0;}
+  .b-bagi{background:var(--emas);color:#10140c;} .b-cocok{background:transparent;color:var(--emas1);border:1px solid rgba(201,169,74,.6) !important;}
+  .h{font-size:11px;letter-spacing:1.4px;color:var(--redup);font-weight:700;margin:20px 0 8px;}
+  .seg{display:flex;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:11px;padding:3px;margin-bottom:8px;}
+  .seg button{flex:1;border:0;background:transparent;font-size:12.5px;font-weight:600;padding:8px 4px;border-radius:8px;color:var(--redup);cursor:pointer;}
+  .seg button.on{background:var(--emas);color:#10140c;}
+  .riw{background:var(--kaca);border:1px solid var(--garis);border-radius:14px;padding:4px 14px;}
+  .baris{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px;}
+  .baris:first-child{border-top:0;}
+  .baris small{display:block;font-size:11px;color:var(--redup2);margin-top:1px;}
+  .baris .n{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .plus{color:var(--hijau);} .min{color:var(--merah);}
+  .kosong{color:var(--redup2);font-size:12.5px;padding:12px 0;}
+  .keluar{width:100%;margin-top:14px;padding:10px;border:0;background:transparent;color:var(--redup2);font-weight:600;font-size:13px;cursor:pointer;}
+  .muat{color:var(--redup);text-align:center;padding:60px 10px;font-weight:600;}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:12px;}
+  .ov.on{display:flex;}
+  .md{background:#12251a;border:1px solid rgba(201,169,74,.4);border-radius:18px;padding:18px;width:100%;max-width:440px;max-height:90vh;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+  .md h3{margin:0 0 4px;font-size:16px;}
+  .md p{margin:0 0 12px;font-size:12.5px;color:var(--redup);}
+  .fld{margin-bottom:10px;}
+  .fld label{display:block;font-size:12px;font-weight:700;color:var(--redup);margin-bottom:4px;}
+  .fld input{width:100%;font-family:inherit;font-size:19px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--teks);outline:none;font-variant-numeric:tabular-nums;}
+  .fld input.ket{font-size:14px;font-weight:500;}
+  .fld input:focus{border-color:var(--emas);}
+  .fld small{display:block;font-size:11.5px;margin-top:3px;font-weight:600;}
+  .md .tbl{display:flex;gap:8px;margin-top:8px;}
+  .md .tbl button{flex:1;padding:12px;border-radius:11px;font-weight:800;font-size:15px;cursor:pointer;}
+  .bt-batal{background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--teks);}
+  .bt-ok{background:var(--emas);border:1px solid var(--emas);color:#10140c;}
+  .err{color:var(--merah);font-size:13px;font-weight:600;min-height:18px;margin-top:6px;}
+  .login{max-width:360px;margin:60px auto 0;background:var(--kaca);border:1px solid var(--garis);border-radius:18px;padding:20px;}
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1a1300;color:var(--emas1);border:1px solid var(--emas);padding:10px 16px;border-radius:12px;font-weight:700;font-size:13.5px;z-index:60;display:none;max-width:90vw;text-align:center;}
+</style>
+</head>
+<body>
+<div class="layar"><div class="wrap">
+  <div id="muat" class="muat">Memuat Tandon Dollar…</div>
+
+  <div id="loginBox" class="login" style="display:none;">
+    <div class="t">TANDON DOLLAR</div>
+    <h1 style="margin-bottom:12px;">Masuk</h1>
+    <div class="fld"><label for="lgEmail">Email</label><input id="lgEmail" class="ket" type="email" autocomplete="username"></div>
+    <div class="fld"><label for="lgPass">Password</label><input id="lgPass" class="ket" type="password" autocomplete="current-password"></div>
+    <button class="btn isi" style="width:100%;padding:12px;" onclick="masuk()">Masuk</button>
+    <div class="err" id="lgErr"></div>
+  </div>
+
+  <div id="isi" style="display:none;">
+    <div class="t">TANDON DOLLAR</div>
+    <h1 id="sapa">Halo</h1>
+    <div class="d" id="tgl"></div>
+    <div id="kartu"></div>
+    <div class="besar">
+      <button class="b-bagi" onclick="bukaBagi()">🧮 Bagi Uang</button>
+      <button class="b-cocok" onclick="bukaCocok()">✅ Cocokkan</button>
+    </div>
+    <div class="h">RIWAYAT</div>
+    <div class="seg" id="filter"></div>
+    <div class="riw" id="riwayat"></div>
+    <button class="keluar" onclick="keluar()">Keluar dari akun</button>
+  </div>
+</div></div>
+
+<!-- modal masukkan / ambil -->
+<div class="ov" id="ovNom"><div class="md">
+  <h3 id="nomJudul"></h3><p id="nomSub"></p>
+  <div class="fld"><label for="nomJumlah">Jumlah (Rp)</label><input id="nomJumlah" inputmode="numeric" placeholder="0"></div>
+  <div class="fld"><label for="nomKet">Keterangan (boleh kosong)</label><input id="nomKet" class="ket" placeholder="mis. belanja mingguan"></div>
+  <div class="err" id="nomErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovNom')">Batal</button><button class="bt-ok" id="nomOk">Simpan</button></div>
+</div></div>
+
+<!-- modal bagi uang -->
+<div class="ov" id="ovBagi"><div class="md">
+  <h3>🧮 Bagi Uang</h3><p>Isi uang yang mau dibagi. Kontrakan & KUR diisi dulu sesuai jatah, sisanya ke Dana Keluarga. Angka bisa diubah.</p>
+  <div class="fld"><label for="bgTotal">Uang yang dibagi (Rp)</label><input id="bgTotal" inputmode="numeric" placeholder="0" oninput="hitungBagi()"></div>
+  <div class="fld"><label for="bgKontrakan">🏠 Kontrakan</label><input id="bgKontrakan" inputmode="numeric" oninput="rapikan(this);cekBagi()"><small id="bgKontrakanInfo" class="warn"></small></div>
+  <div class="fld"><label for="bgKur">🏦 KUR BRI</label><input id="bgKur" inputmode="numeric" oninput="rapikan(this);cekBagi()"><small id="bgKurInfo" class="warn"></small></div>
+  <div class="fld"><label for="bgKeluarga">👨‍👩‍👧 Dana Keluarga</label><input id="bgKeluarga" inputmode="numeric" oninput="rapikan(this);cekBagi()"></div>
+  <div class="err" id="bgErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovBagi')">Batal</button><button class="bt-ok" onclick="simpanBagi()">Simpan</button></div>
+</div></div>
+
+<!-- modal cocokkan -->
+<div class="ov" id="ovCocok"><div class="md">
+  <h3>✅ Cocokkan Uang Fisik</h3><p>Hitung uang fisik tiap tandon lalu ketik jumlahnya. Kosongkan kalau tidak dihitung.</p>
+  <div class="fld"><label for="ccKontrakan">🏠 Kontrakan</label><input id="ccKontrakan" inputmode="numeric" placeholder="" oninput="rapikan(this);cekCocok()"><small id="ccKontrakanInfo"></small></div>
+  <div class="fld"><label for="ccKur">🏦 KUR BRI</label><input id="ccKur" inputmode="numeric" oninput="rapikan(this);cekCocok()"><small id="ccKurInfo"></small></div>
+  <div class="fld"><label for="ccKeluarga">👨‍👩‍👧 Dana Keluarga</label><input id="ccKeluarga" inputmode="numeric" oninput="rapikan(this);cekCocok()"><small id="ccKeluargaInfo"></small></div>
+  <div class="fld"><label for="ccAlasan">Alasan kalau ada selisih</label><input id="ccAlasan" class="ket" placeholder="mis. lupa catat ambil uang"></div>
+  <div class="err" id="ccErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovCocok')">Batal</button><button class="bt-ok" onclick="simpanCocok()">Samakan</button></div>
+</div></div>
+
+<!-- modal konfirmasi -->
+<div class="ov" id="ovYakin"><div class="md">
+  <h3 id="ykJudul">Yakin?</h3><p id="ykIsi" style="white-space:pre-line;color:var(--teks);font-size:14px;"></p>
+  <div class="tbl"><button class="bt-batal" onclick="jawabYakin(false)">Batal</button><button class="bt-ok" onclick="jawabYakin(true)">Ya, simpan</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = supabase.createClient("https://ywoytgapbshpzrdwdtel.supabase.co", "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK");
+const NAMA = { kontrakan:'🏠 Kontrakan', kur:'🏦 KUR BRI', keluarga:'👨‍👩‍👧 Dana Keluarga' };
+const KEY = { kontrakan:'Kontrakan', kur:'Kur', keluarga:'Keluarga' };
+let data = null, filter = 'semua', profil = null;
+const fmt = n => (Number(n) < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(Number(n || 0))).toLocaleString('id-ID');
+const angka = el => Number(String(el.value || '').replace(/[^0-9]/g, '')) || 0;
+const kosong = el => String(el.value || '').trim() === '';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tglPendek = t => new Date(t).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
+function rapikan(el){ const n = String(el.value).replace(/[^0-9]/g, ''); el.value = n ? Number(n).toLocaleString('id-ID') : ''; }
+document.querySelectorAll('input[inputmode="numeric"]').forEach(el => el.addEventListener('input', () => rapikan(el)));
+function tutup(id){ document.getElementById(id).classList.remove('on'); }
+function buka(id){ document.getElementById(id).classList.add('on'); }
+function toast(t){ const el = document.getElementById('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => el.style.display = 'none', 2600); }
+let _yakin = null;
+function yakin(judul, isi){ document.getElementById('ykJudul').textContent = judul; document.getElementById('ykIsi').textContent = isi; buka('ovYakin'); return new Promise(r => _yakin = r); }
+function jawabYakin(v){ tutup('ovYakin'); if(_yakin){ const r = _yakin; _yakin = null; r(v); } }
+
+async function mulai(){
+  document.getElementById('tgl').textContent = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const { data: { session } } = await sb.auth.getSession();
+  document.getElementById('muat').style.display = 'none';
+  if(!session){ document.getElementById('loginBox').style.display = ''; return; }
+  const { data: p } = await sb.from('users').select('nama, role').eq('id', session.user.id).single();
+  if(!p || (p.role !== 'owner' && p.role !== 'admin')){
+    document.getElementById('loginBox').style.display = '';
+    document.getElementById('lgErr').textContent = 'Tandon Dollar khusus Owner & Admin.';
+    await sb.auth.signOut(); return;
+  }
+  profil = p;
+  const jam = new Date().getHours();
+  document.getElementById('sapa').textContent = `Selamat ${jam < 11 ? 'pagi' : jam < 15 ? 'siang' : jam < 18 ? 'sore' : 'malam'}, ${String(p.nama || '').replace(/\s*\(Admin\)\s*/i, '').replace(/^boss\s+/i, 'Boss ').replace(/^(?!Boss )/, 'Boss ')}`;
+  document.getElementById('isi').style.display = '';
+  muat();
+}
+async function masuk(){
+  const err = document.getElementById('lgErr'); err.textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: document.getElementById('lgEmail').value.trim(), password: document.getElementById('lgPass').value });
+  if(error){ err.textContent = 'Email atau password salah.'; return; }
+  document.getElementById('loginBox').style.display = 'none';
+  mulai();
+}
+async function keluar(){ if(!(await yakin('Keluar?', 'Keluar dari Tandon Dollar?'))) return; await sb.auth.signOut(); location.reload(); }
+
+async function muat(){
+  const { data: d, error } = await sb.rpc('kaleng_data');
+  if(error){ document.getElementById('kartu').innerHTML = `<div class="kaleng">Gagal memuat: ${esc(error.message)}</div>`; return; }
+  data = d; gambar();
+}
+function gambar(){
+  const d = data, k = d.pengaturan;
+  const pctK = Math.min(100, Math.round(Number(d.kontrakan) / Number(k.kontrakan_target) * 100));
+  const tglK = new Date(k.kontrakan_tanggal + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  const perHariK = Number(d.kontrakan_per_hari);
+  const statusK = Number(d.kontrakan_kurang) <= 0 ? '<span class="aman">✅ Target sudah terkumpul!</span>'
+    : `Kurang <b>${fmt(d.kontrakan_kurang)}</b> · ${d.kontrakan_sisa_hari} hari lagi<br>Perlu <b>${fmt(perHariK)}/hari</b>${perHariK > Number(k.kontrakan_harian) ? ' <span class="bahaya">(di atas jatah Rp' + Number(k.kontrakan_harian).toLocaleString('id-ID') + ', tertinggal!)</span>' : ' <span class="aman">· sesuai jadwal</span>'}`;
+  const kurKurang = Number(d.kur_kurang), kurHari = Math.max(Number(d.kur_hari_lagi), 0);
+  const siapK = new Date(d.kur_siap_sebelum + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  const tempoK = new Date(d.kur_jatuh_tempo + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long' });
+  const perHariKur = kurHari > 0 ? Math.ceil(kurKurang / kurHari / 500) * 500 : kurKurang;
+  const statusKur = kurKurang <= 0 ? '<span class="aman">✅ Angsuran sudah cukup, siap dibayar</span>'
+    : `Kurang <b>${fmt(kurKurang)}</b> · harus siap <b>${esc(siapK)}</b> (${kurHari} hari lagi)<br>Perlu <b class="${perHariKur > Number(k.kur_harian) ? 'bahaya' : ''}">${fmt(perHariKur)}/hari</b>${perHariKur > Number(k.kur_harian) ? ' <span class="bahaya">(lebih dari jatah Rp' + Number(k.kur_harian).toLocaleString('id-ID') + ')</span>' : ''}`;
+  const pctKur = Math.min(100, Math.round(Number(d.kur) / Number(k.kur_angsuran) * 100));
+  document.getElementById('kartu').innerHTML = `
+    <div class="kaleng utama">
+      <div class="k-top"><div><div class="k-nama">🏠 Kontrakan</div><div class="k-ket">Target ${fmt(k.kontrakan_target)} · bayar ${esc(tglK)}</div></div><div style="font-weight:800;font-size:13px;">${pctK}%</div></div>
+      <div class="k-saldo">${fmt(d.kontrakan)}</div>
+      <div class="bar"><i style="width:${pctK}%"></i></div>
+      <div class="info">${statusK}</div>
+      <div class="k-ket" style="margin-top:6px;">Tersambung dengan Brankas aplikasi kasir · tabungan harian kasir otomatis masuk sini</div>
+      <div class="aksi"><button class="btn isi" onclick="bukaNom('kontrakan','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kontrakan','keluar')">➖ Ambil</button></div>
+    </div>
+    <div class="kaleng">
+      <div class="k-top"><div><div class="k-nama">🏦 KUR BRI</div><div class="k-ket">Angsuran ke-${d.kur_angsuran_ke} dari ${k.kur_tenor} · ${fmt(k.kur_angsuran)} · jatuh tempo ${esc(tempoK)}</div></div><div style="font-weight:800;font-size:13px;color:var(--emas1);">${pctKur}%</div></div>
+      <div class="k-saldo">${fmt(d.kur)}</div>
+      <div class="bar"><i style="width:${pctKur}%"></i></div>
+      <div class="info">${statusKur}</div>
+      <div class="aksi"><button class="btn isi" onclick="bukaNom('kur','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kur','keluar')">➖ Ambil</button>
+        ${Number(d.kur) >= Number(k.kur_angsuran) ? `<button class="btn isi" style="flex-basis:100%;" onclick="bayarKur()">💳 Bayar angsuran ke-${d.kur_angsuran_ke}</button>` : ''}</div>
+    </div>
+    <div class="kaleng">
+      <div class="k-top"><div><div class="k-nama">👨‍👩‍👧 Dana Keluarga</div><div class="k-ket">Rumah tangga, dana darurat & tabungan cabang</div></div></div>
+      <div class="k-saldo">${fmt(d.keluarga)}</div>
+      <div class="aksi"><button class="btn isi" onclick="bukaNom('keluarga','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('keluarga','keluar')">➖ Ambil</button></div>
+    </div>`;
+  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['kur','KUR'],['keluarga','Keluarga']]
+    .map(([k2, l]) => `<button class="${k2 === filter ? 'on' : ''}" onclick="filter='${k2}';gambar()">${l}</button>`).join('');
+  const rows = (d.riwayat || []).filter(r => filter === 'semua' || r.kaleng === filter).slice(0, 40);
+  document.getElementById('riwayat').innerHTML = rows.map(r => `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Keluar'))}
+      <small>${tglPendek(r.waktu)} ${new Date(r.waktu).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${NAMA[r.kaleng]} · ${esc(r.pencatat || '-')}</small></span>
+      <span class="n ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada catatan.</div>';
+}
+
+// masukkan / ambil
+function bukaNom(kaleng, jenis){
+  document.getElementById('nomJudul').textContent = `${jenis === 'masuk' ? '➕ Masukkan ke' : '➖ Ambil dari'} ${NAMA[kaleng]}`;
+  document.getElementById('nomSub').textContent = `Saldo sekarang ${fmt(data[kaleng])}. Pastikan uang fisiknya juga ${jenis === 'masuk' ? 'dimasukkan ke' : 'diambil dari'} tandon.`;
+  document.getElementById('nomJumlah').value = ''; document.getElementById('nomKet').value = ''; document.getElementById('nomErr').textContent = '';
+  document.getElementById('nomOk').onclick = () => simpanNom(kaleng, jenis);
+  buka('ovNom'); setTimeout(() => document.getElementById('nomJumlah').focus(), 60);
+}
+async function simpanNom(kaleng, jenis){
+  const j = angka(document.getElementById('nomJumlah')), ket = document.getElementById('nomKet').value.trim();
+  const err = document.getElementById('nomErr');
+  if(!j){ err.textContent = 'Isi jumlahnya dulu.'; return; }
+  if(jenis === 'keluar' && j > Number(data[kaleng])){ err.textContent = `Saldo cuma ${fmt(data[kaleng])}.`; return; }
+  const { error } = await sb.rpc('kaleng_catat', { p_kaleng: kaleng, p_jenis: jenis, p_jumlah: j, p_keterangan: ket || null, p_sumber: 'manual' });
+  if(error){ err.textContent = 'Gagal: ' + error.message; return; }
+  tutup('ovNom'); toast(`${jenis === 'masuk' ? 'Masuk' : 'Keluar'} ${fmt(j)} · ${NAMA[kaleng]}`); muat();
+}
+async function bayarKur(){
+  const k = data.pengaturan;
+  if(!(await yakin('💳 Bayar angsuran KUR', `Angsuran ke-${data.kur_angsuran_ke}: ${fmt(k.kur_angsuran)}\nUang diambil dari tandon KUR BRI untuk disetor ke bank.`))) return;
+  const { error } = await sb.rpc('kaleng_catat', { p_kaleng: 'kur', p_jenis: 'keluar', p_jumlah: Number(k.kur_angsuran), p_keterangan: `Bayar angsuran KUR ke-${data.kur_angsuran_ke}`, p_sumber: 'bayar_kur' });
+  if(error){ toast('Gagal: ' + error.message); return; }
+  toast('Angsuran KUR tercatat dibayar'); muat();
+}
+
+// bagi uang
+function bukaBagi(){
+  ['bgTotal','bgKontrakan','bgKur','bgKeluarga'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('bgErr').textContent = ''; hitungBagi(); buka('ovBagi');
+  setTimeout(() => document.getElementById('bgTotal').focus(), 60);
+}
+function hitungBagi(){
+  const el = document.getElementById('bgTotal'); rapikan(el);
+  const total = angka(el), k = data.pengaturan;
+  const jatahK = Number(data.kontrakan_kurang) > 0 ? Math.max(Number(k.kontrakan_harian), Number(data.kontrakan_per_hari)) : 0;
+  const kurHari = Math.max(Number(data.kur_hari_lagi), 1);
+  const jatahKur = Number(data.kur_kurang) > 0 ? Math.min(Number(data.kur_kurang), Math.max(Number(k.kur_harian), Math.ceil(Number(data.kur_kurang) / kurHari / 500) * 500)) : 0;
+  const a = Math.min(total, jatahK), b = Math.min(total - a, jatahKur), c = total - a - b;
+  const set = (id, v) => document.getElementById(id).value = total ? Number(v).toLocaleString('id-ID') : '';
+  set('bgKontrakan', a); set('bgKur', b); set('bgKeluarga', c);
+  document.getElementById('bgKontrakanInfo').textContent = jatahK ? `Jatah harian ${fmt(jatahK)}` : 'Target kontrakan sudah terkumpul';
+  document.getElementById('bgKurInfo').textContent = jatahKur ? `Jatah harian ${fmt(jatahKur)} (angsuran harus siap ${new Date(data.kur_siap_sebelum + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'short' })})` : 'Angsuran bulan ini sudah cukup';
+  cekBagi();
+}
+function cekBagi(){
+  const t = angka(document.getElementById('bgTotal')), s = ['bgKontrakan','bgKur','bgKeluarga'].reduce((x, id) => x + angka(document.getElementById(id)), 0);
+  document.getElementById('bgErr').textContent = t && s !== t ? `Jumlah pembagian ${fmt(s)} belum sama dengan ${fmt(t)}.` : '';
+}
+async function simpanBagi(){
+  const t = angka(document.getElementById('bgTotal'));
+  const isi = [['kontrakan','bgKontrakan'],['kur','bgKur'],['keluarga','bgKeluarga']].map(([k, id]) => [k, angka(document.getElementById(id))]).filter(x => x[1] > 0);
+  const s = isi.reduce((x, y) => x + y[1], 0);
+  if(!t || !isi.length){ document.getElementById('bgErr').textContent = 'Isi uang yang mau dibagi.'; return; }
+  if(s !== t){ cekBagi(); return; }
+  if(!(await yakin('🧮 Bagi Uang ' + fmt(t), isi.map(([k, v]) => `${NAMA[k]}: ${fmt(v)}`).join('\n') + '\n\nMasukkan uang fisiknya ke tiap tandon.'))) return;
+  for(const [k, v] of isi){
+    const { error } = await sb.rpc('kaleng_catat', { p_kaleng: k, p_jenis: 'masuk', p_jumlah: v, p_keterangan: 'Bagi uang ' + fmt(t), p_sumber: 'bagi' });
+    if(error){ document.getElementById('bgErr').textContent = 'Gagal di ' + NAMA[k] + ': ' + error.message; muat(); return; }
+  }
+  tutup('ovBagi'); toast('Uang ' + fmt(t) + ' sudah dibagi'); muat();
+}
+
+// cocokkan
+function bukaCocok(){
+  ['ccKontrakan','ccKur','ccKeluarga','ccAlasan'].forEach(id => document.getElementById(id).value = '');
+  ['kontrakan','kur','keluarga'].forEach(k => document.getElementById('cc' + KEY[k]).placeholder = 'Aplikasi: ' + fmt(data[k]));
+  document.getElementById('ccErr').textContent = ''; cekCocok(); buka('ovCocok');
+}
+function cekCocok(){
+  ['kontrakan','kur','keluarga'].forEach(k => {
+    const el = document.getElementById('cc' + KEY[k]), inf = document.getElementById('cc' + KEY[k] + 'Info');
+    if(kosong(el)){ inf.textContent = ''; return; }
+    const sel = angka(el) - Number(data[k]);
+    inf.className = sel === 0 ? 'aman' : 'bahaya';
+    inf.textContent = sel === 0 ? '✅ Cocok' : `⚠️ ${sel < 0 ? 'Kurang' : 'Lebih'} ${fmt(Math.abs(sel))} dari catatan aplikasi`;
+  });
+}
+async function simpanCocok(){
+  const alasan = document.getElementById('ccAlasan').value.trim();
+  const beda = ['kontrakan','kur','keluarga'].map(k => { const el = document.getElementById('cc' + KEY[k]); return kosong(el) ? null : [k, angka(el) - Number(data[k])]; }).filter(x => x && x[1] !== 0);
+  const dihitung = ['kontrakan','kur','keluarga'].some(k => !kosong(document.getElementById('cc' + KEY[k])));
+  if(!dihitung){ document.getElementById('ccErr').textContent = 'Isi minimal satu tandon.'; return; }
+  if(!beda.length){ tutup('ovCocok'); toast('✅ Semua tandon cocok'); return; }
+  if(!alasan){ document.getElementById('ccErr').textContent = 'Ada selisih, isi alasannya dulu.'; return; }
+  if(!(await yakin('Samakan dengan uang fisik?', beda.map(([k, v]) => `${NAMA[k]}: ${v < 0 ? 'kurang' : 'lebih'} ${fmt(Math.abs(v))}`).join('\n') + '\n\nCatatan aplikasi akan disamakan dengan uang fisik.'))) return;
+  for(const [k, v] of beda){
+    const { error } = await sb.rpc('kaleng_catat', { p_kaleng: k, p_jenis: v > 0 ? 'masuk' : 'keluar', p_jumlah: Math.abs(v), p_keterangan: `Cocokkan: ${v < 0 ? 'kurang' : 'lebih'} · ${alasan}`, p_sumber: 'cocokkan' });
+    if(error){ document.getElementById('ccErr').textContent = 'Gagal di ' + NAMA[k] + ': ' + error.message; muat(); return; }
+  }
+  tutup('ovCocok'); toast('Tandon sudah disamakan dengan uang fisik'); muat();
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible' && profil) muat(); });
+mulai();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
