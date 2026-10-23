@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-23.2">
+<meta name="app-version" content="tandon-2026-10-23.3">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -192,9 +192,18 @@ async function masuk(){
 async function keluar(){ if(!(await yakin('Keluar?', 'Keluar dari Tandon Dollar?'))) return; await sb.auth.signOut(); location.reload(); }
 
 async function muat(){
-  const { data: d, error } = await sb.rpc('kaleng_data');
+  const [{ data: d, error }, st] = await Promise.all([sb.rpc('kaleng_data'), sb.rpc('setoran_harian_status').then(r => r, () => ({}))]);
   if(error){ document.getElementById('kartu').innerHTML = `<div class="kaleng">Gagal memuat: ${esc(error.message)}</div>`; return; }
-  data = d; gambar();
+  data = d; setoran = (st && st.data) || null; gambar();
+}
+// status setoran kasir hari ini (Tabungan → Kontrakan, KUR BRI → KUR)
+let setoran = null;
+function htmlSetoran(jml, nama){
+  if(!setoran) return '';
+  const jam = Number(new Date().toLocaleString('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false }));
+  return Number(jml) > 0
+    ? `<div class="k-ket" style="margin-top:6px;"><span class="aman">✅ Hari ini kasir sudah setor ${fmt(jml)}</span></div>`
+    : `<div class="k-ket" style="margin-top:6px;"><span class="${jam >= 17 ? 'bahaya' : ''}">${jam >= 17 ? '⚠️' : '⏳'} Kasir belum catat ${nama} hari ini</span></div>`;
 }
 function gambar(){
   const d = data, k = d.pengaturan;
@@ -217,6 +226,7 @@ function gambar(){
       <div class="bar"><i style="width:${pctK}%"></i></div>
       <div class="info">${statusK}</div>
       <div class="k-ket" style="margin-top:6px;">Tersambung dengan Brankas aplikasi kasir · tabungan harian kasir otomatis masuk sini</div>
+      ${htmlSetoran(setoran && setoran.tabungan, 'Tabungan')}
       <div class="aksi"><button class="btn isi" onclick="bukaNom('kontrakan','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kontrakan','keluar')">➖ Ambil</button></div>
     </div>
     <div class="kaleng">
@@ -224,6 +234,8 @@ function gambar(){
       <div class="k-saldo">${fmt(d.kur)}</div>
       <div class="bar"><i style="width:${pctKur}%"></i></div>
       <div class="info">${statusKur}</div>
+      <div class="k-ket" style="margin-top:6px;">Tersambung dengan aplikasi kasir · setoran 💳 KUR BRI kasir otomatis masuk sini</div>
+      ${htmlSetoran(setoran && setoran.kur, 'KUR BRI')}
       <div class="aksi"><button class="btn isi" onclick="bukaNom('kur','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kur','keluar')">➖ Ambil</button>
         ${Number(d.kur) >= Number(k.kur_angsuran) ? `<button class="btn isi" style="flex-basis:100%;" onclick="bayarKur()">💳 Bayar angsuran ke-${d.kur_angsuran_ke}</button>` : ''}</div>
     </div>

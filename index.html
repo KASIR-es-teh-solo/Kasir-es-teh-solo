@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-23.2">
+<meta name="app-version" content="2026-10-23.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -431,6 +431,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 
   /* ===== MODALS ===== */
   .mini-stempel{border:none;border-radius:8px;padding:7px 10px;font-weight:800;font-size:13px;cursor:pointer;color:#0c1f14;}
+  body:has(.overlay.show) #setoranBanner{display:none !important}
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
   .overlay.show{display:flex;}
   .modal{background:#fff;border:1px solid var(--line-soft);border-radius:14px;padding:20px;width:100%;max-width:320px;max-height:85vh;overflow-y:auto;color:var(--ink);box-shadow:0 10px 30px rgba(12,31,20,.15);}
@@ -1539,6 +1540,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" class="metode-bayar-btn" data-kat="Kebersihan" onclick="pilihKategoriBelanja(this)">🧽 Kebersihan</button>
         <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
         <button type="button" class="metode-bayar-btn" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Tabungan</button>
+        <button type="button" class="metode-bayar-btn" id="btnKurBri" data-kat="KUR BRI" onclick="pilihKategoriBelanja(this)">💳 KUR BRI</button>
         <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
       </div>
       <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
@@ -1546,6 +1548,9 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Uang tabungan diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
+      </div>
+      <div id="belanjaInfoKur" class="hidden" style="margin-top:8px;background:#e3f2fd;border:1px solid #42a5f5;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#0d47a1;">
+        💳 Setoran harian KUR BRI. Uang diambil dari Kas Outlet lalu dimasukkan ke tandon KUR, dan otomatis tercatat di Tandon Dollar. <b>Tidak mengurangi laba</b> (diganti Owner).
       </div>
     </div>
     <div class="field">
@@ -1606,6 +1611,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <option value="Perawatan Alat">Perawatan Alat</option>
         <option value="Lainnya">Lainnya</option>
         <option value="Bayar Hutang Bahan">Bayar Hutang Bahan (tidak mengurangi laba)</option>
+        <option value="KUR BRI">KUR BRI (masuk tandon KUR, tidak mengurangi laba)</option>
       </select>
     </div>
     <div class="field">
@@ -2246,6 +2252,7 @@ async function loadProfileAndEnter(){
   activeCabangId = (savedCabang && userAllowedCabang.find(c=>c.id===savedCabang))
     ? savedCabang
     : (userAllowedCabang[0] ? userAllowedCabang[0].id : null);
+  setTimeout(cekPengingatSetoran, 1500);
 
   const sel = document.getElementById('ownerCabangSelector');
   if(userAllowedCabang.length > 1){
@@ -3026,7 +3033,7 @@ async function bukaKasModal(){
   document.getElementById('kasOverlay').classList.add('show');
   // transaksi offline yang belum terkirim -> wajib sinkron dulu (kalau tidak, kas "lebih" palsu)
   if(tampilkanPeringatanAntrianKas()) return;
-  try{ kasTK = await ambilDataTutupKas(); }
+  try{ kasTK = await ambilDataTutupKas(); await cekPengingatSetoran(); }
   catch(e){ body.innerHTML = `<div class="login-error show">${escTG(e.message)}</div><button class="login-btn" onclick="bukaKasModal()">Coba lagi</button>`; return; }
   kasTK.alasan = '';
   kasLangkah(1);
@@ -3037,7 +3044,7 @@ function kasLangkah(n){
   const body = document.getElementById('kasModalBody');
   const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   const namaB = b => escTG((b.deskripsi || b.kategori || 'Belanja').split(' · dicatat')[0]);
-  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
+  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'💳','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
   const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
   if(n === 1){
@@ -3049,7 +3056,8 @@ function kasLangkah(n){
           : '<div class="tk-row"><span>Belum ada uang keluar Kas Outlet hari ini</span><b>Rp0</b></div>'}
         <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
-      <div class="tk-q">Semua belanja, es batu &amp; tabungan hari ini sudah dicatat?</div>
+      ${htmlPengingatSetoranTK()}
+      <div class="tk-q">Semua belanja, es batu, tabungan &amp; KUR BRI hari ini sudah dicatat?</div>
       <button class="login-btn" onclick="kasLangkah(2)">✅ Sudah semua, lanjut</button>
       <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada yang lupa, catat dulu</button>`;
     return;
@@ -3223,6 +3231,7 @@ async function submitHitungKas(){
 
   closeKasModal();
   refreshSaldoHeader();
+  cekPengingatSetoran();
   const selisih = kasFisik - d.kasSistem;
   try{
     await tampilkanLaporanKas({
@@ -3885,6 +3894,7 @@ function changeOwnerCabang(selectEl){
     loadDashboard();
   }
   refreshSaldoHeader();
+  cekPengingatSetoran();
   // daftar bahan (dipakai form resep & beli stok) ikut cabang baru
   try{ if(document.getElementById('settingsBahanBakuList')) loadBahanBakuList(); }catch(e){}
   // beranda ikut cabang baru (nama & angka kas)
@@ -5684,8 +5694,8 @@ async function hitungKasPenjualan(daftarCabang){
     kasToko += Number(kt.data || 0);
     tunai += (tx.data || []).reduce((a,r)=>a+Number(r.total),0);
     // tabungan ke Brankas dipisah dari belanja supaya tidak membingungkan
-    tabungan += (by.data || []).filter(b => b.kategori === 'Tabungan').reduce((a,b)=>a+Number(b.jumlah),0);
-    keluar += (by.data || []).filter(b => b.kategori !== 'Tabungan').reduce((a,b)=>a+Number(b.jumlah),0);
+    tabungan += (by.data || []).filter(b => b.kategori === 'Tabungan' || b.kategori === 'KUR BRI').reduce((a,b)=>a+Number(b.jumlah),0);
+    keluar += (by.data || []).filter(b => b.kategori !== 'Tabungan' && b.kategori !== 'KUR BRI').reduce((a,b)=>a+Number(b.jumlah),0);
   }
   return { total: laci + kasToko, tunai, keluar, tabungan };
 }
@@ -5709,6 +5719,7 @@ async function refreshBrankasHeader(){
 
 async function refreshSaldoHeader(){
   refreshBrankasHeader();
+  if(Date.now() - (window.__setoranCekTerakhir || 0) > 120000){ window.__setoranCekTerakhir = Date.now(); cekPengingatSetoran(); }
   const box = document.getElementById('topbarSaldo');
   const role = currentProfile && currentProfile.role;
   const boleh = role === 'owner' || role === 'admin';
@@ -5804,7 +5815,7 @@ async function loadRingkasan(){
     const { data: biayaRows } = await biayaQuery;
     // "Bayar Hutang Bahan" & "Es Batu" tidak mengurangi laba: modalnya sudah dihitung dari harga modal produk
     // (es batu masuk resep sejak 14 Okt 2026, belanja es tetap dicatat supaya kas laci pas)
-    const totalBiayaHariIni = (biayaRows||[]).filter(b => b.kategori !== KATEGORI_BAYAR_HUTANG && b.kategori !== 'Es Batu').reduce((s,b)=>s+Number(b.jumlah),0);
+    const totalBiayaHariIni = (biayaRows||[]).filter(b => b.kategori !== KATEGORI_BAYAR_HUTANG && b.kategori !== 'Es Batu' && b.kategori !== KATEGORI_KUR).reduce((s,b)=>s+Number(b.jumlah),0);
 
     document.getElementById('dashLabaHariIni').textContent = fmt(totalHariIni - totalModal - totalBiayaHariIni);
 
@@ -7788,6 +7799,8 @@ async function submitGantiPassword(){
 const KATEGORI_BAYAR_HUTANG = 'Bayar Hutang Bahan';
 // Tabungan: uang laci pindah ke Brankas (tabel brankas, hanya Owner yang bisa lihat) -> kas laci berkurang, laba TIDAK terpotong
 const KATEGORI_TABUNGAN = 'Tabungan';
+// KUR BRI: setoran harian angsuran KUR (ditanggung Owner). Kas Outlet berkurang, laba TIDAK terpotong, otomatis masuk tandon KUR (trigger trg_kur_dari_kasir)
+const KATEGORI_KUR = 'KUR BRI';
 function pilihKategoriBelanja(btn){
   document.querySelectorAll('#belanjaKecilKategori .metode-bayar-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -7795,7 +7808,65 @@ function pilihKategoriBelanja(btn){
   if(info) info.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_BAYAR_HUTANG);
   const infoTab = document.getElementById('belanjaInfoTabungan');
   if(infoTab) infoTab.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_TABUNGAN);
+  const infoKur = document.getElementById('belanjaInfoKur');
+  if(infoKur) infoKur.classList.toggle('hidden', btn.dataset.kat !== KATEGORI_KUR);
+  // isi nominal harian otomatis (boleh diganti)
+  const inp = document.getElementById('belanjaKecilJumlah');
+  const st = window.__setoranStatus;
+  if(inp && st){
+    const target = btn.dataset.kat === KATEGORI_KUR ? Number(st.kur_target) : btn.dataset.kat === KATEGORI_TABUNGAN ? Number(st.tabungan_target) : 0;
+    if(target > 0 && (!inp.value || inp.dataset.otomatis === '1')){ inp.value = target.toLocaleString('id-ID'); inp.dataset.otomatis = '1'; }
+    else if(!target && inp.dataset.otomatis === '1'){ inp.value = ''; inp.dataset.otomatis = ''; }
+  }
 }
+
+// ================== PENGINGAT TABUNGAN & KUR BRI (2026-10-23) ==================
+// Tiap hari kasir cabang utama wajib catat 💰 Tabungan (Kontrakan) & 💳 KUR BRI. Kalau belum: muncul pengingat
+// mulai jam 17.00 di atas layar + di langkah 1 Tutup Kas. Data dari fungsi database setoran_harian_status.
+window.__setoranStatus = null;
+function setoranKurang(st){
+  st = st || window.__setoranStatus;
+  if(!st || !st.wajib) return [];
+  const out = [];
+  if(Number(st.tabungan) <= 0) out.push({ kat: 'Tabungan', ikon: '💰', nama: 'Tabungan', target: Number(st.tabungan_target) });
+  if(Number(st.kur) <= 0) out.push({ kat: 'KUR BRI', ikon: '💳', nama: 'KUR BRI', target: Number(st.kur_target) });
+  return out;
+}
+async function cekPengingatSetoran(){
+  if(!currentProfile || !activeCabangId || !navigator.onLine) return;
+  try{
+    const { data, error } = await sb.rpc('setoran_harian_status', { p_cabang: activeCabangId });
+    if(error) throw error;
+    window.__setoranStatus = data;
+  }catch(e){ return; }
+  tampilkanBannerSetoran();
+}
+function tampilkanBannerSetoran(){
+  let b = document.getElementById('setoranBanner');
+  const kurang = setoranKurang();
+  const jam = Number(new Date().toLocaleString('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false }));
+  let tunda = 0; try{ tunda = Number(sessionStorage.getItem('setoranTunda') || 0); }catch(_){}
+  if(!kurang.length || jam < 17 || Date.now() < tunda){ if(b) b.remove(); return; }
+  if(!b){
+    b = document.createElement('div'); b.id = 'setoranBanner';
+    b.style.cssText = 'position:fixed;bottom:calc(92px + env(safe-area-inset-bottom, 0px));left:50%;transform:translateX(-50%);width:max-content;z-index:8900;background:#b26a00;color:#fff;border-radius:12px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.35);display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);font-size:13px;font-weight:700;';
+    document.body.appendChild(b);
+  }
+  b.innerHTML = `<span style="flex-basis:100%;text-align:center;">⏰ Belum dicatat hari ini</span>` +
+    kurang.map(k => `<button onclick="bukaBelanjaKecil('${k.kat}')" style="background:#fff;color:#b26a00;border:none;border-radius:8px;padding:6px 10px;font-weight:800;font-size:13px;cursor:pointer;">${k.ikon} ${k.nama}</button>`).join('') +
+    `<button onclick="try{sessionStorage.setItem('setoranTunda', Date.now() + 30*60000)}catch(_){}; document.getElementById('setoranBanner').remove();" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px;cursor:pointer;">Nanti</button>`;
+}
+function htmlPengingatSetoranTK(){
+  const kurang = setoranKurang();
+  if(!kurang.length) return '';
+  return `<div style="margin-top:12px;background:#fff4e0;border:2px solid #e0a030;border-radius:10px;padding:10px 12px;color:#7a4a00;font-size:13px;">
+    <b>⏰ Belum dicatat hari ini:</b>
+    ${kurang.map(k => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;"><span>${k.ikon} ${k.nama} <small>(biasanya ${fmt(k.target)})</small></span>
+      <button onclick="closeKasModal(); bukaBelanjaKecil('${k.kat}');" style="border:none;background:#e0a030;color:#fff;border-radius:8px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer;">Catat sekarang</button></div>`).join('')}
+  </div>`;
+}
+setInterval(() => { if(document.visibilityState === 'visible') cekPengingatSetoran(); }, 5 * 60000);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') cekPengingatSetoran(); });
 
 // ================== BELI STOK BAHAN (ADMIN & OWNER) ==================
 // Hanya bahan yang stoknya berkurang otomatis saat transaksi. Disimpan lewat fungsi database kasir_beli_stok
@@ -7900,12 +7971,13 @@ async function simpanBeliStok(){
   if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
 
-async function bukaBelanjaKecil(){
+async function bukaBelanjaKecil(kategori){
   if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
-  document.getElementById('belanjaKecilJumlah').value = '';
+  const inpJ = document.getElementById('belanjaKecilJumlah'); inpJ.value = ''; inpJ.dataset.otomatis = '';
   document.getElementById('belanjaKecilKet').value = '';
   document.getElementById('belanjaKecilError').classList.remove('show');
-  pilihKategoriBelanja(document.querySelector('#belanjaKecilKategori .metode-bayar-btn'));
+  if(kategori && !window.__setoranStatus) await cekPengingatSetoran();
+  pilihKategoriBelanja((kategori && document.querySelector(`#belanjaKecilKategori .metode-bayar-btn[data-kat="${kategori}"]`)) || document.querySelector('#belanjaKecilKategori .metode-bayar-btn'));
   document.getElementById('belanjaKecilOverlay').classList.add('show');
   await loadBelanjaKecilHariIni();
 }
@@ -7947,7 +8019,10 @@ async function submitBelanjaKecil(){
 
   if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
   document.getElementById('belanjaKecilJumlah').value = '';
+  document.getElementById('belanjaKecilJumlah').dataset.otomatis = '';
   document.getElementById('belanjaKecilKet').value = '';
+  if(kategori === KATEGORI_KUR) showSuccessToast('💳', 'KUR BRI tersimpan', `${fmt(jumlah)} · masuk tandon KUR di Tandon Dollar`);
+  cekPengingatSetoran();
   await loadBelanjaKecilHariIni();
 }
 
