@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.4">
+<meta name="app-version" content="2026-10-24.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -2368,41 +2368,11 @@ async function loadProfileAndEnter(){
   siapkanTampilanBaru();
 
   // pulihkan halaman terakhir yang dibuka sebelum refresh (kalau masih valid buat role ini)
-  const savedView = ambilViewState();
-  let viewDipulihkan = false;
-
-  if(profile.role === 'admin'){
-    // admin boleh pakai Kasir (POS) sejak 15 Okt (permintaan Boss Leo) + tetap lihat semua Dashboard
-    if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel)) && savedView.panel !== 'brankas'){
-      showDashPanel(savedView.panel);
-      viewDipulihkan = true;
-    } else if(savedView && savedView.type === 'sop'){
-      showSOPView();
-      viewDipulihkan = true;
-    } else if(savedView && savedView.type === 'kasir'){
-      showKasirView();
-      viewDipulihkan = true;
-    }
-    if(!viewDipulihkan) (document.body.classList.contains('ui-baru') ? tampilkanBeranda() : tampilkanLaporanTertutup());
-  } else if(profile.role === 'owner'){
-    if(savedView && savedView.type === 'dash' && (DASH_NAV_MAP[savedView.panel] || ['laporan','menuoutlet','cekstok'].includes(savedView.panel))){
-      showDashPanel(savedView.panel);
-      viewDipulihkan = true;
-    } else if(savedView && savedView.type === 'settings'){
-      showSettingsView();
-      viewDipulihkan = true;
-    } else if(savedView && savedView.type === 'sop'){
-      showSOPView();
-      viewDipulihkan = true;
-    }
-    if(!viewDipulihkan) (UI_BARU ? tampilkanBeranda() : showKasirView());
-  } else {
-    // kasir: cuma boleh POS atau SOP Menu
-    if(savedView && savedView.type === 'sop'){
-      showSOPView();
-      viewDipulihkan = true;
-    }
-    if(!viewDipulihkan) showKasirView();
+  // 2026-10-24: semua halaman ikut dipulihkan (Beranda, folder menu, Laporan/Profil/Kas Outlet, modul Admin, Pesanan, dll)
+  if(!pulihkanViewTerakhir(profile.role, ambilViewState())){
+    if(profile.role === 'kasir') showKasirView();
+    else if(profile.role === 'admin') (document.body.classList.contains('ui-baru') ? tampilkanBeranda() : tampilkanLaporanTertutup());
+    else (UI_BARU ? tampilkanBeranda() : showKasirView());
   }
   // tampilan sudah siap -> tampilkan (cegah tampilan lama kedip sebentar saat refresh)
   document.body.classList.remove('memuat-awal');
@@ -4127,6 +4097,38 @@ function ambilViewState(){
   catch(e){ return null; }
 }
 
+// kembalikan halaman terakhir setelah refresh. true = berhasil dipulihkan
+function pulihkanViewTerakhir(role, v){
+  if(!v || !v.type) return false;
+  const bos = role === 'owner' || role === 'admin';
+  try{
+    switch(v.type){
+      case 'beranda': if(!UI_BARU) return false; tampilkanBeranda(); return true;
+      case 'kasir': showKasirView(); return true;
+      case 'sop': showSOPView(); return true;
+      case 'settings': if(role !== 'owner') return false; showSettingsView(); return true;
+      case 'dash':
+        if(!bos) return false;
+        if(!(DASH_NAV_MAP[v.panel] || ['laporan','menuoutlet','cekstok'].includes(v.panel))) return false;
+        if(role === 'admin' && v.panel === 'brankas') return false;
+        showDashPanel(v.panel); return true;
+      case 'grid':
+        if(!(menuRoleIni()[v.jenis] || (role === 'admin' && ADM_MODUL[v.jenis]))) return false;
+        tampilkanGrid(v.jenis); return true;
+      case 'kategori':
+        if(role === 'admin' || !menuRoleIni().kategori[v.i]) return false;
+        tampilkanKategori(v.i); return true;
+      case 'modul':
+        if(role !== 'admin' || !ADM_MODUL[v.m]) return false;
+        tampilkanModulAdmin(v.m); return true;
+      case 'nav':
+        if(!OVERLAY_HALAMAN[v.k] || (v.k === 'beliStok' && !bos)) return false;
+        navKe(v.k); return true;
+    }
+  }catch(e){ console.warn('Gagal memulihkan halaman', e); }
+  return false;
+}
+
 function showKasirView(){
   sembunyikanHalamanBaru(); tandaiNavBawah('kasir');
   document.getElementById('kasirView').classList.remove('hidden');
@@ -4208,6 +4210,7 @@ function navKe(k){
   document.getElementById(idOverlay).classList.add('sebagai-halaman');
   document.body.classList.add('ada-halaman-overlay');
   jalankanMenu(k);
+  simpanViewState({ type:'nav', k });
 }
 // kalau halaman itu tertutup sendiri (mis. sesudah Simpan), kembali ke Beranda — jangan tinggal layar kosong
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -4305,6 +4308,7 @@ function tampilkanKategori(i){
   tandaiNavBawah('beranda');
   document.getElementById('halamanGridView').innerHTML =
     `<button class="bd-kembali" onclick="tampilkanBeranda()">◀ Beranda</button><div class="bd-kats">${htmlKotakMenu(kat[0], kat[1])}</div>`;
+  simpanViewState({ type:'kategori', i });
 }
 function tampilkanGrid(jenis){
   if(currentProfile && currentProfile.role === 'admin' && ADM_MODUL[jenis]){ tampilkanModulAdmin(jenis); return; }
@@ -4313,6 +4317,7 @@ function tampilkanGrid(jenis){
   tampilkanHalamanBaru('halamanGridView');
   tandaiNavBawah(jenis);
   document.getElementById('halamanGridView').innerHTML = `<div class="bd-kats bd-utama">${htmlKotakMenu(cfg[0], cfg[1])}</div>`;
+  simpanViewState({ type:'grid', jenis });
 }
 // ================== 2026-10-21: BERANDA ADMIN gaya Pusat Kendali Owner ==================
 // Tampilan disamakan dengan halaman Owner (gelap profesional + kartu emas), tapi isinya TETAP fitur Admin saja
@@ -4505,6 +4510,7 @@ function tampilkanModulAdmin(key){
   </div></div>`;
   if(key === 'persediaan') cekJadwalOpname();
   if(key === 'keuangan') isiAmplopAdmin();
+  simpanViewState({ type:'modul', m: key });
 }
 async function isiAmplopAdmin(){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };

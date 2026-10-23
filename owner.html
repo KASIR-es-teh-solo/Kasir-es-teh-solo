@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-23.5">
+<meta name="app-version" content="owner-2026-10-24.1">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -240,13 +240,24 @@ async function mulai(){
   const { data: cab } = await sb.from('cabang').select('id, nama').eq('aktif', true).order('nama');
   // cabang pusat paling kiri, lalu cabang lain
   cabangList = (cab || []).sort((x, y) => (/pusat/i.test(y.nama) ? 1 : 0) - (/pusat/i.test(x.nama) ? 1 : 0));
-  // setiap dibuka selalu mulai di cabang pusat (Pusat Dermo)
+  // setiap dibuka selalu mulai di cabang pusat (Pusat Dermo),
+  // kecuali habis refresh / dibuka lagi < 30 menit: kembali ke halaman & cabang terakhir
   pilihan = cabangList.length ? cabangList[0].id : 'semua';
+  const terakhir = ambilHalamanTerakhir();
+  if(terakhir && (terakhir.cab === 'semua' || cabangList.some(c => c.id === terakhir.cab))) pilihan = terakhir.cab;
   gambarCabang();
   document.getElementById('muat').style.display = 'none';
   document.getElementById('isi').style.display = '';
-  muatSemua();
+  if(terakhir && terakhir.panel && terakhir.panel !== 'beranda' && (terakhir.panel === 'brankas' || MODUL.some(m => m[0] === terakhir.panel))){ muatBeranda(); buka(terakhir.panel); }
+  else muatSemua();
 }
+// ingat halaman terakhir (supaya refresh tidak balik ke Beranda)
+function simpanHalamanTerakhir(){ try{ localStorage.setItem('pkHalaman', JSON.stringify({ panel: panelAktif, cab: pilihan, t: Date.now() })); }catch(e){} }
+function ambilHalamanTerakhir(){
+  try{ const v = JSON.parse(localStorage.getItem('pkHalaman') || 'null'); return v && Date.now() - v.t < 30 * 60000 ? v : null; }catch(e){ return null; }
+}
+window.addEventListener('pagehide', simpanHalamanTerakhir);
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') simpanHalamanTerakhir(); });
 
 function gambarCabang(){
   const tombol = [...cabangList.map(c => [c.id, rapiNama(c.nama)]), ['semua','Semua cabang']];
@@ -255,6 +266,7 @@ function gambarCabang(){
 }
 function pilihCabang(id){
   pilihan = id;
+  simpanHalamanTerakhir();
   gambarCabang();
   muatSemua();
 }
@@ -269,6 +281,7 @@ function buka(p){
   document.getElementById('ibPanel').style.display = p === 'brankas' ? 'none' : '';
   document.getElementById('brChip2').style.display = p === 'brankas' ? '' : 'none';
   window.scrollTo(0, 0);
+  simpanHalamanTerakhir();
   muatPanel();
 }
 // tombol Perbarui di Beranda sudah dihapus: data diperbarui otomatis saat aplikasi dibuka lagi & tiap 1 menit di Beranda
