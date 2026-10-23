@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-23.4">
+<meta name="app-version" content="2026-10-23.5">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1021,7 +1021,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">📈</span>
           <div class="label">Laba Bersih Hari Ini</div>
           <div class="value" id="dashLabaHariIni">Rp 0</div>
-          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bayar hutang bahan &amp; es batu (sudah di modal) tidak memotong laba</div>
+          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bahan harian &amp; es batu (sudah di modal) tidak memotong laba</div>
         </div>
         <div class="dash-card hidden" id="dashKasCard">
           <span class="icon">💵</span>
@@ -1541,10 +1541,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" class="metode-bayar-btn" data-kat="Lainnya" onclick="pilihKategoriBelanja(this)">📦 Lainnya</button>
         <button type="button" class="metode-bayar-btn" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Simpanan Harian</button>
         <button type="button" class="metode-bayar-btn" id="btnKurBri" data-kat="KUR BRI" onclick="pilihKategoriBelanja(this)">📥 Setoran Harian</button>
-        <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
+        <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🍬 Bahan Harian</button>
       </div>
       <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        🧾 Untuk <b>bayar bahan yang sudah diantar sebelumnya</b> (misal gula). Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
+        🍬 Untuk <b>beli bahan resep eceran</b> (misal gula). Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b> karena sudah dihitung di harga modal tiap cup.
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
@@ -1610,7 +1610,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <option value="Gaji">Gaji</option>
         <option value="Perawatan Alat">Perawatan Alat</option>
         <option value="Lainnya">Lainnya</option>
-        <option value="Bayar Hutang Bahan">Bayar Hutang Bahan (tidak mengurangi laba)</option>
+        <option value="Bayar Hutang Bahan">Bahan Harian, misal gula (tidak mengurangi laba)</option>
         <option value="KUR BRI">Setoran Harian (tidak mengurangi laba)</option>
       </select>
     </div>
@@ -3044,7 +3044,7 @@ function kasLangkah(n){
   const body = document.getElementById('kasModalBody');
   const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   const namaB = b => escTG((b.deskripsi || labelKat(b.kategori) || 'Belanja').split(' · dicatat')[0]);
-  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Bayar Hutang Bahan':'🧾','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
+  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Bayar Hutang Bahan':'🍬','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
   const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
   if(n === 1){
@@ -7800,7 +7800,7 @@ const KATEGORI_BAYAR_HUTANG = 'Bayar Hutang Bahan';
 // Tabungan: uang laci pindah ke Brankas (tabel brankas, hanya Owner yang bisa lihat) -> kas laci berkurang, laba TIDAK terpotong
 const KATEGORI_TABUNGAN = 'Tabungan';
 // Nama tampilan (data di database tetap 'Tabungan' & 'KUR BRI')
-const LABEL_KAT = { 'Tabungan': 'Simpanan Harian', 'KUR BRI': 'Setoran Harian' };
+const LABEL_KAT = { 'Tabungan': 'Simpanan Harian', 'KUR BRI': 'Setoran Harian', 'Bayar Hutang Bahan': 'Bahan Harian' };
 function labelKat(k){ return LABEL_KAT[k] || k; }
 // KUR BRI: setoran harian angsuran KUR (ditanggung Owner). Kas Outlet berkurang, laba TIDAK terpotong, otomatis masuk tandon KUR (trigger trg_kur_dari_kasir)
 const KATEGORI_KUR = 'KUR BRI';
