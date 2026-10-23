@@ -1029,7 +1029,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         </div>
         <div class="dash-card hidden" id="dashSaldoCard">
           <span class="icon">🏦</span>
-          <div class="label">Saldo Kas Outlet (uang di laci)</div>
+          <div class="label">Saldo Kas Outlet</div>
           <div class="value" id="dashSaldoKas">Rp 0</div>
           <div id="dashSaldoInfo" style="font-size:11px;color:rgba(255,255,255,.7);margin-top:4px;line-height:1.3;"></div>
         </div>
@@ -1247,7 +1247,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">💰</span>
           <div class="label">Saldo Kas Outlet</div>
           <div class="value" id="kasTokoSaldo">Rp 0</div>
-          <div style="font-size:12px;color:#f3e6b5;margin-top:4px;">Uang di luar laci untuk belanja kedai (setoran tutup kas masuk ke sini)</div>
+          <div style="font-size:12px;color:#f3e6b5;margin-top:4px;">Saldo outlet di luar Kas Outlet</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
             <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="bukaBeliStok('kas_toko')">📦 Beli Stok (cup dll)</button>
             <button class="header-btn" style="background:#fff;color:#0c1f14;border-color:#fff;font-weight:800;" onclick="kasTokoBiaya()">📝 Biaya Lain</button>
@@ -1528,7 +1528,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <div class="overlay" id="belanjaKecilOverlay">
   <div class="modal">
     <h3>🧊 Belanja Harian</h3>
-    <p>Catat uang tunai yang diambil dari laci untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas.</p>
+    <p>Catat uang yang diambil dari Kas Outlet untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas Outlet.</p>
     <div class="login-error" id="belanjaKecilError"></div>
     <div class="field">
       <label>Untuk apa?</label>
@@ -1542,10 +1542,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <button type="button" class="metode-bayar-btn" id="btnBayarHutangBahan" data-kat="Bayar Hutang Bahan" onclick="pilihKategoriBelanja(this)">🧾 Bayar Hutang Bahan</button>
       </div>
       <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        🧾 Untuk <b>bayar bahan yang sudah diantar sebelumnya</b> (misal gula). Kas laci berkurang, tapi <b>tidak mengurangi laba</b>.
+        🧾 Untuk <b>bayar bahan yang sudah diantar sebelumnya</b> (misal gula). Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        💰 Uang tabungan diambil dari laci. Kas laci berkurang, tapi <b>tidak mengurangi laba</b>.
+        💰 Uang tabungan diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
     </div>
     <div class="field">
@@ -1558,7 +1558,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <button class="login-btn" id="belanjaKecilSubmitBtn" onclick="submitBelanjaKecil()">Simpan</button>
     <div style="margin-top:14px;">
-      <div class="bk-head" style="margin-bottom:6px;">Uang keluar laci hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
+      <div class="bk-head" style="margin-bottom:6px;">Uang keluar Kas Outlet hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
       <div id="belanjaKecilList" style="max-height:180px;overflow:auto;"></div>
     </div>
     <button class="modal-close" onclick="tutupBelanjaKecil()">Tutup</button>
@@ -1619,12 +1619,12 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div class="field">
       <label>Sumber Dana</label>
       <select id="biayaSumberDana" style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line-soft);background:#fff;color:var(--ink);font-size:14px;">
-        <option value="tunai">💵 Kas Tunai (ambil dari laci)</option>
-        <option value="non_tunai">🏦 Transfer/Non-Tunai (bukan dari laci)</option>
+        <option value="tunai">💵 Kas Outlet</option>
+        <option value="non_tunai">🏦 Transfer/Non-Tunai (bukan dari Kas Outlet)</option>
         <option value="dana_operasional">🏠 Dana Operasional (sewa, listrik, gaji)</option>
         <option value="dana_stok">📦 Dana Stok (gas LPG, stok)</option>
       </select>
-      <div style="font-size:11px;color:#1a1a1a;margin-top:4px;">Kalau bayarnya pakai uang tunai di laci, pilih "Kas Tunai" — biar ikut kepotong pas Hitung Kas. Kalau transfer bank, pilih yang non-tunai biar kas di laci nggak keitung berkurang.</div>
+      <div style="font-size:11px;color:#1a1a1a;margin-top:4px;">Bayar pakai uang Kas Outlet → pilih "Kas Outlet" (ikut terpotong saat Tutup Kas). Transfer bank → pilih Non-Tunai. Sewa/listrik → Dana Operasional. Gas/stok → Dana Stok.</div>
     </div>
     <button class="login-btn" id="biayaSubmitBtn" onclick="submitBiaya()">Simpan</button>
     <button class="modal-close" onclick="closeBiayaModal()">Batal</button>
@@ -1636,7 +1636,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <div class="overlay" id="uangLaciOverlay">
   <div class="modal">
     <h3>💵 Kas Outlet</h3>
-    <p>Catat uang yang keluar dari laci, atau hitung kas saat tutup.</p>
+    <p>Catat uang yang keluar dari Kas Outlet, atau Tutup Kas.</p>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaBelanjaKecil();">🧊 Belanja Harian</button>
     <button class="login-btn" style="margin-bottom:8px;" onclick="tutupUangLaci(); bukaKasModal();">💵 Tutup Kas</button>
     <button class="modal-close" onclick="tutupUangLaci()">Tutup</button>
@@ -1664,7 +1664,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin:10px 0 6px;">Pakai uang apa?</div>
       <button type="button" id="beliStokDanaStok" onclick="pilihDanaBeliStok('dana_stok')" style="width:100%;margin-bottom:8px;padding:12px 8px;border-radius:10px;border:2px solid #6d3b1f;font-weight:800;font-size:14px;cursor:pointer;">📦 Dana Stok <span id="beliStokSaldoDana" style="font-weight:600;font-size:12px;"></span></button>
       <div style="display:flex;gap:8px;">
-        <button type="button" id="beliStokDanaLaci" onclick="pilihDanaBeliStok('tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #2e7d32;font-weight:800;font-size:14px;cursor:pointer;">💵 Uang Laci</button>
+        <button type="button" id="beliStokDanaLaci" onclick="pilihDanaBeliStok('tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #2e7d32;font-weight:800;font-size:14px;cursor:pointer;">💵 Kas Outlet</button>
         <button type="button" id="beliStokDanaLain" onclick="pilihDanaBeliStok('non_tunai')" style="flex:1;padding:12px 8px;border-radius:10px;border:2px solid #1565c0;font-weight:800;font-size:14px;cursor:pointer;">💳 Uang Lainnya</button>
       </div>
       <button type="button" id="beliStokDanaKas" class="hidden" onclick="pilihDanaBeliStok('kas_toko')" style="width:100%;margin-top:8px;padding:12px 8px;border-radius:10px;border:2px solid #a06000;font-weight:800;font-size:14px;cursor:pointer;">💰 Kas Outlet</button>
@@ -1959,7 +1959,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <button class="receipt-close" id="receiptGrabBtn" onclick="konfirmasiBayar('grab')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#00b14f;color:#fff;border:2px solid #00873c;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 GrabFood</button>
       <button class="receipt-close" id="receiptShopeeBtn" onclick="konfirmasiBayar('shopee')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#ee4d2d;color:#fff;border:2px solid #c73a1d;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 ShopeeFood</button>
     </div>
-    <div class="sub" style="margin-top:4px;font-size:11px;">Pesanan online: harga outlet & tidak masuk uang laci.</div>
+    <div class="sub" style="margin-top:4px;font-size:11px;">Pesanan online: harga outlet & tidak masuk Kas Outlet.</div>
     <button class="receipt-close" onclick="tutupKonfirmasiBayar()" style="background:transparent;color:var(--forest-dark);border:1px solid var(--line-soft);margin-top:8px;">KEMBALI</button>
   </div>
 </div>
@@ -3043,10 +3043,10 @@ function kasLangkah(n){
   if(n === 1){
     document.getElementById('kasModalTitle').textContent = '🔒 Tutup Kas';
     body.innerHTML = strip + `
-      <div class="tk-sub">${tgl} · cek dulu semua uang keluar laci hari ini</div>
+      <div class="tk-sub">${tgl} · cek dulu semua uang keluar Kas Outlet hari ini</div>
       <div class="tk-list">
         ${d.biaya.length ? d.biaya.map(b=>`<div class="tk-row"><span>${ikon(b.kategori)} ${escTG(b.kategori)}<small>${namaB(b)} · ${jam(b.created_at)}</small></span><b>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</b></div>`).join('')
-          : '<div class="tk-row"><span>Belum ada uang keluar laci hari ini</span><b>Rp0</b></div>'}
+          : '<div class="tk-row"><span>Belum ada uang keluar Kas Outlet hari ini</span><b>Rp0</b></div>'}
         <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
       <div class="tk-q">Semua belanja, es batu &amp; tabungan hari ini sudah dicatat?</div>
@@ -3063,18 +3063,18 @@ function kasLangkah(n){
       <div class="tk-list">
         <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Saldo Kas Outlet'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
-        <div class="tk-row"><span>− Uang keluar laci<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
+        <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja + tabungan</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
-      <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di laci' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di Kas Outlet' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
       <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
     return;
   }
-  document.getElementById('kasModalTitle').textContent = '💵 Hitung Uang di Laci';
+  document.getElementById('kasModalTitle').textContent = '💵 Hitung Kas Outlet';
   const alasan = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
   body.innerHTML = strip + `
     <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
-    <div style="font-weight:800;font-size:14px;color:#111;">${d.patenAktif ? 'Jumlah uang di laci sekarang' : 'Jumlah uang outlet yang dihitung sekarang'}</div>
+    <div style="font-weight:800;font-size:14px;color:#111;">${d.patenAktif ? 'Jumlah uang Kas Outlet sekarang' : 'Jumlah uang outlet yang dihitung sekarang'}</div>
     <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
     <div id="tkStatus"></div>
     <div id="tkAlasan" class="hidden">
@@ -3108,7 +3108,7 @@ function kasHitungLive(){
   al.classList.toggle('hidden', selisih === 0);
   if(!d.patenAktif){ se.innerHTML = htmlAmplopTK(d, fisik); return; }
   const setor = Math.max(0, fisik - d.paten), tinggal = fisik - setor;
-  se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Outlet: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di laci untuk kembalian besok.</span></div>`;
+  se.innerHTML = `<div class="tk-setor">💼 Masuk Kas Outlet: <b>${fmt(setor)}</b><br><span>Sisakan <b>${fmt(tinggal)}</b> di Kas Outlet untuk kembalian besok.</span></div>`;
 }
 
 // kotak "masukkan ke amplop" di langkah hitung uang (sama dengan pembagian di fungsi kas_tutup)
@@ -3125,7 +3125,7 @@ function htmlAmplopTK(d, fisik){
   return `<div class="tk-setor" style="line-height:1.55;">✉️ <b style="font-size:15px;">Masukkan ke amplop:</b><br>
     📦 Dana Stok: <b>${fmt(a.ds)}</b><br><span>cup, teh, bubuk rasa, dll. sesuai yang laku (tunai + Grab/Shopee)${r.gas ? ' + gas' : ''}</span><br>
     🏠 Dana Operasional: <b>${fmt(a.dop)}</b>${ketOp ? '<br><span>' + ketOp + '</span>' : ''}<br>
-    💵 Sisa di Kas Outlet (laci): <b>${fmt(a.sisa)}</b>${(a.ds < (d.danaStok||0) || a.dop < (d.danaOperasional||0)) ? '<br><span style="color:#c0392b;">Uang laci kurang, amplop diisi semampunya.</span>' : ''}</div>`;
+    💵 Sisa di Kas Outlet: <b>${fmt(a.sisa)}</b>${(a.ds < (d.danaStok||0) || a.dop < (d.danaOperasional||0)) ? '<br><span style="color:#c0392b;">Kas Outlet kurang, amplop diisi semampunya.</span>' : ''}</div>`;
 }
 
 function kasPilihAlasan(el, a){
@@ -3150,7 +3150,7 @@ function tampilkanPeringatanAntrianKas(){
   document.getElementById('kasModalBody').innerHTML = `
     <div style="background:#fff4e0;border:1px solid #e0a030;border-radius:8px;padding:10px;font-size:13px;margin-bottom:14px;">
       ⚠️ Masih ada <b>${antrian.length} transaksi offline (${fmt(total)})</b> yang belum terkirim ke server.<br><br>
-      Uangnya sudah ada di laci, tapi belum masuk hitungan. Kalau Hitung Kas sekarang, hasilnya jadi <b>kas lebih palsu</b>.
+      Uangnya sudah ada di Kas Outlet, tapi belum masuk hitungan. Kalau Hitung Kas sekarang, hasilnya jadi <b>kas lebih palsu</b>.
       Sambungkan internet lalu sinkron dulu.
     </div>
     <div class="login-error" id="kasError"></div>
@@ -3189,7 +3189,7 @@ async function submitHitungKas(){
   const errBox = document.getElementById('kasError');
   errBox.classList.remove('show');
   const kasFisik = angkaRupiah('kasFisikInput');
-  if(isNaN(kasFisik) || kasFisik < 0){ errBox.textContent = 'Isi dulu jumlah uang di laci.'; errBox.classList.add('show'); return; }
+  if(isNaN(kasFisik) || kasFisik < 0){ errBox.textContent = 'Isi dulu jumlah uang Kas Outlet.'; errBox.classList.add('show'); return; }
   let catatan = kasTK.alasan || '';
   const ta = document.getElementById('kasCatatanInput');
   if(ta && !ta.classList.contains('hidden')) catatan = ta.value.trim();
@@ -3270,21 +3270,21 @@ async function tampilkanLaporanKas(d){
     <div class="lk-judul">Uang masuk</div>
     <div class="lk-row"><span>Kas awal (modal kembalian)</span><b>${fmt(d.kasAwal)}</b></div>
     <div class="lk-row"><span>Penjualan tunai (${d.jumlahTx} transaksi)</span><b>${fmt(d.totalTunai)}</b></div>
-    <div class="lk-judul">Uang keluar dari laci</div>
+    <div class="lk-judul">Uang keluar dari Kas Outlet</div>
     ${biaya.length ? biaya.map(b=>`<div class="lk-row kecil"><span>${esc(namaBiaya(b))} · ${jam(b.created_at)}${b.pencatat ? ' · '+esc(b.pencatat) : ''}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : '− ' + fmt(b.jumlah)}</span></div>`).join('')
       : '<div class="lk-row kecil"><span>Tidak ada belanja tunai</span><span></span></div>'}
     <div class="lk-row"><span>Total keluar</span><b>${d.totalBiaya < 0 ? '+ ' + fmt(-d.totalBiaya) : '− ' + fmt(d.totalBiaya)}</b></div>
     <div class="lk-judul">Hasil hitung</div>
-    <div class="lk-row"><span>Seharusnya di laci</span><b>${fmt(d.kasSistem)}</b></div>
+    <div class="lk-row"><span>Seharusnya di Kas Outlet</span><b>${fmt(d.kasSistem)}</b></div>
     <div class="lk-row"><span>Dihitung oleh ${esc(namaKasir)}</span><b>${fmt(d.kasFisik)}</b></div>
     <div class="lk-row total"><span>Selisih</span><b style="color:${warnaSelisih}">${teksSelisih}</b></div>
     ${d.setoran > 0 ? `<div class="lk-judul">Setoran</div>
     <div class="lk-row"><span>💼 Masuk Kas Outlet</span><b>${fmt(d.setoran)}</b></div>
-    <div class="lk-row"><span>Ditinggal di laci (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
+    <div class="lk-row"><span>Sisa Kas Outlet (kas awal besok)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     ${(d.danaStok || d.danaOperasional) ? `<div class="lk-judul">Masukkan ke amplop</div>
     <div class="lk-row"><span>📦 Dana Stok</span><b>${fmt(d.danaStok || 0)}</b></div>
     <div class="lk-row"><span>🏠 Dana Operasional</span><b>${fmt(d.danaOperasional || 0)}</b></div>
-    <div class="lk-row"><span>💵 Sisa di laci (Kas Outlet)</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
+    <div class="lk-row"><span>💵 Sisa di Kas Outlet</span><b>${fmt(d.kasDitinggal)}</b></div>` : ''}
     <div class="lk-catatan">Catatan: ${d.catatan ? esc(d.catatan) : '—'}</div>`;
 
   const garis = '--------------------------------\n';
@@ -3306,8 +3306,8 @@ async function tampilkanLaporanKas(d){
   t += baris('SELISIH', teksSelisih);
   t += (d.selisih === 0 ? 'STATUS: KAS PAS' : d.selisih < 0 ? 'STATUS: KAS KURANG' : 'STATUS: KAS LEBIH') + '\n';
   if(d.catatan) t += 'Catatan: ' + d.catatan + '\n';
-  if(d.setoran > 0){ t += garis + baris('Ke Kas Outlet', fmt(d.setoran)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
-  if(d.danaStok || d.danaOperasional){ t += garis + 'Masukkan ke amplop:\n' + baris(' Dana Stok', fmt(d.danaStok || 0)) + baris(' Dana Operasional', fmt(d.danaOperasional || 0)) + baris('Sisa di laci', fmt(d.kasDitinggal)); }
+  if(d.setoran > 0){ t += garis + baris('Ke Kas Outlet', fmt(d.setoran)) + baris('Sisa Kas Outlet', fmt(d.kasDitinggal)); }
+  if(d.danaStok || d.danaOperasional){ t += garis + 'Masukkan ke amplop:\n' + baris(' Dana Stok', fmt(d.danaStok || 0)) + baris(' Dana Operasional', fmt(d.danaOperasional || 0)) + baris('Sisa Kas Outlet', fmt(d.kasDitinggal)); }
   laporanKasTeks = t;
 
   document.getElementById('laporanKasOverlay').classList.add('show');
@@ -3414,7 +3414,7 @@ async function loadRiwayatKas(){
         <span>${escTG(r.cabang ? r.cabang.nama : '-')} · oleh ${escTG(r.ditutup ? r.ditutup.nama : '-')}</span>
         <span class="time">${new Date(r.waktu_tutup).toLocaleTimeString('id-ID', { timeZone:'Asia/Jakarta' })}</span>
         <span style="width:100%;font-size:12px;opacity:.85;margin-top:4px;">
-          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Ke Kas Outlet: ' + fmt(r.setoran) + ' · Sisa laci: ' + fmt(r.kas_ditinggal) : ''}
+          Kas awal: ${fmt(r.kas_awal)}${Number(r.total_biaya) > 0 ? ' · Biaya Tunai: '+fmt(r.total_biaya) : ''} · Seharusnya: ${fmt(r.kas_sistem)} · Dihitung: ${fmt(r.kas_fisik)}${Number(r.setoran) > 0 ? ' · Ke Kas Outlet: ' + fmt(r.setoran) + ' · Sisa Kas Outlet: ' + fmt(r.kas_ditinggal) : ''}
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
@@ -3435,7 +3435,7 @@ async function loadRiwayatKas(){
     const tgl = new Date(g.list[0].waktu_tutup).toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short', ...(tahunIni ? {} : { year:'numeric' }), timeZone:'Asia/Jakarta' });
     const totalSelisih = g.list.reduce((a,r)=>a + Number(r.selisih || 0), 0);
     const akhir = g.list[0]; // tutup kas terakhir hari itu
-    const sub = `Uang di laci: ${fmt(akhir.kas_fisik)}${Number(akhir.setoran) > 0 ? ' · setor ' + fmt(akhir.setoran) : ''}${g.list.length > 1 ? ' · ' + g.list.length + 'x tutup kas' : ''}`;
+    const sub = `Kas Outlet: ${fmt(akhir.kas_fisik)}${Number(akhir.setoran) > 0 ? ' · setor ' + fmt(akhir.setoran) : ''}${g.list.length > 1 ? ' · ' + g.list.length + 'x tutup kas' : ''}`;
     return `
       <div class="rk-hari">
         <div class="rk-kepala" onclick="this.parentNode.classList.toggle('terbuka')">
@@ -4315,7 +4315,7 @@ const ADM_MODUL = {
     ['cup','Stok Cup','Sisa cup & perkiraan habis','stokcup'],
     ['opname','Stok Opname','Hitung barang tiap 2 minggu (Jumat)','opname']]],
   pembelian: ['Pembelian', [
-    ['belanja','Belanja Harian','Catat belanja dari laci','belanja'],
+    ['belanja','Belanja Harian','Catat belanja dari Kas Outlet','belanja'],
     ['pesanan','Riwayat Pembelian','Beli stok yang sudah masuk','pembelian']]],
   laporan: ['Laporan', [
     ['laporan','Ringkasan Penjualan','Penjualan per hari','ringkasan'],
@@ -5077,7 +5077,7 @@ async function konfirmasiBayar(metode){
   // 2026-10-19: konfirmasi dulu untuk pesanan online (kalau kasir salah pencet bisa batal)
   if(metode === 'grab' || metode === 'shopee'){
     const nm = metode === 'grab' ? '🟢 GrabFood' : '🟠 ShopeeFood';
-    if(!confirm(`Catat sebagai pesanan ${nm}?\n\nUang TIDAK masuk laci (dibayar lewat aplikasi ${metode === 'grab' ? 'Grab' : 'Shopee'}).\n\nOK = simpan · Batal = kembali`)) return;
+    if(!confirm(`Catat sebagai pesanan ${nm}?\n\nUang TIDAK masuk Kas Outlet (dibayar lewat aplikasi ${metode === 'grab' ? 'Grab' : 'Shopee'}).\n\nOK = simpan · Batal = kembali`)) return;
   }
   // 'online' = pesanan Shopee/Grab: harga outlet, stok berkurang, TIDAK masuk saldo kas laci
   // 2026-10-19: online dipisah GrabFood / ShopeeFood (server menyimpan metode 'online' + platform)
@@ -5640,7 +5640,7 @@ async function hitungSaldoKas(daftarCabang){
     total += kasLaci + masuk - keluar;
     const tgl = new Date(sejak).toLocaleString('id-ID',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
     info.push(`${daftarCabang.length>1 ? c.nama+': ' : ''}Hitung Kas ${tgl} ${fmt(kasLaci)}` +
-      (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} keluar laci` : ''));
+      (masuk||keluar ? ` · +${fmt(masuk)} jual · −${fmt(keluar)} keluar` : ''));
   }
   return { total, info };
 }
@@ -7687,7 +7687,7 @@ async function loadPembelianData(){
 
   box.innerHTML = data.map(p=>`
     <div class="tx-row" style="flex-wrap:wrap;">
-      <span>${escTG(p.bahan_baku ? p.bahan_baku.nama : '-')} · ${p.jumlah} ${escTG(p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : '')}${isOwner && p.cabang ? ' · '+escTG(p.cabang.nama) : ''}${p.sumber_dana === 'tunai' ? ' <span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Dari laci</span>' : ''}</span>
+      <span>${escTG(p.bahan_baku ? p.bahan_baku.nama : '-')} · ${p.jumlah} ${escTG(p.bahan_baku ? (p.bahan_baku.satuan_beli || p.bahan_baku.satuan) : '')}${isOwner && p.cabang ? ' · '+escTG(p.cabang.nama) : ''}${p.sumber_dana === 'tunai' ? ' <span style="font-size:10px;background:rgba(46,125,50,.12);color:#2e7d32;padding:2px 6px;border-radius:10px;font-weight:700;">💵 Kas Outlet</span>' : ''}</span>
       <span class="time">${new Date(p.created_at).toLocaleString('id-ID')}</span>
       <span style="width:100%;display:flex;justify-content:space-between;margin-top:4px;font-size:12px;">
         <span style="opacity:.9;font-weight:600;">${fmt(p.harga_satuan)}/satuan${p.catatan ? ' · '+escTG(p.catatan) : ''}</span>
@@ -7814,11 +7814,11 @@ function pilihDanaBeliStok(d){
   if(kas){ kas.classList.add('hidden');
     kas.style.background = d === 'kas_toko' ? '#a06000' : '#fff'; kas.style.color = d === 'kas_toko' ? '#fff' : '#a06000'; }
   document.getElementById('beliStokDanaInfo').textContent = d === 'dana_stok'
-    ? 'Ambil uangnya dari amplop Dana Stok. Uang laci tidak berubah.'
+    ? 'Ambil uangnya dari amplop Dana Stok. Kas Outlet tidak berubah.'
     : d === 'tunai'
-    ? 'Uang diambil dari laci kasir. Saldo kas ikut berkurang.'
-    : d === 'kas_toko' ? 'Dibayar dari Kas Outlet. Uang laci tidak berubah.'
-    : 'Uang pribadi / transfer. Saldo laci tidak berubah.';
+    ? 'Uang diambil dari Kas Outlet. Saldonya ikut berkurang.'
+    : d === 'kas_toko' ? 'Dibayar dari Kas Outlet.'
+    : 'Uang pribadi / transfer. Kas Outlet tidak berubah.';
 }
 const BELI_STOK_URUT = ['cup 18 oz','cup 22 oz','cup 16 oz','sedotan','kopi ice roast','milo','teh original'];
 
@@ -7894,7 +7894,7 @@ async function simpanBeliStok(){
   btn.disabled = false; btn.textContent = 'Simpan';
   if(error) return gagal('Gagal menyimpan: ' + error.message);
   tutupBeliStok();
-  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'uang laci' : beliStokDana === 'kas_toko' ? 'Kas Outlet' : beliStokDana === 'dana_stok' ? 'Dana Stok' : 'uang lainnya'}). Stok sudah bertambah.`);
+  alert(`✅ ${b.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(b)} (${fmt(t)}) tersimpan (${beliStokDana === 'tunai' ? 'Kas Outlet' : beliStokDana === 'kas_toko' ? 'Kas Outlet' : beliStokDana === 'dana_stok' ? 'Dana Stok' : 'uang lainnya'}). Stok sudah bertambah.`);
   try{ await loadPembelianData(); }catch(_){}
   if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
@@ -7923,7 +7923,7 @@ async function submitBelanjaKecil(){
   const ket = document.getElementById('belanjaKecilKet').value.trim();
 
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
-  if(!confirm(`Ambil ${fmt(jumlah)} dari laci untuk ${kategori}?`)) return;
+  if(!confirm(`Ambil ${fmt(jumlah)} dari Kas Outlet untuk ${kategori}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   const { error } = kategori === KATEGORI_TABUNGAN
@@ -8606,13 +8606,13 @@ async function loadBelanjaKecilHariIni(){
       <span style="text-align:right;"><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span class="bk-sub">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>
       ${id ? `<br><button type="button" class="bk-batal" style="margin-top:6px;font-size:13px;padding:5px 12px;border-radius:14px;border:1px solid #e53935;background:#fdecea;color:#c62828;font-weight:800;cursor:pointer;" onclick="batalkanBelanja('${id}', '${escTG(r.kategori).replace(/'/g,"\\'")}', ${Number(r.jumlah)})">🚫 Batalkan</button>` : ''}</span>
     </div>`;
-  }).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar laci hari ini.</div>';
+  }).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar Kas Outlet hari ini.</div>';
 }
 
 // Batalkan belanja (Owner & Admin). Tidak dihapus: jadi Rp0 + tanda DIBATALKAN + masuk Log Aktivitas.
 // (Membatalkan TRANSAKSI penjualan tetap khusus Owner.)
 async function batalkanBelanja(id, kategori, jumlah){
-  const alasan = prompt(`Batalkan belanja ${kategori} ${fmt(jumlah)}?\nUang dianggap kembali ke laci.\n\nAlasan (opsional, misal: dobel):`, '');
+  const alasan = prompt(`Batalkan belanja ${kategori} ${fmt(jumlah)}?\nUang dianggap kembali ke Kas Outlet.\n\nAlasan (opsional, misal: dobel):`, '');
   if(alasan === null) return;
   const { error } = await sb.rpc('belanja_batal', { p_id: id, p_alasan: alasan.trim() || null });
   if(error){ alert('Gagal membatalkan: ' + error.message); return; }
@@ -8896,16 +8896,16 @@ async function loadBrankasOnline(){
       <div class="bo-nama">${BO_NAMA[pf]} · belum cair</div>
       <div class="bo-saldo">${fmt(d.saldo || 0)}</div>
       <div class="bo-info">Bulan ini: <b>${d.pesanan_bulan || 0}</b> pesanan · ${fmt(d.masuk_bulan || 0)} (harga outlet)<br>
-        Cair ke rekening: ${fmt(d.cair_bulan || 0)}${Number(d.ke_laci_bulan) > 0 ? ' · ke laci: ' + fmt(d.ke_laci_bulan) : ''}</div>
+        Cair ke rekening: ${fmt(d.cair_bulan || 0)}${Number(d.ke_laci_bulan) > 0 ? ' · ke Kas Outlet: ' + fmt(d.ke_laci_bulan) : ''}</div>
       <div class="bo-btn"><button class="b1" onclick="brankasOnlineCair('${pf}')">🏦 Sudah cair ke rekening</button>
-        <button class="b2" onclick="brankasOnlineKeLaci('${pf}')">➡️ Masukkan ke laci</button></div>
+        <button class="b2" onclick="brankasOnlineKeLaci('${pf}')">➡️ Masukkan ke Kas Outlet</button></div>
     </div>`;
   }).join('');
   const rows = data.riwayat || [];
   const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
     : r.jenis === 'cair' ? `🏦 ${BO_NAMA[r.platform] || 'Online'} cair ke rekening · diterima ${fmt(r.diterima || 0)}`
-    : r.jenis === 'selisih' ? '🧹 Sisa dikosongkan (tidak masuk laci)'
-    : `➡️ ${BO_NAMA[r.platform] || 'Online'} dimasukkan ke laci`;
+    : r.jenis === 'selisih' ? '🧹 Sisa dikosongkan (tidak masuk Kas Outlet)'
+    : `➡️ ${BO_NAMA[r.platform] || 'Online'} dimasukkan ke Kas Outlet`;
   list.innerHTML = rows.length ? `<div style="background:#fff;border-radius:10px;padding:2px 12px;">` + rows.map((r,i)=>{
     const tgl = new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
     const masuk = r.jenis === 'masuk';
@@ -8931,7 +8931,7 @@ async function brankasOnlineCair(pf){
   if(b === null) return;
   const diterima = Number(String(b).replace(/[^0-9]/g,''));
   if(isNaN(diterima) || String(b).trim() === ''){ alert('Isi jumlah uang yang masuk rekening.'); return; }
-  if(!confirm(`${BO_NAMA[pf]} cair ke rekening:\nPesanan ${fmt(jumlah)} · diterima ${fmt(diterima)} · potongan ${fmt(jumlah - diterima)}\n\nUang laci tidak berubah. Simpan?`)) return;
+  if(!confirm(`${BO_NAMA[pf]} cair ke rekening:\nPesanan ${fmt(jumlah)} · diterima ${fmt(diterima)} · potongan ${fmt(jumlah - diterima)}\n\nKas Outlet tidak berubah. Simpan?`)) return;
   const { error } = await sb.rpc('brankas_online_catat', { p_cabang: activeCabangId, p_platform: pf, p_jenis: 'cair', p_jumlah: jumlah, p_diterima: diterima, p_keterangan: null });
   if(error){ alert('Gagal: ' + error.message); return; }
   showSuccessToast('🏦', 'Tercatat cair ke rekening', `${BO_NAMA[pf]} diterima ${fmt(diterima)}`);
@@ -8944,14 +8944,14 @@ async function brankasOnlineKeLaci(pf){
   if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
   const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
   if(saldo <= 0){ alert(`${BO_NAMA[pf]} masih kosong.`); return; }
-  const a = await mintaRupiah(`Masukkan berapa ke laci kasir?\n${BO_NAMA[pf]} belum cair: ${fmt(saldo)}`, String(saldo));
+  const a = await mintaRupiah(`Masukkan berapa ke Kas Outlet?\n${BO_NAMA[pf]} belum cair: ${fmt(saldo)}`, String(saldo));
   if(a === null) return;
   const jumlah = Number(String(a).replace(/[^0-9]/g,''));
   if(!jumlah || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
-  if(!confirm(`Pindahkan ${fmt(jumlah)} dari ${BO_NAMA[pf]} ke laci?\n\nPastikan uangnya benar-benar dimasukkan ke laci.`)) return;
+  if(!confirm(`Pindahkan ${fmt(jumlah)} dari ${BO_NAMA[pf]} ke Kas Outlet?\n\nPastikan uangnya benar-benar dimasukkan ke Kas Outlet.`)) return;
   const { error } = await sb.rpc('brankas_online_catat', { p_cabang: activeCabangId, p_platform: pf, p_jenis: 'ke_laci', p_jumlah: jumlah, p_diterima: null, p_keterangan: null });
   if(error){ alert('Gagal: ' + error.message); return; }
-  showSuccessToast('➡️', 'Masuk ke laci', `${fmt(jumlah)} dari ${BO_NAMA[pf]}`);
+  showSuccessToast('➡️', 'Masuk ke Kas Outlet', `${fmt(jumlah)} dari ${BO_NAMA[pf]}`);
   await loadBrankasOnline();
   if(typeof refreshSaldoHeader === 'function') refreshSaldoHeader();
 }

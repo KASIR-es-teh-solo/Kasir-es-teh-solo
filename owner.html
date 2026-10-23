@@ -445,7 +445,7 @@ async function muatUang(){
 // ---------- pembelian per cabang (cuma pantau; dicatat Admin/Kasir di aplikasi kasir) ----------
 let beliHari = 7;
 function periodeBeli(h){ beliHari = h; muatBeli(); }
-const danaLbl = d => d === 'tunai' ? 'Uang laci' : d === 'kas_toko' ? 'Kas Outlet' : d === 'dana_stok' ? 'Dana Stok' : d === 'dana_operasional' ? 'Dana Operasional' : 'Uang lain';
+const danaLbl = d => d === 'tunai' ? 'Kas Outlet' : d === 'kas_toko' ? 'Kas Outlet' : d === 'dana_stok' ? 'Dana Stok' : d === 'dana_operasional' ? 'Dana Operasional' : 'Uang lain';
 async function muatBeli(){
   const box = document.getElementById('beliIsi');
   if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
@@ -526,7 +526,7 @@ function folderPengeluaran(rows){
     const hari = g.d.toLocaleDateString('id-ID', { weekday:'long' });
     const tgl = g.d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
     return `<details class="fold"><summary><span class="fic">📁</span><span class="ft"><b>${esc(hari)}, ${esc(tgl)}</b><small>${g.isi.length} pengeluaran</small></span><span class="kanan min">− ${fmt(tot)}</span><span class="pan">▾</span></summary>
-      ${g.isi.map(b => `<div class="baris"><span>${esc(b.kategori)} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'uang laci' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
+      ${g.isi.map(b => `<div class="baris"><span>${esc(b.kategori)} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'Kas Outlet' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
     </details>`;
   }).join('');
 }
