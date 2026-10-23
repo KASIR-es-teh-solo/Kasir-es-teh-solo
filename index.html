@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.1">
+<meta name="app-version" content="2026-10-24.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -377,9 +377,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bk-chips.on{display:flex;}
   .bk-chip{border:1px solid #ccc;border-radius:20px;padding:7px 12px;font-size:13px;font-weight:700;background:#fafafa;color:var(--ink);cursor:pointer;}
   .bk-chip.hj{border-color:#66bb6a;background:#e8f5e9;color:#1b5e20;}
-  .bk-chips[data-untuk="resep"] .bk-chip.on{background:#2e7d32;color:#fff;border-color:#2e7d32;}
-  .bk-chips[data-untuk="biaya"] .bk-chip.on{background:#e65100;color:#fff;border-color:#e65100;}
-  .bk-cat{width:100%;font-size:11px;color:#2e7d32;font-weight:700;margin-top:2px;}
+  .bk-chip.r{border-color:#a5d6a7;}
+  .bk-chip.b{border-color:#ffcc80;}
+  .bk-chip.r.on{background:#2e7d32;color:#fff;border-color:#2e7d32;}
+  .bk-chip.b.on{background:#e65100;color:#fff;border-color:#e65100;}
   .bk-rutin-judul{border-top:1px dashed #ccc;margin:14px 0 8px;padding-top:10px;font-size:12px;font-weight:800;color:#555;}
   .bk-rutin{border:1px solid var(--line-soft);border-radius:12px;padding:9px 6px;background:#fff;color:var(--ink);font-weight:800;font-size:13px;cursor:pointer;}
   .bk-rutin.on{background:var(--gold);border-color:var(--gold);}
@@ -1555,29 +1556,18 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-mode res" data-mode="resep" onclick="pilihModeBelanja('resep')">🍬 Bahan Resep<small>tidak mengurangi laba</small></button>
           <button type="button" class="bk-mode bia" data-mode="biaya" onclick="pilihModeBelanja('biaya')">🧾 Biaya Toko<small>mengurangi laba</small></button>
         </div>
-        <div class="bk-chips" data-untuk="resep">
-          <button type="button" class="bk-chip" data-kat="Es Batu" data-isi="Es batu" onclick="pilihChipBelanja(this)">🧊 Es Batu</button>
-          <button type="button" class="bk-chip" data-kat="Bayar Hutang Bahan" data-isi="Gula" onclick="pilihChipBelanja(this)">Gula</button>
-          <button type="button" class="bk-chip" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" onclick="pilihChipBelanja(this)">Susu SKM</button>
-          <button type="button" class="bk-chip" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" onclick="pilihChipBelanja(this)">Susu Full Cream</button>
-          <button type="button" class="bk-chip" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" onclick="pilihChipBelanja(this)">Sealer</button>
+        <div class="bk-chips on" id="bkChipsSemua">
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Es Batu" data-isi="Es batu" onclick="pilihChipBelanja(this)">🧊 Es Batu</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Gula" onclick="pilihChipBelanja(this)">🍬 Gula</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" onclick="pilihChipBelanja(this)">💧 Galon</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" onclick="pilihChipBelanja(this)">🔥 Gas</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
         </div>
-        <div class="bk-chips" data-untuk="biaya">
-          <button type="button" class="bk-chip" data-kat="Air Galon" data-isi="Galon" onclick="pilihChipBelanja(this)">💧 Galon</button>
-          <button type="button" class="bk-chip" data-kat="Gas" data-isi="Gas LPG" onclick="pilihChipBelanja(this)">🔥 Gas</button>
-          <button type="button" class="bk-chip" data-kat="Kebersihan" data-isi="Kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
-          <button type="button" class="bk-chip" data-kat="Lainnya" data-isi="Lemon" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
-          <button type="button" class="bk-chip" data-kat="Lainnya" data-isi="Kresek" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
-          <button type="button" class="bk-chip hj" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" data-pindah="resep" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
-          <button type="button" class="bk-chip hj" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" data-pindah="resep" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
-          <div class="bk-cat">🥛 = bahan resep. Kalau ditekan, otomatis pindah ke 🍬 Bahan Resep (laba tidak terpotong dua kali).</div>
-        </div>
-      </div>
-      <div id="belanjaInfoHutang" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
-        🍬 Bahan yang sudah dihitung di harga modal cup (gula, susu, es batu, sealer). Kas Outlet berkurang, <b>laba tidak dipotong lagi</b>.
-      </div>
-      <div id="belanjaInfoBiaya" class="hidden" style="margin-top:8px;background:#fff3e0;border:1px solid #ffa726;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#8a3a00;">
-        🧾 Biaya di luar resep (galon, gas, kebersihan, lemon, kresek). Kas Outlet berkurang dan <b>laba ikut dipotong</b>.
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
@@ -7848,11 +7838,8 @@ function kategoriBelanjaAktif(){ return bkKat; }
 function gambarFormBelanja(){
   const box = document.getElementById('belanjaKecilKategori'); if(!box) return;
   box.querySelectorAll('.bk-mode').forEach(b => b.classList.toggle('on', b.dataset.mode === bkMode));
-  box.querySelectorAll('.bk-chips').forEach(c => c.classList.toggle('on', c.dataset.untuk === bkMode));
   document.querySelectorAll('#belanjaKecilRutin .bk-rutin').forEach(b => b.classList.toggle('on', bkMode === 'rutin' && b.dataset.kat === bkKat));
   const tampil = (id, on) => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', !on); };
-  tampil('belanjaInfoHutang', bkMode === 'resep');
-  tampil('belanjaInfoBiaya', bkMode === 'biaya');
   tampil('belanjaInfoTabungan', bkKat === KATEGORI_TABUNGAN);
   tampil('belanjaInfoKur', bkKat === KATEGORI_KUR);
   const lbl = document.getElementById('belanjaKecilKetLabel');
@@ -7880,16 +7867,11 @@ function pilihModeBelanja(mode){
   gambarFormBelanja();
 }
 function pilihChipBelanja(el){
-  const mode = el.dataset.pindah || el.closest('.bk-chips').dataset.untuk;
-  bkMode = mode; bkKat = el.dataset.kat;
-  document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.remove('on'));
-  // chip susu di Biaya Toko -> tandai chip yang sama di Bahan Resep
-  const target = mode !== el.closest('.bk-chips').dataset.untuk
-    ? document.querySelector(`#belanjaKecilKategori .bk-chips[data-untuk="${mode}"] .bk-chip[data-isi="${el.dataset.isi}"]`) : el;
-  (target || el).classList.add('on');
+  // tiap item otomatis masuk kategorinya: hijau = Bahan Resep, oranye = Biaya Toko
+  bkMode = el.dataset.mode; bkKat = el.dataset.kat;
+  document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.toggle('on', c === el));
   isiKetBelanja(el.dataset.isi);
   gambarFormBelanja();
-  if(el.dataset.pindah) showSuccessToast('🍬', 'Pindah ke Bahan Resep', `${el.dataset.isi} sudah dihitung di harga modal cup`);
 }
 // dipakai tombol Simpanan/Setoran Harian & pengingat (bukaBelanjaKecil('Tabungan'))
 function pilihKategoriBelanja(btn){
@@ -7900,7 +7882,7 @@ function pilihKategoriBelanja(btn){
     isiKetBelanja('');
     gambarFormBelanja(); return;
   }
-  const chip = kat && document.querySelector(`#belanjaKecilKategori .bk-chip[data-kat="${kat}"]:not([data-pindah])`);
+  const chip = kat && document.querySelector(`#belanjaKecilKategori .bk-chip[data-kat="${kat}"]`);
   if(chip) pilihChipBelanja(chip); else pilihModeBelanja('resep');
 }
 
