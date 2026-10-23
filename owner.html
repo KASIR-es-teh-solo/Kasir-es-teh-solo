@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-23.2">
+<meta name="app-version" content="owner-2026-10-23.3">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -151,6 +151,7 @@
     <div class="panel" id="p-uang"><div id="uangIsi"></div></div>
     <div class="panel" id="p-brankas"><div id="brankasIsi"></div></div>
     <div class="panel" id="p-stok"><div id="stokIsi"></div></div>
+    <div class="panel" id="p-online"><div id="onlineIsi"></div></div>
     <div class="panel" id="p-beli"><div id="beliIsi"></div></div>
     <div class="panel" id="p-menu"><div id="menuIsi"></div></div>
     <div class="panel" id="p-karyawan"><div id="karyawanIsi"></div></div>
@@ -200,12 +201,14 @@ const IKON = {
   kasir:'<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
   brankas:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m7.9 7.9 2.7 2.7"/><path d="m13.4 10.6 2.7-2.7"/><path d="m7.9 16.1 2.7-2.7"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/>',
   beli:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  online:'<circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'
 };
 const icTebal = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const ic = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const MODUL = [
-  ['uang', 'Keuangan', 'Kas outlet, amplop dana, Brankas Online & laba'],
+  ['uang', 'Keuangan', 'Kas Outlet, amplop dana & laba bersih'],
+  ['online', 'Brankas Online', 'GrabFood & ShopeeFood belum cair'],
   ['brankas', 'Brankas', 'Saldo, tambah uang, ambil & riwayat'],
   ['stok', 'Persediaan', 'Stok bahan & cup per cabang'],
   ['beli', 'Pembelian', 'Belanja harian & beli stok per cabang'],
@@ -272,7 +275,7 @@ setInterval(() => { if(document.visibilityState === 'visible' && profil && panel
 function toggleBrankas(){ buka(panelAktif === 'brankas' ? 'beranda' : 'brankas'); }
 function muatSemua(){ muatBeranda(); if(panelAktif !== 'beranda') muatPanel(); }
 function muatPanel(){
-  ({ uang: muatUang, brankas: muatBrankas, stok: muatStok, beli: muatBeli, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
+  ({ uang: muatUang, online: muatOnline, brankas: muatBrankas, stok: muatStok, beli: muatBeli, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
 }
 function keKasir(){
   // ke aplikasi kasir tanpa dilempar balik ke sini
@@ -385,6 +388,7 @@ async function muatBeranda(){
     el.textContent = `${t('trx')} transaksi`;
     try{ await grafikPenjualan(ids, t('jual')); if(el.dataset.banding) el.textContent = `${el.dataset.banding} · ${t('trx')} transaksi`; }catch(e){}
   }catch(e){ document.getElementById('aJual').textContent = '-'; document.getElementById('aKas').textContent = '-'; }
+  try{ const os = await Promise.all(cabDipilih().map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => Number((r.data || {}).saldo || 0)))); info.online = fmt(os.reduce((x, y) => x + y, 0)); gambarModul(info); }catch(e){}
   try{ const sb_ = await saldoBrankas(); document.getElementById('aBrankas').textContent = fmt(sb_); document.getElementById('aBrankas2').textContent = fmt(sb_); info.brankas = fmt(sb_); }catch(e){ document.getElementById('aBrankas').textContent = '-'; }
   try{
     const habis = await barangHampirHabis();
@@ -429,10 +433,6 @@ async function muatUang(){
     </div>
 
     ${dana}
-    <div class="sec"><h3>Brankas Online <small>Grab / Shopee, belum cair</small></h3>
-      ${online.map(o => htmlBrankasOnline(o)).join('')}
-    </div>
-
     <div class="sec"><h3>Laba bersih 30 hari <small>perkiraan</small></h3>
       ${laba.map(l => { const v = labaDari(l.d); return `<div class="baris"><span><b>${esc(namaCab(l.c.id))}</b><small>Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'trx').toLocaleString('id-ID')} transaksi · ${n(l.d,'hari_buka')} hari buka</small></span><span class="kanan ${v < 0 ? 'min' : 'plus'}">${v < 0 ? '− ' : ''}${fmt(Math.abs(v))}</span></div>`; }).join('')}
     </div>
@@ -531,6 +531,15 @@ function folderPengeluaran(rows){
   }).join('');
 }
 
+async function muatOnline(){
+  const box = document.getElementById('onlineIsi');
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  const online = await Promise.all(cabDipilih().map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} }))));
+  const total = online.reduce((a, o) => a + Number(o.d.saldo || 0), 0);
+  box.innerHTML = `<div class="gold" style="margin-bottom:10px;"><small>Belum cair · GrabFood & ShopeeFood</small><b class="n">${fmt(total)}</b>
+      <span style="font-size:12px;font-weight:700;">Tekan Cairkan saat uangnya ditransfer, langsung masuk Kas Outlet.</span></div>
+    <div class="sec"><h3>Per platform <small>harga outlet</small></h3>${online.map(o => htmlBrankasOnline(o)).join('')}</div>`;
+}
 // ---------- Brankas Online di Pusat Kendali: saldo per platform + 1 tombol Cairkan ke Kas Outlet + riwayat ----------
 const BO_PF = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain' };
 let boBuka = {};
@@ -546,7 +555,7 @@ function htmlBrankasOnline(o){
     ${pfs.map(pf => `<div class="baris"><span>${BO_PF[pf]}<small>Bulan ini ${Number((pp[pf] || {}).pesanan_bulan || 0)} pesanan · belum cair</small></span>
       <span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt((pp[pf] || {}).saldo || 0)}
       ${Number((pp[pf] || {}).saldo) > 0 ? `<button class="btn" onclick="boCairkan('${id}','${pf}',${Number((pp[pf] || {}).saldo)})">💵 Cairkan</button>` : ''}</span></div>`).join('')}
-    <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatUang()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>
+    <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatPanel()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>
     ${boBuka[id] ? (riw.map(r => `<div class="baris"><span>${lbl(r)}<small>${r.jenis === 'masuk' ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }) : jamWIB(r.waktu) + ' · ' + esc(r.pencatat || '-')}</small></span><span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada riwayat.</div>') : ''}`;
 }
 async function boCairkan(cabangId, pf, saldo){
