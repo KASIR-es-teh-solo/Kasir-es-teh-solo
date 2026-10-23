@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.2">
+<meta name="app-version" content="2026-10-24.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1557,16 +1557,16 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-mode bia" data-mode="biaya" onclick="pilihModeBelanja('biaya')">🧾 Biaya Toko<small>mengurangi laba</small></button>
         </div>
         <div class="bk-chips on" id="bkChipsSemua">
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Es Batu" data-isi="Es batu" onclick="pilihChipBelanja(this)">🧊 Es Batu</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Gula" onclick="pilihChipBelanja(this)">🍬 Gula</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" onclick="pilihChipBelanja(this)">💧 Galon</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" onclick="pilihChipBelanja(this)">🔥 Gas</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Es Batu" data-isi="Es batu" data-kunci="es batu|es balok|es kristal" onclick="pilihChipBelanja(this)">🧊 Es Batu</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Gula" data-kunci="gula" onclick="pilihChipBelanja(this)">🍬 Gula</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" data-kunci="skm|kental manis|susu kental" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" data-kunci="full cream|fullcream|uht" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" data-kunci="sealer|segel" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" data-kunci="galon|air isi ulang" onclick="pilihChipBelanja(this)">💧 Galon</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" data-kunci="kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
         </div>
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
@@ -7833,7 +7833,11 @@ function labelKat(k){ return LABEL_KAT[k] || k; }
 // KUR BRI: setoran harian angsuran KUR (ditanggung Owner). Kas Outlet berkurang, laba TIDAK terpotong, otomatis masuk tandon KUR (trigger trg_kur_dari_kasir)
 const KATEGORI_KUR = 'KUR BRI';
 // state form Belanja Harian: mode 'resep' | 'biaya' | 'rutin', kategori yang disimpan, chip yang dipilih
-let bkMode = 'resep', bkKat = 'Es Batu', bkIsiTerakhir = '';
+// state form Belanja Harian: mode 'resep' | 'biaya' | 'rutin' | null, kategori yang disimpan
+// 2026-10-24: tidak ada item terpilih otomatis. Ketikan "Beli apa?" ditebak: cocok item -> item itu;
+// kata bahan resep -> Bahan Resep; selain itu -> Biaya Toko. Pilihan manual tombol besar tetap dihormati.
+let bkMode = null, bkKat = null, bkIsiTerakhir = '', bkManual = false;
+const BK_KATA_RESEP = /\b(gula|susu|skm|uht|krimer|creamer|es batu|sealer|segel)\b/i;
 function kategoriBelanjaAktif(){ return bkKat; }
 function gambarFormBelanja(){
   const box = document.getElementById('belanjaKecilKategori'); if(!box) return;
@@ -7853,37 +7857,61 @@ function gambarFormBelanja(){
     else if(!target && inp.dataset.otomatis === '1'){ inp.value = ''; inp.dataset.otomatis = ''; }
   }
 }
+function tandaiChipBelanja(el){ document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.toggle('on', c === el)); }
 function isiKetBelanja(isi){
   const ket = document.getElementById('belanjaKecilKet'); if(!ket) return;
   const v = ket.value.trim();
   if(!v || v === bkIsiTerakhir) ket.value = isi || '';
   bkIsiTerakhir = isi || '';
 }
+function kosongkanFormBelanja(){ bkMode = null; bkKat = null; bkManual = false; bkIsiTerakhir = ''; tandaiChipBelanja(null); gambarFormBelanja(); }
 function pilihModeBelanja(mode){
-  bkMode = mode;
+  bkMode = mode; bkManual = true;
   bkKat = mode === 'resep' ? KATEGORI_BAYAR_HUTANG : 'Lainnya';
-  document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.remove('on'));
+  tandaiChipBelanja(null);
   isiKetBelanja('');
   gambarFormBelanja();
 }
 function pilihChipBelanja(el){
   // tiap item otomatis masuk kategorinya: hijau = Bahan Resep, oranye = Biaya Toko
-  bkMode = el.dataset.mode; bkKat = el.dataset.kat;
-  document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.toggle('on', c === el));
+  bkMode = el.dataset.mode; bkKat = el.dataset.kat; bkManual = false;
+  tandaiChipBelanja(el);
   isiKetBelanja(el.dataset.isi);
   gambarFormBelanja();
 }
+// tebak kategori dari ketikan "Beli apa?"
+function chipCocokKetikan(teks){
+  const t = ' ' + teks.toLowerCase() + ' ';
+  return [...document.querySelectorAll('#belanjaKecilKategori .bk-chip')].find(c =>
+    (c.dataset.kunci || '').split('|').some(k => new RegExp('(^|[^a-z])' + k.replace(/ /g, '\\s*') + '([^a-z]|$)').test(t)));
+}
+function tebakKategoriBelanja(){
+  if(bkMode === 'rutin') return;
+  const teks = (document.getElementById('belanjaKecilKet').value || '').trim();
+  const aktif = document.querySelector('#belanjaKecilKategori .bk-chip.on');
+  if(!teks){ if(!bkManual){ bkMode = null; bkKat = null; tandaiChipBelanja(null); } bkIsiTerakhir = ''; gambarFormBelanja(); return; }
+  const cocok = chipCocokKetikan(teks);
+  if(cocok){ bkMode = cocok.dataset.mode; bkKat = cocok.dataset.kat; bkManual = false; tandaiChipBelanja(cocok); bkIsiTerakhir = teks; gambarFormBelanja(); return; }
+  if(aktif) tandaiChipBelanja(null);
+  if(!bkManual){
+    if(BK_KATA_RESEP.test(teks)){ bkMode = 'resep'; bkKat = KATEGORI_BAYAR_HUTANG; }
+    else { bkMode = 'biaya'; bkKat = 'Lainnya'; }   // barang di luar daftar (mis. sabun) -> Biaya Toko
+  } else { bkKat = bkMode === 'resep' ? KATEGORI_BAYAR_HUTANG : 'Lainnya'; }
+  bkIsiTerakhir = teks;
+  gambarFormBelanja();
+}
+document.addEventListener('input', e => { if(e.target && e.target.id === 'belanjaKecilKet'){ document.getElementById('belanjaKecilError').classList.remove('show'); tebakKategoriBelanja(); } });
 // dipakai tombol Simpanan/Setoran Harian & pengingat (bukaBelanjaKecil('Tabungan'))
 function pilihKategoriBelanja(btn){
   const kat = btn && btn.dataset ? btn.dataset.kat : btn;
   if(kat === KATEGORI_TABUNGAN || kat === KATEGORI_KUR){
-    bkMode = 'rutin'; bkKat = kat;
-    document.querySelectorAll('#belanjaKecilKategori .bk-chip').forEach(c => c.classList.remove('on'));
+    bkMode = 'rutin'; bkKat = kat; bkManual = false;
+    tandaiChipBelanja(null);
     isiKetBelanja('');
     gambarFormBelanja(); return;
   }
   const chip = kat && document.querySelector(`#belanjaKecilKategori .bk-chip[data-kat="${kat}"]`);
-  if(chip) pilihChipBelanja(chip); else pilihModeBelanja('resep');
+  if(chip) pilihChipBelanja(chip); else kosongkanFormBelanja();
 }
 
 // ================== PENGINGAT TABUNGAN & KUR BRI (2026-10-23) ==================
@@ -8043,8 +8071,7 @@ async function bukaBelanjaKecil(kategori){
   document.getElementById('belanjaKecilKet').value = '';
   document.getElementById('belanjaKecilError').classList.remove('show');
   if(kategori && !window.__setoranStatus) await cekPengingatSetoran();
-  bkIsiTerakhir = '';
-  pilihKategoriBelanja(kategori || 'Es Batu');
+  if(kategori) pilihKategoriBelanja(kategori); else kosongkanFormBelanja();
   document.getElementById('belanjaKecilOverlay').classList.add('show');
   await loadBelanjaKecilHariIni();
 }
@@ -8062,7 +8089,8 @@ async function submitBelanjaKecil(){
   const ket = document.getElementById('belanjaKecilKet').value.trim();
 
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
-  if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu pilihan cepat).'; errBox.classList.add('show'); return; }
+  if(!bkKat){ errBox.textContent = 'Pilih item belanja atau ketik "Beli apa?" dulu.'; errBox.classList.add('show'); return; }
+  if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu item).'; errBox.classList.add('show'); return; }
   if(!confirm(`Ambil ${fmt(jumlah)} dari Kas Outlet untuk ${labelKat(kategori)}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
@@ -8088,7 +8116,7 @@ async function submitBelanjaKecil(){
   document.getElementById('belanjaKecilJumlah').value = '';
   document.getElementById('belanjaKecilJumlah').dataset.otomatis = '';
   document.getElementById('belanjaKecilKet').value = '';
-  bkIsiTerakhir = ''; pilihModeBelanja(bkMode === 'rutin' ? 'resep' : bkMode);
+  kosongkanFormBelanja();
   if(kategori === KATEGORI_KUR) showSuccessToast('📥', 'Setoran Harian tersimpan', fmt(jumlah));
   cekPengingatSetoran();
   await loadBelanjaKecilHariIni();
