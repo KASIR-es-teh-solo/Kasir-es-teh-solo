@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.5">
+<meta name="app-version" content="2026-10-24.6">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -378,6 +378,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bk-chip{border:1px solid #ccc;border-radius:20px;padding:7px 12px;font-size:13px;font-weight:700;background:#fafafa;color:var(--ink);cursor:pointer;}
   .bk-chip.hj{border-color:#66bb6a;background:#e8f5e9;color:#1b5e20;}
   .bk-chip.r{border-color:#a5d6a7;}
+  .bk-chip.s{border-color:#a1887f;background:#efebe9;color:#4e342e;}
+  .bk-sub{width:100%;font-size:12px;font-weight:800;color:#6d3b1f;margin-top:6px;}
   .bk-chip.b{border-color:#ffcc80;}
   .bk-chip.r.on{background:#2e7d32;color:#fff;border-color:#2e7d32;}
   .bk-chip.b.on{background:#e65100;color:#fff;border-color:#e65100;}
@@ -1567,6 +1569,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" data-kunci="kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
+          <div class="bk-sub">📦 Beli Stok</div>
+          <button type="button" class="bk-chip s" data-stok="Cup 16 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 16 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="Cup 18 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 18 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="Cup 22 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 22 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="" onclick="bukaBeliStokDari(this)">📦 Stok lain</button>
         </div>
       </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
@@ -7888,7 +7895,7 @@ function pilihChipBelanja(el){
 // tebak kategori dari ketikan "Beli apa?"
 function chipCocokKetikan(teks){
   const t = ' ' + teks.toLowerCase() + ' ';
-  return [...document.querySelectorAll('#belanjaKecilKategori .bk-chip')].find(c =>
+  return [...document.querySelectorAll('#belanjaKecilKategori .bk-chip[data-kunci]')].find(c =>
     (c.dataset.kunci || '').split('|').some(k => new RegExp('(^|[^a-z])' + k.replace(/ /g, '\\s*') + '([^a-z]|$)').test(t)));
 }
 function tebakKategoriBelanja(){
@@ -7907,6 +7914,15 @@ function tebakKategoriBelanja(){
   gambarFormBelanja();
 }
 document.addEventListener('input', e => { if(e.target && e.target.id === 'belanjaKecilKet'){ document.getElementById('belanjaKecilError').classList.remove('show'); tebakKategoriBelanja(); } });
+// tombol 📦 Beli Stok di Belanja Harian: buka form Beli Stok yang sama (stok bertambah, Dana Stok), bahan langsung terpilih
+async function bukaBeliStokDari(el){
+  const nama = String(el.dataset.stok || '').toLowerCase();
+  tutupBelanjaKecil();
+  await bukaBeliStok();
+  if(!nama) return;
+  const i = beliStokDaftar.findIndex(b => String(b.nama).toLowerCase() === nama);
+  if(i >= 0) pilihBeliStok(i);
+}
 // dipakai tombol Simpanan/Setoran Harian & pengingat (bukaBelanjaKecil('Tabungan'))
 function pilihKategoriBelanja(btn){
   const kat = btn && btn.dataset ? btn.dataset.kat : btn;
