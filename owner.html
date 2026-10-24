@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-24.1">
+<meta name="app-version" content="owner-2026-10-24.2">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -441,7 +441,7 @@ async function muatUang(){
   ]);
   const tot = k => per.reduce((a, r) => a + r[k], 0);
   const n = (d, k) => Number((d || {})[k] || 0);
-  const labaDari = d => d ? (n(d,'omzet') - n(d,'modal')) - (n(d,'gaji') + n(d,'sewa') + n(d,'listrik') + n(d,'galon') + n(d,'gas') + n(d,'kresek')) : 0;
+  const labaDari = d => d ? (n(d,'omzet') - n(d,'modal')) - (n(d,'gaji') + n(d,'sewa') + n(d,'listrik') + n(d,'galon') + n(d,'gas') + n(d,'kresek') + n(d,'lain')) : 0;
   box.innerHTML = `
     <div class="sec"><h3>Kas & penjualan hari ini <small>per cabang</small></h3>
       ${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · Pengeluaran ${fmt(r.keluarHari)} · ${r.trx} transaksi</small><small>Tutup kas terakhir: ${r.tutup ? jamWIB(r.tutup) : 'belum pernah'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}

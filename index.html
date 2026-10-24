@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.6">
+<meta name="app-version" content="2026-10-24.7">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -379,7 +379,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bk-chip.hj{border-color:#66bb6a;background:#e8f5e9;color:#1b5e20;}
   .bk-chip.r{border-color:#a5d6a7;}
   .bk-chip.s{border-color:#a1887f;background:#efebe9;color:#4e342e;}
-  .bk-sub{width:100%;font-size:12px;font-weight:800;color:#6d3b1f;margin-top:6px;}
+  .bk-judul-stok{width:100%;font-size:12px;font-weight:800;color:#6d3b1f;margin-top:6px;}
   .bk-chip.b{border-color:#ffcc80;}
   .bk-chip.r.on{background:#2e7d32;color:#fff;border-color:#2e7d32;}
   .bk-chip.b.on{background:#e65100;color:#fff;border-color:#e65100;}
@@ -1040,7 +1040,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">📈</span>
           <div class="label">Laba Bersih Hari Ini</div>
           <div class="value" id="dashLabaHariIni">Rp 0</div>
-          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bahan harian &amp; es batu (sudah di modal) tidak memotong laba</div>
+          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bahan harian, es batu (sudah di modal), sewa, listrik &amp; gaji (sudah dicicil per hari) tidak memotong laba</div>
         </div>
         <div class="dash-card hidden" id="dashKasCard">
           <span class="icon">💵</span>
@@ -1563,19 +1563,20 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Gula" data-kunci="gula" onclick="pilihChipBelanja(this)">🍬 Gula</button>
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" data-kunci="skm|kental manis|susu kental" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" data-kunci="full cream|fullcream|uht" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" data-kunci="sealer|segel" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" data-dana="dana_stok" data-kunci="sealer|segel" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" data-kunci="galon|air isi ulang" onclick="pilihChipBelanja(this)">💧 Galon</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-dana="dana_stok" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" data-kunci="kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
-          <div class="bk-sub">📦 Beli Stok</div>
+          <div class="bk-judul-stok">📦 Beli Stok</div>
           <button type="button" class="bk-chip s" data-stok="Cup 16 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 16 Oz</button>
           <button type="button" class="bk-chip s" data-stok="Cup 18 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 18 Oz</button>
           <button type="button" class="bk-chip s" data-stok="Cup 22 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 22 Oz</button>
           <button type="button" class="bk-chip s" data-stok="" onclick="bukaBeliStokDari(this)">📦 Stok lain</button>
         </div>
       </div>
+      <div id="belanjaInfoDana" class="hidden" style="margin-top:8px;background:#efebe9;border:1px solid #a1887f;border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.4;color:#4e342e;">📦 Uang diambil dari <b>amplop Dana Stok</b>. Kas Outlet tidak berubah.</div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
@@ -5851,12 +5852,15 @@ async function loadRingkasan(){
       totalModal += modalSatuan * it.qty;
     });
 
-    let biayaQuery = sb.from('biaya_operasional').select('jumlah, cabang_id, kategori').gte('created_at', startOfDay.toISOString());
+    let biayaQuery = sb.from('biaya_operasional').select('jumlah, cabang_id, kategori, sumber_dana').gte('created_at', startOfDay.toISOString());
     if(filterCabangId){ biayaQuery = biayaQuery.eq('cabang_id', filterCabangId); }
     const { data: biayaRows } = await biayaQuery;
     // "Bayar Hutang Bahan" & "Es Batu" tidak mengurangi laba: modalnya sudah dihitung dari harga modal produk
     // (es batu masuk resep sejak 14 Okt 2026, belanja es tetap dicatat supaya kas laci pas)
-    const totalBiayaHariIni = (biayaRows||[]).filter(b => b.kategori !== KATEGORI_BAYAR_HUTANG && b.kategori !== 'Es Batu' && b.kategori !== KATEGORI_KUR).reduce((s,b)=>s+Number(b.jumlah),0);
+    // 2026-10-24: sewa, listrik, gaji & yang dibayar dari Dana Operasional tidak memotong laba hari ini (sudah dicicil per hari)
+    const BIAYA_TETAP = ['Sewa','Listrik','Gaji'];
+    const totalBiayaHariIni = (biayaRows||[]).filter(b => b.kategori !== KATEGORI_BAYAR_HUTANG && b.kategori !== 'Es Batu' && b.kategori !== KATEGORI_KUR
+      && !BIAYA_TETAP.includes(b.kategori) && b.sumber_dana !== 'dana_operasional').reduce((s,b)=>s+Number(b.jumlah),0);
 
     document.getElementById('dashLabaHariIni').textContent = fmt(totalHariIni - totalModal - totalBiayaHariIni);
 
@@ -7849,7 +7853,7 @@ const KATEGORI_KUR = 'KUR BRI';
 // state form Belanja Harian: mode 'resep' | 'biaya' | 'rutin' | null, kategori yang disimpan
 // 2026-10-24: tidak ada item terpilih otomatis. Ketikan "Beli apa?" ditebak: cocok item -> item itu;
 // kata bahan resep -> Bahan Resep; selain itu -> Biaya Toko. Pilihan manual tombol besar tetap dihormati.
-let bkMode = null, bkKat = null, bkIsiTerakhir = '', bkManual = false;
+let bkMode = null, bkKat = null, bkIsiTerakhir = '', bkManual = false, bkDana = 'tunai';  // bkDana: sealer & gas dari Dana Stok
 const BK_KATA_RESEP = /\b(gula|susu|skm|uht|krimer|creamer|es batu|sealer|segel)\b/i;
 function kategoriBelanjaAktif(){ return bkKat; }
 function gambarFormBelanja(){
@@ -7859,6 +7863,7 @@ function gambarFormBelanja(){
   const tampil = (id, on) => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', !on); };
   tampil('belanjaInfoTabungan', bkKat === KATEGORI_TABUNGAN);
   tampil('belanjaInfoKur', bkKat === KATEGORI_KUR);
+  tampil('belanjaInfoDana', bkDana === 'dana_stok');
   const lbl = document.getElementById('belanjaKecilKetLabel');
   if(lbl) lbl.textContent = bkMode === 'rutin' ? 'Keterangan (opsional)' : 'Beli apa?';
   // isi nominal harian otomatis untuk setoran rutin (boleh diganti)
@@ -7877,9 +7882,9 @@ function isiKetBelanja(isi){
   if(!v || v === bkIsiTerakhir) ket.value = isi || '';
   bkIsiTerakhir = isi || '';
 }
-function kosongkanFormBelanja(){ bkMode = null; bkKat = null; bkManual = false; bkIsiTerakhir = ''; tandaiChipBelanja(null); gambarFormBelanja(); }
+function kosongkanFormBelanja(){ bkMode = null; bkKat = null; bkManual = false; bkDana = 'tunai'; bkIsiTerakhir = ''; tandaiChipBelanja(null); gambarFormBelanja(); }
 function pilihModeBelanja(mode){
-  bkMode = mode; bkManual = true;
+  bkMode = mode; bkManual = true; bkDana = 'tunai';
   bkKat = mode === 'resep' ? KATEGORI_BAYAR_HUTANG : 'Lainnya';
   tandaiChipBelanja(null);
   isiKetBelanja('');
@@ -7887,7 +7892,7 @@ function pilihModeBelanja(mode){
 }
 function pilihChipBelanja(el){
   // tiap item otomatis masuk kategorinya: hijau = Bahan Resep, oranye = Biaya Toko
-  bkMode = el.dataset.mode; bkKat = el.dataset.kat; bkManual = false;
+  bkMode = el.dataset.mode; bkKat = el.dataset.kat; bkManual = false; bkDana = el.dataset.dana || 'tunai';
   tandaiChipBelanja(el);
   isiKetBelanja(el.dataset.isi);
   gambarFormBelanja();
@@ -7902,10 +7907,11 @@ function tebakKategoriBelanja(){
   if(bkMode === 'rutin') return;
   const teks = (document.getElementById('belanjaKecilKet').value || '').trim();
   const aktif = document.querySelector('#belanjaKecilKategori .bk-chip.on');
-  if(!teks){ if(!bkManual){ bkMode = null; bkKat = null; tandaiChipBelanja(null); } bkIsiTerakhir = ''; gambarFormBelanja(); return; }
+  if(!teks){ if(!bkManual){ bkMode = null; bkKat = null; bkDana = 'tunai'; tandaiChipBelanja(null); } bkIsiTerakhir = ''; gambarFormBelanja(); return; }
   const cocok = chipCocokKetikan(teks);
-  if(cocok){ bkMode = cocok.dataset.mode; bkKat = cocok.dataset.kat; bkManual = false; tandaiChipBelanja(cocok); bkIsiTerakhir = teks; gambarFormBelanja(); return; }
+  if(cocok){ bkMode = cocok.dataset.mode; bkKat = cocok.dataset.kat; bkManual = false; bkDana = cocok.dataset.dana || 'tunai'; tandaiChipBelanja(cocok); bkIsiTerakhir = teks; gambarFormBelanja(); return; }
   if(aktif) tandaiChipBelanja(null);
+  bkDana = 'tunai';
   if(!bkManual){
     if(BK_KATA_RESEP.test(teks)){ bkMode = 'resep'; bkKat = KATEGORI_BAYAR_HUTANG; }
     else { bkMode = 'biaya'; bkKat = 'Lainnya'; }   // barang di luar daftar (mis. sabun) -> Biaya Toko
@@ -7927,7 +7933,7 @@ async function bukaBeliStokDari(el){
 function pilihKategoriBelanja(btn){
   const kat = btn && btn.dataset ? btn.dataset.kat : btn;
   if(kat === KATEGORI_TABUNGAN || kat === KATEGORI_KUR){
-    bkMode = 'rutin'; bkKat = kat; bkManual = false;
+    bkMode = 'rutin'; bkKat = kat; bkManual = false; bkDana = 'tunai';
     tandaiChipBelanja(null);
     isiKetBelanja('');
     gambarFormBelanja(); return;
@@ -8113,10 +8119,16 @@ async function submitBelanjaKecil(){
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
   if(!bkKat){ errBox.textContent = 'Pilih item belanja atau ketik "Beli apa?" dulu.'; errBox.classList.add('show'); return; }
   if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu item).'; errBox.classList.add('show'); return; }
-  if(!confirm(`Ambil ${fmt(jumlah)} dari Kas Outlet untuk ${labelKat(kategori)}?`)) return;
+  let dana = bkMode === 'rutin' ? 'tunai' : bkDana;
+  if(!confirm(`Ambil ${fmt(jumlah)} dari ${dana === 'dana_stok' ? 'amplop Dana Stok' : 'Kas Outlet'} untuk ${labelKat(kategori)}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
-  const { error } = kategori === KATEGORI_TABUNGAN
+  const simpanBiaya = d => sb.from('biaya_operasional').insert({
+    cabang_id: activeCabangId, kategori,
+    deskripsi: (ket ? ket + ' · ' : '') + 'dicatat di kasir',
+    jumlah, sumber_dana: d, dicatat_oleh: currentUser.id
+  });
+  let { error } = kategori === KATEGORI_TABUNGAN
     ? await sb.from('brankas').insert({
         cabang_id: activeCabangId,
         jenis: 'masuk',
@@ -8124,14 +8136,12 @@ async function submitBelanjaKecil(){
         keterangan: ket || null,
         dicatat_oleh: currentUser.id
       })
-    : await sb.from('biaya_operasional').insert({
-    cabang_id: activeCabangId,
-    kategori,
-    deskripsi: (ket ? ket + ' · ' : '') + 'dicatat di kasir',
-    jumlah,
-    sumber_dana: 'tunai',
-    dicatat_oleh: currentUser.id
-  });
+    : await simpanBiaya(dana);
+  // amplop Dana Stok kurang -> tawarkan ambil dari Kas Outlet
+  if(error && dana === 'dana_stok' && /Dana Stok/i.test(error.message || '')){
+    if(confirm(`${error.message}.\n\nAmbil dari Kas Outlet saja?`)){ dana = 'tunai'; ({ error } = await simpanBiaya('tunai')); }
+    else { btn.disabled = false; btn.textContent = 'Simpan'; return; }
+  }
   btn.disabled = false; btn.textContent = 'Simpan';
 
   if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
@@ -8140,6 +8150,7 @@ async function submitBelanjaKecil(){
   document.getElementById('belanjaKecilKet').value = '';
   kosongkanFormBelanja();
   if(kategori === KATEGORI_KUR) showSuccessToast('📥', 'Setoran Harian tersimpan', fmt(jumlah));
+  else if(dana === 'dana_stok') showSuccessToast('📦', 'Tersimpan dari Dana Stok', `${ket} ${fmt(jumlah)} · Kas Outlet tidak berubah`);
   cekPengingatSetoran();
   await loadBelanjaKecilHariIni();
 }
@@ -8993,7 +9004,7 @@ async function loadLabaBersih(hari){
   lbData = data;
   const n = k => Number(data[k] || 0);
   const kotor = n('omzet') - n('modal');
-  const biaya = n('gaji') + n('sewa') + n('listrik') + n('galon') + n('gas') + n('kresek');
+  const biaya = n('gaji') + n('sewa') + n('listrik') + n('galon') + n('gas') + n('kresek') + n('lain');
   const laba = kotor - biaya;
   const hariBuka = Math.max(1, n('hari_buka'));
   const judulPeriode = lbHari === 1 ? 'hari ini' : lbHari + ' hari';
@@ -9020,6 +9031,7 @@ async function loadLabaBersih(hari){
     baris('💧 Air galon', kurang(n('galon')), 'lb-min', `rata-rata belanja 30 hari ±${fmt(p.galon_per_hari)}/hari`) +
     baris('🔥 Gas LPG', kurang(n('gas')), 'lb-min', `rata-rata belanja 30 hari ±${fmt(p.gas_per_hari)}/hari`) +
     baris('🛍️ Kresek', kurang(n('kresek')), 'lb-min', `${kl.k1||0} kecil · ${kl.k2||0} sedang · ${kl.k3||0} besar`) +
+    baris('🧽 Biaya lain', kurang(n('lain')), 'lb-min', 'belanja kebersihan, lemon, sabun, dll.') +
     baris('Laba bersih', (laba < 0 ? '− ' : '') + fmt(Math.abs(laba)), 'tot ' + (laba < 0 ? 'lb-min' : 'lb-plus'));
   const hariIni = n('omzet_hari_ini');
   const pct = impas ? Math.round(hariIni / impas * 100) : 0;
