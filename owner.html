@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-24.2">
+<meta name="app-version" content="owner-2026-10-24.3">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -149,6 +149,7 @@
     </div>
 
     <div class="panel" id="p-uang"><div id="uangIsi"></div></div>
+    <div class="panel" id="p-dana"><div id="danaIsi"></div></div>
     <div class="panel" id="p-brankas"><div id="brankasIsi"></div></div>
     <div class="panel" id="p-stok"><div id="stokIsi"></div></div>
     <div class="panel" id="p-online"><div id="onlineIsi"></div></div>
@@ -205,12 +206,14 @@ const IKON = {
   brankas:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m7.9 7.9 2.7 2.7"/><path d="m13.4 10.6 2.7-2.7"/><path d="m7.9 16.1 2.7-2.7"/><path d="m13.4 13.4 2.7 2.7"/><circle cx="12" cy="12" r="2"/>',
   beli:'<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
   online:'<circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
+  dana:'<rect width="20" height="14" x="2" y="5" rx="2"/><path d="m2 7 10 6 10-6"/>',
   plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>'
 };
 const icTebal = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const ic = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const MODUL = [
-  ['uang', 'Keuangan', 'Kas Outlet, amplop dana & laba bersih'],
+  ['uang', 'Keuangan', 'Kas Outlet & laba bersih'],
+  ['dana', 'Amplop Dana', 'Dana Stok & Dana Operasional'],
   ['online', 'Brankas Online', 'GrabFood & ShopeeFood belum cair'],
   ['brankas', 'Brankas', 'Saldo, tambah uang, ambil & riwayat'],
   ['stok', 'Persediaan', 'Stok bahan & cup per cabang'],
@@ -291,7 +294,7 @@ setInterval(() => { if(document.visibilityState === 'visible' && profil && panel
 function toggleBrankas(){ buka(panelAktif === 'brankas' ? 'beranda' : 'brankas'); }
 function muatSemua(){ muatBeranda(); if(panelAktif !== 'beranda') muatPanel(); }
 function muatPanel(){
-  ({ uang: muatUang, online: muatOnline, brankas: muatBrankas, stok: muatStok, beli: muatBeli, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
+  ({ uang: muatUang, dana: muatDanaPanel, online: muatOnline, brankas: muatBrankas, stok: muatStok, beli: muatBeli, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
 }
 function keKasir(){
   // ke aplikasi kasir tanpa dilempar balik ke sini
@@ -398,6 +401,7 @@ async function muatBeranda(){
     document.getElementById('aKas').textContent = fmt(t('kas'));
     document.getElementById('aKasRinci').textContent = `Penjualan ${fmt(t('tunai'))} · Pengeluaran ${fmt(t('keluarHari'))}`;
     info.uang = fmt(t('kas'));
+    try{ const ds = await Promise.all(cabDipilih().map(c => sb.rpc('dana_saldo', { p_cabang: c.id }).then(x => x.data || {}))); info.dana = fmt(ds.reduce((a, d) => a + Number(d.stok || 0) + Number(d.operasional || 0), 0)); }catch(_){}
     const tutup = per.map(r => r.tutup).filter(Boolean).sort().pop();
     if(tutup) info.laporan = `<span style="font-weight:600;color:var(--redup2)">${new Date(tutup).toLocaleString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>`;
     const el = document.getElementById('aBanding');
@@ -430,14 +434,13 @@ async function muatUang(){
   const box = document.getElementById('uangIsi');
   box.innerHTML = '<div class="muat">Memuat…</div>';
   const cabs = cabDipilih();
-  const [per, online, laba, biaya, dana] = await Promise.all([
+  const [per, online, laba, biaya] = await Promise.all([
     Promise.all(cabs.map(kasCabang)),
     Promise.all(cabs.map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
     Promise.all(cabs.map(c => sb.rpc('laba_bersih', { p_cabang: c.id, p_hari: 30 }).then(r => ({ c, d: r.data })))),
     sb.from('biaya_operasional').select('kategori, deskripsi, jumlah, sumber_dana, created_at, cabang_id, pencatat:dicatat_oleh(nama)')
       .in('cabang_id', cabs.map(c => c.id).concat(NOL)).gte('created_at', new Date(Date.now() - 7*864e5).toISOString())
-      .order('created_at', { ascending:false }).limit(60),
-    muatDana(cabs)
+      .order('created_at', { ascending:false }).limit(60)
   ]);
   const tot = k => per.reduce((a, r) => a + r[k], 0);
   const n = (d, k) => Number((d || {})[k] || 0);
@@ -448,7 +451,6 @@ async function muatUang(){
       ${per.length > 1 ? `<div class="baris"><span><b>Total</b><small>Penjualan ${fmt(tot('jual'))} · Pengeluaran ${fmt(tot('keluarHari'))}</small></span><span class="kanan" style="color:var(--emas)">${fmt(tot('kas'))}</span></div>` : ''}
     </div>
 
-    ${dana}
     <div class="sec"><h3>Laba bersih 30 hari <small>perkiraan</small></h3>
       ${laba.map(l => { const v = labaDari(l.d); return `<div class="baris"><span><b>${esc(namaCab(l.c.id))}</b><small>Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'trx').toLocaleString('id-ID')} transaksi · ${n(l.d,'hari_buka')} hari buka</small></span><span class="kanan ${v < 0 ? 'min' : 'plus'}">${v < 0 ? '− ' : ''}${fmt(Math.abs(v))}</span></div>`; }).join('')}
     </div>
@@ -585,11 +587,18 @@ async function boCairkan(cabangId, pf, saldo){
 }
 
 // ---------- amplop: Dana Stok & Dana Operasional (disisihkan tiap tutup kas) ----------
+// ---------- Amplop Dana (menu sendiri, 2026-10-24) ----------
+async function muatDanaPanel(){
+  const box = document.getElementById('danaIsi');
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  try{ box.innerHTML = await muatDana(cabDipilih()); }
+  catch(e){ box.innerHTML = `<div class="kosong">Gagal memuat: ${esc(e.message || e)}</div>`; }
+}
 async function muatDana(cabs){
   const ids = cabs.map(c => c.id);
   const [saldo, masuk, beli, keluar, bt] = await Promise.all([
     Promise.all(cabs.map(c => sb.rpc('dana_saldo', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
-    sb.from('dana_pos').select('cabang_id, pos, jenis, jumlah, sumber, keterangan, created_at').in('cabang_id', ids).order('created_at', { ascending:false }).limit(40),
+    sb.from('dana_pos').select('cabang_id, pos, jenis, jumlah, sumber, keterangan, created_at').in('cabang_id', ids).order('created_at', { ascending:false }).limit(80),
     sb.from('pembelian').select('cabang_id, total, jumlah, sumber_dana, created_at, bahan:bahan_baku_id(nama, satuan_beli, satuan)').in('cabang_id', ids).in('sumber_dana', ['dana_stok','dana_operasional']).order('created_at', { ascending:false }).limit(40),
     sb.from('biaya_operasional').select('cabang_id, kategori, deskripsi, jumlah, sumber_dana, created_at').in('cabang_id', ids).in('sumber_dana', ['dana_stok','dana_operasional']).order('created_at', { ascending:false }).limit(40),
     sb.from('biaya_tetap').select('cabang_id, gaji_aktif, gas_per_hari').in('cabang_id', ids)
@@ -600,43 +609,46 @@ async function muatDana(cabs){
     ...(masuk.data || []).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.pos], judul: r.sumber === 'tutup_kas' ? 'Disisihkan saat tutup kas' : (r.keterangan || (r.jenis === 'masuk' ? 'Tambah manual' : 'Ambil manual')), n: (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah) })),
     ...(beli.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `Beli ${(r.bahan && r.bahan.nama) || '-'} ${Number(r.jumlah).toLocaleString('id-ID')} ${(r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''}`, n: -Number(r.total) })),
     ...(keluar.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `${labelKat(r.kategori)}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, n: -Number(r.jumlah) }))
-  ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 30);
+  ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 60);
   const satu = cabs.length === 1 ? cabs[0] : null;
   const cfg = satu ? ((bt.data || []).find(x => x.cabang_id === satu.id) || { gaji_aktif:false, gas_per_hari:1650 }) : null;
-  return `<div class="sec"><h3>Amplop <small>disisihkan tiap tutup kas</small></h3>
+  return `<div class="sec"><h3>Amplop Dana <small>disisihkan tiap tutup kas</small></h3>
       <div class="baris"><span>📦 Dana Stok<small>Cup, teh, sedotan, sealer, bubuk rasa, kopi ice roast, Milo, gas LPG</small></span><span class="kanan">${fmt(jml('stok'))}</span></div>
       <div class="baris"><span>🏠 Dana Operasional<small>Sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji kasir' : ''}</small></span><span class="kanan">${fmt(jml('operasional'))}</span></div>
       ${satu ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn" onclick="danaAtur('${satu.id}','stok')">± Dana Stok</button>
-        <button class="btn" onclick="danaAtur('${satu.id}','operasional')">± Dana Operasional</button></div>
+        <button class="btn" onclick="danaAtur('${satu.id}','stok','masuk')">+ Dana Stok</button>
+        <button class="btn" onclick="danaAtur('${satu.id}','stok','keluar')">− Dana Stok</button>
+        <button class="btn" onclick="danaAtur('${satu.id}','operasional','masuk')">+ Dana Operasional</button>
+        <button class="btn" onclick="danaAtur('${satu.id}','operasional','keluar')">− Dana Operasional</button></div>
+      <div class="info" style="margin-top:6px;">Kalau isi amplop fisik beda dengan angka di sini, pakai tombol + (tambah) atau − (ambil) untuk koreksi. Semua koreksi tercatat di Log Aktivitas.</div>
       <div class="baris" style="margin-top:6px;"><span>Gaji kasir ikut disisihkan<small>${cfg.gaji_aktif ? 'AKTIF' : 'OFF'} · aktifkan kalau sudah ada karyawan</small></span><span class="kanan"><button class="btn" onclick="danaGaji('${satu.id}', ${!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${cfg.gaji_aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>
       <div class="baris"><span>Patokan gas LPG<small>masuk Dana Stok per hari buka</small></span><span class="kanan"><button class="btn" onclick="danaGas('${satu.id}', ${!!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${fmt(cfg.gas_per_hari || 1650)}/hari</button></span></div>` : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk mengatur amplop.</div>'}
       <div class="sub">RIWAYAT AMPLOP</div>
       ${rows.map(r => `<div class="baris"><span>${esc(r.judul)}<small>${jamWIB(r.t)} · ${r.pos}${cabs.length > 1 ? ' · ' + esc(namaCab(r.cab)) : ''}</small></span><span class="kanan ${r.n < 0 ? 'min' : 'plus'}">${r.n < 0 ? '−' : '+'} ${fmt(Math.abs(r.n))}</span></div>`).join('') || '<div class="kosong">Belum ada. Amplop terisi otomatis mulai tutup kas berikutnya.</div>'}
     </div>`;
 }
-async function danaAtur(cabangId, pos){
+async function danaAtur(cabangId, pos, jenis){
   const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
-  const pilih = prompt(`${nama}\nKetik 1 = Tambah uang ke amplop\nKetik 2 = Ambil uang dari amplop`, '1');
+  let pilih = jenis === 'masuk' ? '1' : jenis === 'keluar' ? '2' : prompt(`${nama}\nKetik 1 = Tambah uang ke amplop\nKetik 2 = Ambil uang dari amplop`, '1');
   if(pilih !== '1' && pilih !== '2') return;
   const r = await mintaNominal(`${pilih === '1' ? 'Tambah ke' : 'Ambil dari'} ${nama} berapa?`, '', true);
   if(!r) return;
   const { error } = await sb.rpc('dana_atur', { p_cabang: cabangId, p_pos: pos, p_jenis: pilih === '1' ? 'masuk' : 'keluar', p_jumlah: r.jumlah, p_keterangan: r.ket || null });
   if(error){ alert('Gagal: ' + error.message); return; }
-  muatUang();
+  muatPanel(); muatBeranda();
 }
 async function danaGaji(cabangId, aktif, gas){
   if(!confirm(aktif ? 'Aktifkan gaji kasir? Mulai tutup kas berikutnya, gaji per jam x jam buka ikut disisihkan ke Dana Operasional.' : 'Matikan gaji kasir dari Dana Operasional?')) return;
   const { error } = await sb.rpc('dana_pengaturan_simpan', { p_cabang: cabangId, p_gaji_aktif: aktif, p_gas_per_hari: gas });
   if(error){ alert('Gagal: ' + error.message); return; }
-  muatUang();
+  muatPanel(); muatBeranda();
 }
 async function danaGas(cabangId, gaji, gas){
   const r = await mintaNominal('Patokan gas LPG per hari (masuk Dana Stok)?', gas, false);
   if(!r) return;
   const { error } = await sb.rpc('dana_pengaturan_simpan', { p_cabang: cabangId, p_gaji_aktif: gaji, p_gas_per_hari: r.jumlah });
   if(error){ alert('Gagal: ' + error.message); return; }
-  muatUang();
+  muatPanel(); muatBeranda();
 }
 
 // ---------- stok (cuma lihat; tambah stok tetap di aplikasi kasir oleh Admin) ----------
