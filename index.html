@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.7">
+<meta name="app-version" content="2026-10-24.8">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1576,6 +1576,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-chip s" data-stok="" onclick="bukaBeliStokDari(this)">📦 Stok lain</button>
         </div>
       </div>
+      <div id="belanjaInfoStok" class="hidden" style="margin-top:8px;background:#fff3e0;border:2px solid #e65100;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.4;color:#8a3a00;">📦 Barang stok (cup, sedotan, teh, bubuk, kopi, Milo) dicatat lewat <b>Beli Stok</b> supaya stok bertambah.
+        <button type="button" onclick="bukaBeliStokDari({ dataset: { stok: stokDariKetikan(document.getElementById('belanjaKecilKet').value) } })" style="display:block;margin-top:6px;border:none;background:#6d3b1f;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;font-size:13px;cursor:pointer;">📦 Buka Beli Stok</button></div>
       <div id="belanjaInfoDana" class="hidden" style="margin-top:8px;background:#efebe9;border:1px solid #a1887f;border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.4;color:#4e342e;">📦 Uang diambil dari <b>amplop Dana Stok</b>. Kas Outlet tidak berubah.</div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
@@ -7854,6 +7856,12 @@ const KATEGORI_KUR = 'KUR BRI';
 // 2026-10-24: tidak ada item terpilih otomatis. Ketikan "Beli apa?" ditebak: cocok item -> item itu;
 // kata bahan resep -> Bahan Resep; selain itu -> Biaya Toko. Pilihan manual tombol besar tetap dihormati.
 let bkMode = null, bkKat = null, bkIsiTerakhir = '', bkManual = false, bkDana = 'tunai';  // bkDana: sealer & gas dari Dana Stok
+// barang stok (cup, sedotan, teh, bubuk, kopi, Milo) wajib lewat Beli Stok supaya stok bertambah & uang dari Dana Stok
+const BK_KATA_STOK = /\b(cup|gelas plastik|sedotan|teh original|teh kering|biang teh|bubuk|milo|kopi|ice roast)\b/i;
+function stokDariKetikan(teks){
+  const m = String(teks || '').toLowerCase().match(/cup\s*(16|18|22)/);
+  return m ? 'Cup ' + m[1] + ' Oz' : '';
+}
 const BK_KATA_RESEP = /\b(gula|susu|skm|uht|krimer|creamer|es batu|sealer|segel)\b/i;
 function kategoriBelanjaAktif(){ return bkKat; }
 function gambarFormBelanja(){
@@ -7864,6 +7872,7 @@ function gambarFormBelanja(){
   tampil('belanjaInfoTabungan', bkKat === KATEGORI_TABUNGAN);
   tampil('belanjaInfoKur', bkKat === KATEGORI_KUR);
   tampil('belanjaInfoDana', bkDana === 'dana_stok');
+  tampil('belanjaInfoStok', bkMode !== 'rutin' && BK_KATA_STOK.test(document.getElementById('belanjaKecilKet').value || ''));
   const lbl = document.getElementById('belanjaKecilKetLabel');
   if(lbl) lbl.textContent = bkMode === 'rutin' ? 'Keterangan (opsional)' : 'Beli apa?';
   // isi nominal harian otomatis untuk setoran rutin (boleh diganti)
@@ -8119,6 +8128,7 @@ async function submitBelanjaKecil(){
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
   if(!bkKat){ errBox.textContent = 'Pilih item belanja atau ketik "Beli apa?" dulu.'; errBox.classList.add('show'); return; }
   if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu item).'; errBox.classList.add('show'); return; }
+  if(bkMode !== 'rutin' && BK_KATA_STOK.test(ket)){ errBox.textContent = 'Cup, sedotan, teh, bubuk, kopi & Milo dicatat lewat 📦 Beli Stok (tombol di bawah), supaya stok bertambah.'; errBox.classList.add('show'); gambarFormBelanja(); return; }
   let dana = bkMode === 'rutin' ? 'tunai' : bkDana;
   if(!confirm(`Ambil ${fmt(jumlah)} dari ${dana === 'dana_stok' ? 'amplop Dana Stok' : 'Kas Outlet'} untuk ${labelKat(kategori)}?`)) return;
 
