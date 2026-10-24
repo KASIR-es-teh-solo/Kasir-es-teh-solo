@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.8">
+<meta name="app-version" content="2026-10-24.9">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -678,6 +678,14 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   #belanjaKecilOverlay #belanjaKecilList .tx-row{font-size:14px;color:#000;font-weight:600;}
   #belanjaKecilOverlay #belanjaKecilList .tx-row b{font-weight:800;color:#000;}
   #belanjaKecilOverlay .bk-sub{color:#333;font-weight:600;}
+  /* daftar uang keluar per sumber uang (2026-10-24) */
+  .bk-grp{border-radius:12px;padding:6px 12px;margin-top:8px;}
+  .bk-grp.g-kas{background:#f1f8e9;border:1px solid #aed581;} .bk-grp.g-stok{background:#efebe9;border:1px solid #a1887f;}
+  .bk-grp.g-op{background:#fff8e1;border:1px solid #ffd54f;} .bk-grp.g-lain{background:#e3f2fd;border:1px solid #90caf9;}
+  .bk-grp-h{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:13.5px;color:#000;padding:4px 0 6px;border-bottom:1px dashed rgba(0,0,0,.15);}
+  .bk-grp-h small{display:block;font-weight:600;font-size:11px;color:#555;}
+  #belanjaKecilOverlay .bk-grp .tx-row{background:transparent;border:0;border-bottom:1px solid rgba(0,0,0,.08);border-radius:0;box-shadow:none;margin:0;padding:7px 0;font-size:13.5px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  #belanjaKecilOverlay .bk-grp .tx-row:last-child{border-bottom:0;}
   #belanjaKecilOverlay .modal-close{color:#111;font-weight:700;opacity:1;}
   .lb-box{background:#fff;color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14px;}
   .lb-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-soft);}
@@ -1601,8 +1609,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     </div>
     <button class="login-btn" id="belanjaKecilSubmitBtn" onclick="submitBelanjaKecil()">Simpan</button>
     <div style="margin-top:14px;">
-      <div class="bk-head" style="margin-bottom:6px;">Uang keluar Kas Outlet hari ini · Total <span id="belanjaKecilTotal">Rp 0</span></div>
-      <div id="belanjaKecilList" style="max-height:180px;overflow:auto;"></div>
+      <div class="bk-head" style="margin-bottom:6px;">Uang keluar hari ini</div>
+      <div id="belanjaKecilList"></div>
     </div>
     <button class="modal-close" onclick="tutupBelanjaKecil()">Tutup</button>
   </div>
@@ -8811,8 +8819,8 @@ async function loadBelanjaKecilHariIni(){
   const idBiaya = {};
   (biayaRes.data || []).forEach(b => { idBiaya[new Date(b.created_at).getTime() + '|' + b.kategori] = b.id; });
   const rows = (data || []).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
-  document.getElementById('belanjaKecilTotal').textContent = fmt(rows.reduce((s,r)=>s+Number(r.jumlah),0));
-  box.innerHTML = rows.length ? rows.map(r=>{
+  const totalKas = rows.reduce((s,r)=>s+Number(r.jumlah),0);
+  const barisKas = rows.map(r=>{
     const batal = Number(r.jumlah) === 0 && /^DIBATALKAN/.test(r.deskripsi || '');
     const id = bolehBatal && !batal ? idBiaya[new Date(r.created_at).getTime() + '|' + r.kategori] : null;
     return `
@@ -8821,7 +8829,20 @@ async function loadBelanjaKecilHariIni(){
       <span style="text-align:right;"><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span class="bk-sub">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>
       ${id ? `<br><button type="button" class="bk-batal" style="margin-top:6px;font-size:13px;padding:5px 12px;border-radius:14px;border:1px solid #e53935;background:#fdecea;color:#c62828;font-weight:800;cursor:pointer;" onclick="batalkanBelanja('${id}', '${escTG(labelKat(r.kategori)).replace(/'/g,"\\'")}', ${Number(r.jumlah)})">🚫 Batalkan</button>` : ''}</span>
     </div>`;
-  }).join('') : '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar Kas Outlet hari ini.</div>';
+  }).join('');
+  // uang keluar dari Dana Stok / Dana Operasional / uang lain: cuma ditampilkan, TIDAK mengurangi Kas Outlet (tidak dobel)
+  let lain = [];
+  try{ const res = await sb.rpc('belanja_non_kas_outlet', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() }); lain = res.data || []; }catch(e){}
+  const jam = t => new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  const GRUP = [['dana_stok','g-stok','📦 Dari Dana Stok','tidak mengurangi Kas Outlet'],['dana_operasional','g-op','🏠 Dari Dana Operasional','tidak mengurangi Kas Outlet'],['lain','g-lain','🏦 Uang lain','transfer / uang pribadi']];
+  const htmlGrup = GRUP.map(([g, kls, judul, ket]) => {
+    const isi = lain.filter(x => x.grup === g); if(!isi.length) return '';
+    const tot = isi.reduce((a,x)=>a+Number(x.jumlah),0);
+    return `<div class="bk-grp ${kls}"><div class="bk-grp-h"><span>${judul}<small>${ket}</small></span><span>${fmt(tot)}</span></div>` +
+      isi.map(x => `<div class="tx-row"><span>${escTG(x.kategori === 'Pembelian Stok' ? (x.deskripsi || 'Beli stok') : labelKat(x.kategori))}${x.kategori !== 'Pembelian Stok' && x.deskripsi ? ' <span class="bk-sub">· ' + escTG(x.deskripsi) + '</span>' : ''}</span><span style="text-align:right;"><b>${fmt(x.jumlah)}</b> <span class="bk-sub">${jam(x.created_at)}</span></span></div>`).join('') + `</div>`;
+  }).join('');
+  box.innerHTML = `<div class="bk-grp g-kas"><div class="bk-grp-h"><span>💵 Dari Kas Outlet<small>mengurangi Kas Outlet</small></span><span id="belanjaKecilTotal">${fmt(totalKas)}</span></div>` +
+    (barisKas || '<div class="empty-msg" style="font-size:12px;">Belum ada uang keluar Kas Outlet hari ini.</div>') + `</div>` + htmlGrup;
 }
 
 // Batalkan belanja (Owner & Admin). Tidak dihapus: jadi Rp0 + tanda DIBATALKAN + masuk Log Aktivitas.

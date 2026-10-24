@@ -1,0 +1,3 @@
+-- Daftar uang keluar hari ini yang bukan dari Kas Outlet (Dana Stok, Dana Operasional, uang lain) untuk tampilan Belanja Harian.
+-- Sudah diterapkan lewat migration belanja_non_kas_outlet (24 Okt 2026). Tidak dipakai hitungan Kas Outlet.
+-- fungsi: public.belanja_non_kas_outlet(p_cabang uuid, p_sejak timestamptz) -> (grup, kategori, deskripsi, jumlah, created_at, pencatat)
