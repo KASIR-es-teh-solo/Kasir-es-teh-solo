@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.11">
+<meta name="app-version" content="2026-10-24.12">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1459,24 +1459,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 
   <!-- SOP MENU (semua role bisa lihat, edit khusus Owner) -->
   <div id="sopView" class="dash hidden">
-    <!-- 2026-10-24: SOP seduh biang teh (permintaan Boss Leo) - rasa lebih kuat tanpa tambah teh -->
-    <details id="sopSeduhTeh" open style="background:#fffdf5;color:#1a1a1a;border:2px solid #c9a94a;border-radius:14px;padding:12px 14px;margin-bottom:12px;">
-      <summary style="font-weight:800;font-size:16px;cursor:pointer;">🫖 Cara Seduh Teh (biang)</summary>
-      <div style="font-size:14px;line-height:1.55;margin-top:8px;">
-        <div style="background:#f3ead0;border-radius:8px;padding:6px 10px;margin-bottom:8px;"><b>Takaran:</b> 96 gram teh = ±4.300 ml teh · 48 gram = ±2.150 ml. Teh <b>ditimbang</b>, jangan pakai sendok.</div>
-        <ol style="margin:0;padding-left:20px;">
-          <li><b>Didihkan air</b>, lalu <b>matikan kompor</b>. Teh jangan direbus (jadi pahit getir).</li>
-          <li>Masukkan teh, <b>aduk 2 menit</b> sampai semua daun tenggelam.</li>
-          <li><b>Tutup rapat</b>, diamkan <b>20 menit</b> (pakai timer HP).</li>
-          <li>Saring, <b>tekan ampasnya</b> sampai sarinya keluar semua.</li>
-          <li><b>Dinginkan dulu</b>: rendam wadah teh (tutup terpasang) di baskom air + es ±30–45 menit, aduk sesekali. Seduh pagi dimulai ±1 jam sebelum buka.</li>
-          <li>Setelah dingin, <b>baru masuk termos</b>. Tempel kertas <b>jam seduh</b>.</li>
-          <li><b>Cicipi 1 sloki</b> tiap seduhan baru. Kalau rasanya beda, lapor dulu, jangan dijual.</li>
-          <li><b>Teh lama tidak dicampur teh baru</b>. Teh lebih dari <b>8 jam</b> dibuang. Termos & keran dicuci tiap tutup toko.</li>
-        </ol>
-        <div style="font-size:12.5px;color:#6b5a1e;margin-top:8px;">Kenapa didinginkan dulu? Teh panas melelehkan banyak es, jadi rasa teh encer dan es batu cepat habis.</div>
-      </div>
-    </details>
     <input type="text" id="sopSearchInput" oninput="renderSOPList()" placeholder="🔍 Cari nama menu..." style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-soft);background:#000;color:#fff;font-weight:700;font-size:14px;margin-bottom:16px;">
     <div id="sopListArea"><div class="empty-msg">Memuat SOP menu...</div></div>
   </div>
