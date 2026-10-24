@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.9">
+<meta name="app-version" content="2026-10-24.10">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1575,8 +1575,8 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" data-kunci="galon|air isi ulang" onclick="pilihChipBelanja(this)">💧 Galon</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-dana="dana_stok" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" data-kunci="kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lainnya" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lemon" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kresek" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
           <div class="bk-judul-stok">📦 Beli Stok</div>
           <button type="button" class="bk-chip s" data-stok="Cup 16 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 16 Oz</button>
           <button type="button" class="bk-chip s" data-stok="Cup 18 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 18 Oz</button>
@@ -3060,7 +3060,7 @@ function kasLangkah(n){
   const body = document.getElementById('kasModalBody');
   const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   const namaB = b => escTG((b.deskripsi || labelKat(b.kategori) || 'Belanja').split(' · dicatat')[0]);
-  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Bayar Hutang Bahan':'🍬','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
+  const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Kresek':'🛍️','Lemon':'🍋','Bayar Hutang Bahan':'🍬','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
   const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
   if(n === 1){
@@ -7857,6 +7857,8 @@ const KATEGORI_TABUNGAN = 'Tabungan';
 // Nama tampilan (data di database tetap 'Tabungan' & 'KUR BRI')
 const LABEL_KAT = { 'Tabungan': 'Simpanan Harian', 'KUR BRI': 'Setoran Harian', 'Bayar Hutang Bahan': 'Bahan Harian' };
 function labelKat(k){ return LABEL_KAT[k] || k; }
+// keterangan belanja tanpa tulisan teknis "· dicatat di kasir"
+function bersihKet(d){ return String(d || '').replace(/( · )?dicatat di kasir.*$/i, '').trim(); }
 // KUR BRI: setoran harian angsuran KUR (ditanggung Owner). Kas Outlet berkurang, laba TIDAK terpotong, otomatis masuk tandon KUR (trigger trg_kur_dari_kasir)
 const KATEGORI_KUR = 'KUR BRI';
 // state form Belanja Harian: mode 'resep' | 'biaya' | 'rutin', kategori yang disimpan, chip yang dipilih
@@ -8825,7 +8827,7 @@ async function loadBelanjaKecilHariIni(){
     const id = bolehBatal && !batal ? idBiaya[new Date(r.created_at).getTime() + '|' + r.kategori] : null;
     return `
     <div class="tx-row"${batal ? ' style="opacity:.55;"' : ''}>
-      <span>${escTG(labelKat(r.kategori))}${r.deskripsi ? ' <span class="bk-sub">· '+escTG(r.deskripsi)+'</span>' : ''}${batal ? ' <span style="color:var(--danger);font-weight:800;">🚫 Dibatalkan</span>' : ''}</span>
+      <span>${escTG(labelKat(r.kategori))}${bersihKet(r.deskripsi) ? ' <span class="bk-sub">· '+escTG(bersihKet(r.deskripsi))+'</span>' : ''}${batal ? ' <span style="color:var(--danger);font-weight:800;">🚫 Dibatalkan</span>' : ''}</span>
       <span style="text-align:right;"><b${Number(r.jumlah) < 0 ? ' style="color:#1b5e20;"' : ''}>${Number(r.jumlah) < 0 ? '+ ' + fmt(-Number(r.jumlah)) : fmt(r.jumlah)}</b> <span class="bk-sub">${new Date(r.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span>
       ${id ? `<br><button type="button" class="bk-batal" style="margin-top:6px;font-size:13px;padding:5px 12px;border-radius:14px;border:1px solid #e53935;background:#fdecea;color:#c62828;font-weight:800;cursor:pointer;" onclick="batalkanBelanja('${id}', '${escTG(labelKat(r.kategori)).replace(/'/g,"\\'")}', ${Number(r.jumlah)})">🚫 Batalkan</button>` : ''}</span>
     </div>`;
