@@ -116,3 +116,6 @@ begin
                                   'talangan_kas', round(v_talang),
                                   'gaji_aktif', coalesce(bt.gaji_aktif, false), 'per_bahan', coalesce(v_rinci, '[]'::jsonb)));
 end $function$;
+
+-- 2026-10-25 23.06 Boss Leo: "uang diambil dari mana, itu yang berkurang" -> penyesuaian talangan (bagian 5) DILEPAS,
+-- dana_hitung_sisih kembali murni pemakaian (masuk_at tetap). Koreksi Rp26.000 Dana Stok -> Kas Outlet juga dibatalkan.
