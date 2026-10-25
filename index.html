@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-24.12">
+<meta name="app-version" content="2026-10-25.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1048,7 +1048,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
           <span class="icon">📈</span>
           <div class="label">Laba Bersih Hari Ini</div>
           <div class="value" id="dashLabaHariIni">Rp 0</div>
-          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, setoran harian, bahan harian, es batu (sudah di modal), sewa, listrik &amp; gaji (sudah dicicil per hari) tidak memotong laba</div>
+          <div style="font-size:11px;color:#f3e6b5;margin-top:4px;">Simpanan, bahan harian, es batu (sudah di modal), sewa, listrik &amp; gaji (sudah dicicil per hari) tidak memotong laba</div>
         </div>
         <div class="dash-card hidden" id="dashKasCard">
           <span class="icon">💵</span>
@@ -1590,13 +1590,10 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
-      <div id="belanjaInfoKur" class="hidden" style="margin-top:8px;background:#e3f2fd;border:1px solid #42a5f5;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#0d47a1;">
-        📥 Setoran harian diambil dari Kas Outlet lalu disimpan terpisah. <b>Tidak mengurangi laba</b> (diganti Owner).
-      </div>
       <div class="bk-rutin-judul">Setoran rutin (bukan belanja)</div>
-      <div class="bk-mode-wrap" id="belanjaKecilRutin">
+      <!-- 2026-10-25: Setoran Harian (BRI) dihapus dari kasir, BRI dibayar Owner sendiri -->
+      <div class="bk-mode-wrap" id="belanjaKecilRutin" style="grid-template-columns:1fr;">
           <button type="button" class="bk-rutin" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Simpanan Harian</button>
-          <button type="button" class="bk-rutin" id="btnKurBri" data-kat="KUR BRI" onclick="pilihKategoriBelanja(this)">📥 Setoran Harian</button>
         </div>
     </div>
     <div class="field">
@@ -1657,7 +1654,6 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <option value="Perawatan Alat">Perawatan Alat</option>
         <option value="Lainnya">Lainnya</option>
         <option value="Bayar Hutang Bahan">Bahan Harian: gula, susu, sealer (tidak mengurangi laba)</option>
-        <option value="KUR BRI">Setoran Harian (tidak mengurangi laba)</option>
       </select>
     </div>
     <div class="field">
@@ -3073,7 +3069,7 @@ function kasLangkah(n){
         <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
       ${htmlPengingatSetoranTK()}
-      <div class="tk-q">Semua belanja, es batu, simpanan &amp; setoran harian sudah dicatat?</div>
+      <div class="tk-q">Semua belanja, es batu &amp; simpanan harian sudah dicatat?</div>
       <button class="login-btn" onclick="kasLangkah(2)">✅ Sudah semua, lanjut</button>
       <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada yang lupa, catat dulu</button>`;
     return;
@@ -7880,7 +7876,6 @@ function gambarFormBelanja(){
   document.querySelectorAll('#belanjaKecilRutin .bk-rutin').forEach(b => b.classList.toggle('on', bkMode === 'rutin' && b.dataset.kat === bkKat));
   const tampil = (id, on) => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', !on); };
   tampil('belanjaInfoTabungan', bkKat === KATEGORI_TABUNGAN);
-  tampil('belanjaInfoKur', bkKat === KATEGORI_KUR);
   tampil('belanjaInfoDana', bkDana === 'dana_stok');
   tampil('belanjaInfoStok', bkMode !== 'rutin' && BK_KATA_STOK.test(document.getElementById('belanjaKecilKet').value || ''));
   const lbl = document.getElementById('belanjaKecilKetLabel');
@@ -7962,7 +7957,7 @@ function pilihKategoriBelanja(btn){
 }
 
 // ================== PENGINGAT TABUNGAN & KUR BRI (2026-10-23) ==================
-// Tiap hari kasir cabang utama wajib catat 💰 Tabungan (Kontrakan) & 💳 KUR BRI. Kalau belum: muncul pengingat
+// Tiap hari kasir cabang utama wajib catat 💰 Tabungan (Kontrakan). (KUR BRI dihapus 25 Okt: dibayar Owner sendiri.) Kalau belum: muncul pengingat
 // mulai jam 17.00 di atas layar + di langkah 1 Tutup Kas. Data dari fungsi database setoran_harian_status.
 window.__setoranStatus = null;
 function setoranKurang(st){
@@ -7970,7 +7965,6 @@ function setoranKurang(st){
   if(!st || !st.wajib) return [];
   const out = [];
   if(Number(st.tabungan) <= 0) out.push({ kat: 'Tabungan', ikon: '💰', nama: 'Simpanan Harian', target: Number(st.tabungan_target) });
-  if(Number(st.kur) <= 0) out.push({ kat: 'KUR BRI', ikon: '📥', nama: 'Setoran Harian', target: Number(st.kur_target) });
   return out;
 }
 async function cekPengingatSetoran(){

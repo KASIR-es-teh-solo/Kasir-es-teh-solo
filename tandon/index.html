@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-23.4">
+<meta name="app-version" content="tandon-2026-10-25.1">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -234,8 +234,6 @@ function gambar(){
       <div class="k-saldo">${fmt(d.kur)}</div>
       <div class="bar"><i style="width:${pctKur}%"></i></div>
       <div class="info">${statusKur}</div>
-      <div class="k-ket" style="margin-top:6px;">Tersambung dengan aplikasi kasir · tombol 📥 Setoran Harian di kasir otomatis masuk sini</div>
-      ${htmlSetoran(setoran && setoran.kur, '📥 Setoran Harian')}
       <div class="aksi"><button class="btn isi" onclick="bukaNom('kur','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kur','keluar')">➖ Ambil</button>
         ${Number(d.kur) >= Number(k.kur_angsuran) ? `<button class="btn isi" style="flex-basis:100%;" onclick="bayarKur()">💳 Bayar angsuran ke-${d.kur_angsuran_ke}</button>` : ''}</div>
     </div>
