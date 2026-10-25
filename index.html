@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-25.1">
+<meta name="app-version" content="2026-10-25.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -3008,9 +3008,10 @@ async function ambilDataTutupKas(){
   ]);
   const paten = Number((cfgRes && cfgRes.data && cfgRes.data.kas_awal_paten) ?? 200000);
   const patenAktif = !(cfgRes && cfgRes.data && cfgRes.data.aktif === false);
-  // hitung mulai jam 00:00 hari ini, ATAU sejak tutup kas terakhir kalau itu juga hari ini (cegah penjualan pagi terhitung 2x)
+  // 2026-10-25 (audit Boss Leo): hitung SEJAK TUTUP KAS TERAKHIR (bukan jam 00.00), supaya penjualan/belanja sesudah tutup kas
+  // sampai tengah malam tidak terlewat. Cabang yang belum pernah tutup kas: mulai jam 00.00 hari ini.
   const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-  if(lastKas && lastKas.waktu_tutup && new Date(lastKas.waktu_tutup) > startOfDay) startOfDay.setTime(new Date(lastKas.waktu_tutup).getTime());
+  if(lastKas && lastKas.waktu_tutup) startOfDay.setTime(new Date(lastKas.waktu_tutup).getTime());
   let kasAwal = lastKas ? Number(lastKas.kas_ditinggal ?? lastKas.kas_fisik) : (patenAktif ? paten : 0);
   // 2026-10-21: kas awal paten dihapus -> semua uang outlet satu angka. Saldo Kas Es Teh S.O.L.O ikut dihitung
   // (saat simpan, fungsi kas_tutup menolkan saldo itu supaya tidak terhitung dua kali).
@@ -3022,7 +3023,7 @@ async function ambilDataTutupKas(){
     kasAwal += kasToko;
   }
   const [txRes, byRes] = await Promise.all([
-    sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','tunai').gt('created_at', startOfDay.toISOString()),
+    sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','tunai').gt('masuk_at', startOfDay.toISOString()), // jam masuk server: transaksi offline telat ikut
     sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() })
   ]);
   if(txRes.error) throw new Error('Gagal mengambil data transaksi: ' + txRes.error.message);
@@ -3143,7 +3144,7 @@ function htmlAmplopTK(d, fisik){
   const r = d.danaRincian || {};
   const ketOp = [r.sewa ? 'sewa' : '', r.listrik ? 'listrik' : '', r.gaji ? 'gaji' : ''].filter(Boolean).join(', ');
   return `<div class="tk-setor" style="line-height:1.55;">✉️ <b style="font-size:15px;">Masukkan ke amplop:</b><br>
-    📦 Dana Stok: <b>${fmt(a.ds)}</b><br><span>cup, teh, bubuk rasa, dll. sesuai yang laku (tunai + Grab/Shopee)${r.gas ? ' + gas' : ''}</span><br>
+    📦 Dana Stok: <b>${fmt(a.ds)}</b><br><span>cup, teh, bubuk rasa, dll. sesuai yang laku (tunai + Grab/Shopee)${r.gas ? ' + gas' : ''}${Number(r.talangan_kas) > 0 ? ' − ' + fmt(r.talangan_kas) + ' stok yang sudah dibeli pakai Kas Outlet' : ''}</span><br>
     🏠 Dana Operasional: <b>${fmt(a.dop)}</b>${ketOp ? '<br><span>' + ketOp + '</span>' : ''}<br>
     💵 Sisa di Kas Outlet: <b>${fmt(a.sisa)}</b>${(a.ds < (d.danaStok||0) || a.dop < (d.danaOperasional||0)) ? '<br><span style="color:#c0392b;">Kas Outlet kurang, amplop diisi semampunya.</span>' : ''}</div>`;
 }
@@ -3426,6 +3427,7 @@ async function loadRiwayatKas(){
   }
 
   const isOwnerKas = currentProfile && currentProfile.role === 'owner';
+  const idKasTerakhir = data[0] && data[0].id; // 2026-10-25: tutup kas terakhir tidak boleh dihapus
 
   const teksSelisih = (n) => Number(n) === 0
     ? '<span style="color:#2e7d32;font-weight:700;">Pas ✅</span>'
@@ -3439,7 +3441,7 @@ async function loadRiwayatKas(){
         </span>
         <span style="width:100%;font-size:12px;margin-top:2px;">${teksSelisih(r.selisih)}</span>
         ${r.catatan ? `<span style="width:100%;font-size:12px;margin-top:2px;font-style:italic;opacity:.8;">Catatan: ${escTG(r.catatan)}</span>` : ''}
-        ${isOwnerKas ? `<span style="width:100%;margin-top:6px;"><button class="remove-btn" onclick="hapusRiwayatKas('${r.id}')" style="font-size:12px;padding:5px 10px;">🗑️ Hapus</button></span>` : ''}
+        ${isOwnerKas && r.id !== idKasTerakhir ? `<span style="width:100%;margin-top:6px;"><button class="remove-btn" onclick="hapusRiwayatKas('${r.id}')" style="font-size:12px;padding:5px 10px;">🗑️ Hapus</button></span>` : ''}${r.id === idKasTerakhir ? '<span style="width:100%;font-size:11px;margin-top:4px;opacity:.8;">🔒 Tutup kas terakhir (jadi modal awal berikutnya)</span>' : ''}
       </div>`;
 
   // kelompokkan per hari (WIB); data sudah urut terbaru dulu
@@ -5689,7 +5691,7 @@ async function hitungSaldoKas(daftarCabang){
     // cabang baru (belum pernah tutup kas): hitung dari nol sejak awal
     const sejak = lastKas ? lastKas.waktu_tutup : '2000-01-01T00:00:00Z';
     const { data: tx } = await sb.from('transaksi').select('total')
-      .eq('cabang_id', c.id).eq('status','selesai').eq('metode_bayar','tunai').gt('created_at', sejak);
+      .eq('cabang_id', c.id).eq('status','selesai').eq('metode_bayar','tunai').gt('masuk_at', sejak);
     // uang keluar dari laci = biaya tunai + pembelian stok dari laci
     const { data: bySemua } = await sb.rpc('laporan_biaya_kas', { p_cabang: c.id, p_sejak: sejak });
     const by = (bySemua || []).filter(b => new Date(b.created_at) > new Date(sejak));
@@ -8023,7 +8025,7 @@ function pilihDanaBeliStok(d){
   document.getElementById('beliStokDanaInfo').textContent = d === 'dana_stok'
     ? 'Ambil uangnya dari amplop Dana Stok. Kas Outlet tidak berubah.'
     : d === 'tunai'
-    ? 'Uang diambil dari Kas Outlet. Saldonya ikut berkurang.'
+    ? 'Uang diambil dari Kas Outlet. Saat tutup kas, sisihan Dana Stok otomatis dikurangi sebesar ini (tidak dobel).'
     : d === 'kas_toko' ? 'Dibayar dari Kas Outlet.'
     : 'Uang pribadi / transfer. Kas Outlet tidak berubah.';
 }
@@ -9007,7 +9009,7 @@ async function ambilDariBrankas(){
   const saldo = Number(saldoTeks || 0);
   if(jumlah > saldo && !confirm(`Isi brankas cuma ${fmt(saldo)}. Tetap ambil ${fmt(jumlah)}?`)) return;
   const ket = prompt('Keterangan (misal: setor ke bank)', '') || null;
-  const { error } = await sb.from('brankas').insert({ jenis: 'keluar', jumlah, keterangan: ket, dicatat_oleh: currentUser.id, dilihat_owner: true });
+  const { error } = await sb.from('brankas').insert({ cabang_id: activeCabangId, jenis: 'keluar', jumlah, keterangan: ket, dicatat_oleh: currentUser.id, dilihat_owner: true });
   if(error){ alert('Gagal menyimpan: ' + error.message); return; }
   catatLog('Ambil Brankas', `Ambil ${fmt(jumlah)} dari Brankas${ket ? ' · ' + ket : ''}`);
   await loadBrankas();
@@ -9247,6 +9249,16 @@ async function submitBiaya(){
   if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
 }
 
+// 2026-10-25 (audit Boss Leo): tombol Hapus di daftar biaya diganti Batalkan (jadi Rp0 + tercatat di Log), sama dengan Belanja Harian
+async function batalkanBiayaDash(id, kategori, jumlah){
+  const alasan = prompt(`Batalkan ${kategori} ${fmt(jumlah)}?\nUangnya dianggap kembali ke sumbernya.\n\nAlasan (opsional, misal: dobel):`, '');
+  if(alasan === null) return;
+  const { error } = await sb.rpc('belanja_batal', { p_id: id, p_alasan: alasan.trim() || null });
+  if(error){ alert('Gagal membatalkan: ' + error.message); return; }
+  showSuccessToast('↩️', 'Dibatalkan', `${kategori} ${fmt(jumlah)}`);
+  await loadBiayaData();
+  if(!document.getElementById('dashPanel-kastoko').classList.contains('hidden')) loadKasToko();
+}
 async function hapusBiaya(id){
   if(!confirm("Hapus catatan biaya ini? Tidak bisa dikembalikan.")) return;
 
@@ -9304,8 +9316,8 @@ async function loadBiayaData(){
       </span>
       <span style="width:100%;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
         <button class="qty-btn" style="width:auto;padding:4px 10px;font-size:11px;" onclick='openEditBiayaModal(${escTG(JSON.stringify(b))})'>Edit</button>
-        ${currentProfile && currentProfile.role==='owner'
-          ? `<button class="remove-btn" onclick="hapusBiaya('${b.id}')">Hapus</button>`
+        ${currentProfile && (currentProfile.role==='owner' || currentProfile.role==='admin') && Number(b.jumlah) > 0
+          ? `<button class="remove-btn" onclick="batalkanBiayaDash('${b.id}', '${escTG(labelKat(b.kategori)).replace(/'/g,'')}', ${Number(b.jumlah)})">Batalkan</button>`
           : ''}
       </span>
     </div>

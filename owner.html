@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-24.3">
+<meta name="app-version" content="owner-2026-10-25.1">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -316,7 +316,7 @@ async function kasCabang(c){
   const sejak = last ? last.waktu_tutup : '2000-01-01T00:00:00Z';
   const hari = awalHari();
   const [tx, by, kt, txHari, byHari] = await Promise.all([
-    sb.from('transaksi').select('total').eq('cabang_id', c.id).eq('status','selesai').eq('metode_bayar','tunai').gt('created_at', sejak),
+    sb.from('transaksi').select('total').eq('cabang_id', c.id).eq('status','selesai').eq('metode_bayar','tunai').gt('masuk_at', sejak),
     sb.rpc('laporan_biaya_kas', { p_cabang: c.id, p_sejak: sejak }),
     sb.rpc('kas_toko_saldo', { p_cabang: c.id }),
     sb.from('transaksi').select('total, metode_bayar').eq('cabang_id', c.id).eq('status','selesai').gte('created_at', hari),
@@ -859,7 +859,7 @@ async function brankasTambah(){
 async function brankasAmbil(){
   const r = await mintaNominal('Ambil uang dari Brankas berapa?', '', true);
   if(!r) return;
-  const { error } = await sb.from('brankas').insert({ jenis:'keluar', jumlah: r.jumlah, keterangan: r.ket || null, dicatat_oleh: user.id, dilihat_owner: true });
+  const { error } = await sb.from('brankas').insert({ cabang_id: pilihan !== 'semua' ? pilihan : (cabangList[0] || {}).id, jenis:'keluar', jumlah: r.jumlah, keterangan: r.ket || null, dicatat_oleh: user.id, dilihat_owner: true });
   if(error){ alert('Gagal: ' + error.message); return; }
   await catatLog('Ambil Brankas', `Ambil ${fmt(r.jumlah)} dari Brankas${r.ket ? ' · ' + r.ket : ''} (lewat Pusat Kendali)`);
   muatSemua();
