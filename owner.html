@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-25.1">
+<meta name="app-version" content="owner-2026-10-26.1">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -332,6 +332,7 @@ async function kasCabang(c){
     jual: jumlah(rowsHari, 'total'),
     tunai: jumlah(rowsHari.filter(r => (r.metode_bayar || 'tunai') === 'tunai'), 'total'),
     online: jumlah(rowsHari.filter(r => r.metode_bayar === 'online'), 'total'),
+    qris: jumlah(rowsHari.filter(r => r.metode_bayar === 'qris'), 'total'),
     trx: rowsHari.length,
     keluarHari: jumlah(byHari.data),
     tutup: last ? last.waktu_tutup : null
@@ -447,7 +448,7 @@ async function muatUang(){
   const labaDari = d => d ? (n(d,'omzet') - n(d,'modal')) - (n(d,'gaji') + n(d,'sewa') + n(d,'listrik') + n(d,'galon') + n(d,'gas') + n(d,'kresek') + n(d,'lain')) : 0;
   box.innerHTML = `
     <div class="sec"><h3>Kas & penjualan hari ini <small>per cabang</small></h3>
-      ${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · Pengeluaran ${fmt(r.keluarHari)} · ${r.trx} transaksi</small><small>Tutup kas terakhir: ${r.tutup ? jamWIB(r.tutup) : 'belum pernah'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}
+      ${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · Pengeluaran ${fmt(r.keluarHari)} · ${r.trx} transaksi</small>${r.qris ? `<small>📱 QRIS hari ini ${fmt(r.qris)} · cocokkan dengan mutasi QRIS</small>` : ''}<small>Tutup kas terakhir: ${r.tutup ? jamWIB(r.tutup) : 'belum pernah'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}
       ${per.length > 1 ? `<div class="baris"><span><b>Total</b><small>Penjualan ${fmt(tot('jual'))} · Pengeluaran ${fmt(tot('keluarHari'))}</small></span><span class="kanan" style="color:var(--emas)">${fmt(tot('kas'))}</span></div>` : ''}
     </div>
 
@@ -604,17 +605,28 @@ async function muatDana(cabs){
     sb.from('biaya_tetap').select('cabang_id, gaji_aktif, gas_per_hari').in('cabang_id', ids)
   ]);
   const jml = k => saldo.reduce((a, x) => a + Number(x.d[k] || 0), 0);
+  // 2026-10-26 kasir sederhana: kasir tidak memisah uang amplop. Owner memindah dari Kas Outlet ke amplop di sini.
+  const [belum, pindah] = await Promise.all([
+    Promise.all(cabs.map(c => sb.rpc('dana_belum_pindah', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })).catch(() => ({ c, d: {} })))),
+    sb.from('dana_pindah').select('cabang_id, pos, jumlah, keterangan, created_at').in('cabang_id', ids).order('created_at', { ascending:false }).limit(40).then(r => r, () => ({ data: [] }))
+  ]);
+  const blm = k => belum.reduce((a, x) => a + Number(x.d[k] || 0), 0);
   const posLbl = { stok:'📦 Dana Stok', operasional:'🏠 Dana Operasional', dana_stok:'📦 Dana Stok', dana_operasional:'🏠 Dana Operasional' };
   const rows = [
     ...(masuk.data || []).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.pos], judul: r.sumber === 'tutup_kas' ? 'Disisihkan saat tutup kas' : (r.keterangan || (r.jenis === 'masuk' ? 'Tambah manual' : 'Ambil manual')), n: (r.jenis === 'masuk' ? 1 : -1) * Number(r.jumlah) })),
     ...(beli.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `Beli ${(r.bahan && r.bahan.nama) || '-'} ${Number(r.jumlah).toLocaleString('id-ID')} ${(r.bahan && (r.bahan.satuan_beli || r.bahan.satuan)) || ''}`, n: -Number(r.total) })),
+    ...((pindah && pindah.data) || []).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.pos], judul: 'Dipindah dari Kas Outlet' + (r.keterangan ? ' · ' + r.keterangan : ''), n: Number(r.jumlah) })),
     ...(keluar.data || []).filter(r => posLbl[r.sumber_dana]).map(r => ({ t: r.created_at, cab: r.cabang_id, pos: posLbl[r.sumber_dana], judul: `${labelKat(r.kategori)}${r.deskripsi ? ' · ' + String(r.deskripsi).split(' · ')[0] : ''}`, n: -Number(r.jumlah) }))
   ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 60);
   const satu = cabs.length === 1 ? cabs[0] : null;
   const cfg = satu ? ((bt.data || []).find(x => x.cabang_id === satu.id) || { gaji_aktif:false, gas_per_hari:1650 }) : null;
-  return `<div class="sec"><h3>Amplop Dana <small>disisihkan tiap tutup kas</small></h3>
+  return `<div class="sec"><h3>Amplop Dana <small>isi amplop sekarang</small></h3>
       <div class="baris"><span>📦 Dana Stok<small>Cup, teh, sedotan, sealer, bubuk rasa, kopi ice roast, Milo, gas LPG</small></span><span class="kanan">${fmt(jml('stok'))}</span></div>
       <div class="baris"><span>🏠 Dana Operasional<small>Sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji kasir' : ''}</small></span><span class="kanan">${fmt(jml('operasional'))}</span></div>
+      <div class="sub">BELUM DIPINDAH DARI KAS OUTLET</div>
+      <div class="baris"><span>📦 Dana Stok<small>sisihan tutup kas − stok yang sudah dibeli pakai Kas Outlet</small></span><span class="kanan">${fmt(blm('stok'))}${satu && blm('stok') > 0 ? ` <button class="btn" onclick="danaPindah('${satu.id}','stok',${blm('stok')})">Pindahkan</button>` : ''}</span></div>
+      <div class="baris"><span>🏠 Dana Operasional<small>sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji' : ''}</small></span><span class="kanan">${fmt(blm('operasional'))}${satu && blm('operasional') > 0 ? ` <button class="btn" onclick="danaPindah('${satu.id}','operasional',${blm('operasional')})">Pindahkan</button>` : ''}</span></div>
+      <div class="info" style="margin-top:6px;">Uangnya masih di Kas Outlet. Tekan <b>Pindahkan</b> saat uang benar-benar dimasukkan ke amplop (misal seminggu sekali). Kas Outlet ikut berkurang.</div>
       ${satu ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
         <button class="btn" onclick="danaAtur('${satu.id}','stok','masuk')">+ Dana Stok</button>
         <button class="btn" onclick="danaAtur('${satu.id}','stok','keluar')">− Dana Stok</button>
@@ -635,6 +647,15 @@ async function danaAtur(cabangId, pos, jenis){
   if(!r) return;
   const { error } = await sb.rpc('dana_atur', { p_cabang: cabangId, p_pos: pos, p_jenis: pilih === '1' ? 'masuk' : 'keluar', p_jumlah: r.jumlah, p_keterangan: r.ket || null });
   if(error){ alert('Gagal: ' + error.message); return; }
+  muatPanel(); muatBeranda();
+}
+async function danaPindah(cabangId, pos, saran){
+  const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
+  const r = await mintaNominal(`Pindahkan dari Kas Outlet ke amplop ${nama} berapa?`, String(saran || ''), true);
+  if(!r) return;
+  const { error } = await sb.rpc('dana_pindahkan', { p_cabang: cabangId, p_pos: pos, p_jumlah: r.jumlah, p_keterangan: r.ket || null });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  alert(`✅ ${fmt(r.jumlah)} dipindah ke amplop ${nama}. Kas Outlet berkurang ${fmt(r.jumlah)}.`);
   muatPanel(); muatBeranda();
 }
 async function danaGaji(cabangId, aktif, gas){
@@ -839,6 +860,7 @@ async function muatBrankas(){
   box.innerHTML = `
     <div class="gold" style="margin-bottom:10px;"><small>🔒 Saldo Brankas · khusus Owner</small><b class="n">${fmt(saldo)}</b>
       <div style="display:flex;gap:8px;margin-top:8px;"><button class="gbtn gelap" onclick="brankasTambah()">${ic('plus')} Tambah uang</button><button class="gbtn terang" onclick="brankasAmbil()">${ic('minus')} Ambil</button></div>
+      <button class="gbtn gelap" style="width:100%;margin-top:8px;" onclick="brankasSimpanan()">💰 Simpanan Harian (dari Kas Outlet)</button>
       <div class="r"><div>Masuk ${esc(namaBulan)}<b>${fmt(jml('masuk'))}</b></div><div>Diambil ${esc(namaBulan)}<b>${fmt(jml('keluar'))}</b></div></div></div>
     <div class="seg">${[['semua','Semua'],['masuk','Masuk'],['keluar','Diambil']].map(([k, l]) => `<button class="${k === brankasFilter ? 'on' : ''}" onclick="filterBrankas('${k}')">${l}</button>`).join('')}</div>
     <div class="sec"><h3>Riwayat Brankas <small>terbaru di atas</small></h3>
@@ -854,6 +876,17 @@ async function brankasTambah(){
     keterangan: 'Tambah uang Owner' + (r.ket ? ' · ' + r.ket : ''), dicatat_oleh: user.id, dilihat_owner: true, kas_shift_id: NOL });
   if(error){ alert('Gagal: ' + error.message); return; }
   await catatLog('Tambah Brankas', `Tambah ${fmt(r.jumlah)} ke Brankas${r.ket ? ' · ' + r.ket : ''} (lewat Pusat Kendali)`);
+  muatSemua();
+}
+// 2026-10-26 kasir sederhana: Simpanan Harian dicatat Owner. Uang diambil dari Kas Outlet (kas_shift_id kosong = mengurangi Kas Outlet).
+async function brankasSimpanan(){
+  const cab = pilihan !== 'semua' ? pilihan : (cabangList[0] || {}).id;
+  const r = await mintaNominal(`Simpanan Harian dari Kas Outlet ${namaCab(cab)} berapa?`, '100000', true);
+  if(!r) return;
+  const { error } = await sb.from('brankas').insert({ cabang_id: cab, jenis:'masuk', jumlah: r.jumlah, keterangan: r.ket || null, dicatat_oleh: user.id, dilihat_owner: true });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  await catatLog('Simpanan Harian', `${fmt(r.jumlah)} dari Kas Outlet ke Brankas${r.ket ? ' · ' + r.ket : ''} (lewat Pusat Kendali)`);
+  alert(`✅ Simpanan Harian ${fmt(r.jumlah)} tercatat. Kas Outlet berkurang ${fmt(r.jumlah)}.`);
   muatSemua();
 }
 async function brankasAmbil(){

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-25.3">
+<meta name="app-version" content="2026-10-26.10">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1556,41 +1556,40 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
 <div class="overlay" id="belanjaKecilOverlay">
   <div class="modal">
     <h3>🧊 Belanja Harian</h3>
-    <p>Catat uang yang diambil dari Kas Outlet untuk belanja kebutuhan kedai. Otomatis mengurangi hitungan Kas Outlet.</p>
+    <p>Semua belanja diambil dari <b>Kas Outlet</b>. Cup, sedotan, bubuk &amp; kopi otomatis menambah stok.</p>
     <div class="login-error" id="belanjaKecilError"></div>
     <div class="field">
       <label>Belanja apa?</label>
       <!-- 2026-10-24: 2 pilihan besar (Bahan Resep / Biaya Toko) + pilihan cepat. Kategori lama tetap dipakai di dalam. -->
       <div id="belanjaKecilKategori">
-        <div class="bk-mode-wrap">
-          <button type="button" class="bk-mode res" data-mode="resep" onclick="pilihModeBelanja('resep')">🍬 Bahan Resep<small>tidak mengurangi laba</small></button>
-          <button type="button" class="bk-mode bia" data-mode="biaya" onclick="pilihModeBelanja('biaya')">🧾 Biaya Toko<small>mengurangi laba</small></button>
-        </div>
         <div class="bk-chips on" id="bkChipsSemua">
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Es Batu" data-isi="Es batu" data-kunci="es batu|es balok|es kristal" onclick="pilihChipBelanja(this)">🧊 Es Batu</button>
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Gula" data-kunci="gula" onclick="pilihChipBelanja(this)">🍬 Gula</button>
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu SKM" data-kunci="skm|kental manis|susu kental" onclick="pilihChipBelanja(this)">🥛 Susu SKM</button>
           <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Susu full cream" data-kunci="full cream|fullcream|uht" onclick="pilihChipBelanja(this)">🥛 Susu Full Cream</button>
-          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" data-dana="dana_stok" data-kunci="sealer|segel" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
+          <button type="button" class="bk-chip r" data-mode="resep" data-kat="Bayar Hutang Bahan" data-isi="Plastik sealer" data-kunci="sealer|segel" onclick="pilihChipBelanja(this)">🔲 Sealer</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Air Galon" data-isi="Galon" data-kunci="galon|air isi ulang" onclick="pilihChipBelanja(this)">💧 Galon</button>
-          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-dana="dana_stok" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
+          <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Gas" data-isi="Gas LPG" data-kunci="gas|lpg|elpiji" onclick="pilihChipBelanja(this)">🔥 Gas</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kebersihan" data-isi="Kebersihan" data-kunci="kebersihan" onclick="pilihChipBelanja(this)">🧽 Kebersihan</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Lemon" data-isi="Lemon" data-kunci="lemon|jeruk nipis" onclick="pilihChipBelanja(this)">🍋 Lemon</button>
           <button type="button" class="bk-chip b" data-mode="biaya" data-kat="Kresek" data-isi="Kresek" data-kunci="kresek|tas plastik" onclick="pilihChipBelanja(this)">🛍️ Kresek</button>
-          <div class="bk-judul-stok">📦 Beli Stok</div>
-          <button type="button" class="bk-chip s" data-stok="Cup 16 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 16 Oz</button>
-          <button type="button" class="bk-chip s" data-stok="Cup 18 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 18 Oz</button>
-          <button type="button" class="bk-chip s" data-stok="Cup 22 Oz" onclick="bukaBeliStokDari(this)">🥤 Cup 22 Oz</button>
-          <button type="button" class="bk-chip s" data-stok="" onclick="bukaBeliStokDari(this)">📦 Stok lain</button>
+          <div class="bk-judul-stok">📦 Stok (otomatis menambah stok)</div>
+          <button type="button" class="bk-chip s" data-stok="Cup 16 Oz" onclick="pilihStokBelanja(this)">🥤 Cup 16 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="Cup 18 Oz" onclick="pilihStokBelanja(this)">🥤 Cup 18 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="Cup 22 Oz" onclick="pilihStokBelanja(this)">🥤 Cup 22 Oz</button>
+          <button type="button" class="bk-chip s" data-stok="" onclick="pilihStokBelanja(this)">📦 Stok lain</button>
         </div>
       </div>
-      <div id="belanjaInfoStok" class="hidden" style="margin-top:8px;background:#fff3e0;border:2px solid #e65100;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.4;color:#8a3a00;">📦 Barang stok (cup, sedotan, teh, bubuk, kopi, Milo) dicatat lewat <b>Beli Stok</b> supaya stok bertambah.
-        <button type="button" onclick="bukaBeliStokDari({ dataset: { stok: stokDariKetikan(document.getElementById('belanjaKecilKet').value) } })" style="display:block;margin-top:6px;border:none;background:#6d3b1f;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;font-size:13px;cursor:pointer;">📦 Buka Beli Stok</button></div>
-      <div id="belanjaInfoDana" class="hidden" style="margin-top:8px;background:#efebe9;border:1px solid #a1887f;border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.4;color:#4e342e;">📦 Uang diambil dari <b>amplop Dana Stok</b>. Kas Outlet tidak berubah.</div>
+      <div id="bkStokBox" class="hidden" style="margin-top:10px;background:#efebe9;border:2px solid #6d3b1f;border-radius:10px;padding:10px;">
+        <label style="font-weight:800;font-size:13px;color:#3e2723;">Barang stok</label>
+        <select id="bkStokPilih" onchange="gantiStokBelanja()" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid #6d3b1f;font-size:15px;margin:4px 0 8px;"></select>
+        <label id="bkStokJmlLabel" style="font-weight:800;font-size:13px;color:#3e2723;">Berapa pcs?</label>
+        <input type="number" inputmode="decimal" id="bkStokJumlah" min="0" placeholder="misal: 50" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid #6d3b1f;font-size:16px;box-sizing:border-box;">
+      </div>
       <div id="belanjaInfoTabungan" class="hidden" style="margin-top:8px;background:#e8f5e9;border:1px solid #66bb6a;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.4;color:#1b5e20;">
         💰 Simpanan harian diambil dari Kas Outlet. Kas Outlet berkurang, tapi <b>tidak mengurangi laba</b>.
       </div>
-      <div class="bk-rutin-judul">Setoran rutin (bukan belanja)</div>
+      <div class="bk-rutin-judul" id="bkRutinJudul">Setoran rutin (bukan belanja)</div>
       <!-- 2026-10-25: Setoran Harian (BRI) dihapus dari kasir, BRI dibayar Owner sendiri -->
       <div class="bk-mode-wrap" id="belanjaKecilRutin" style="grid-template-columns:1fr;">
           <button type="button" class="bk-rutin" id="btnTabungan" data-kat="Tabungan" onclick="pilihKategoriBelanja(this)">💰 Simpanan Harian</button>
@@ -2003,11 +2002,13 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div class="receipt-total"><span>TOTAL</span><span id="receiptTotal">Rp 0</span></div>
     <div class="sub" style="margin-top:10px;">Terima kasih sudah pesan!</div>
     <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar('tunai')" style="margin-top:10px;padding:26px 12px;font-size:26px;font-weight:800;letter-spacing:1px;border-radius:14px;">💵 BAYAR TUNAI</button>
+    <!-- 2026-10-26 kasir sederhana: QRIS dipisah dari tunai (uangnya masuk rekening, tidak dihitung di Kas Outlet) -->
+    <button class="receipt-close" id="receiptQrisBtn" onclick="konfirmasiBayar('qris')" style="margin-top:10px;padding:14px 8px;font-size:19px;font-weight:800;background:#1565c0;color:#fff;border:2px solid #0d47a1;border-radius:12px;">📱 QRIS</button>
     <div style="display:flex;gap:8px;margin-top:22px;">
       <button class="receipt-close" id="receiptGrabBtn" onclick="konfirmasiBayar('grab')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#00b14f;color:#fff;border:2px solid #00873c;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 GrabFood</button>
       <button class="receipt-close" id="receiptShopeeBtn" onclick="konfirmasiBayar('shopee')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#ee4d2d;color:#fff;border:2px solid #c73a1d;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 ShopeeFood</button>
     </div>
-    <div class="sub" style="margin-top:4px;font-size:11px;">Pesanan online: harga outlet & tidak masuk Kas Outlet.</div>
+    <div class="sub" style="margin-top:4px;font-size:11px;">QRIS &amp; pesanan online tidak masuk Kas Outlet.</div>
     <button class="receipt-close" onclick="tutupKonfirmasiBayar()" style="background:transparent;color:var(--forest-dark);border:1px solid var(--line-soft);margin-top:8px;">KEMBALI</button>
   </div>
 </div>
@@ -3027,6 +3028,10 @@ async function ambilDataTutupKas(){
     sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() })
   ]);
   if(txRes.error) throw new Error('Gagal mengambil data transaksi: ' + txRes.error.message);
+  // 2026-10-26: QRIS dicatat terpisah, hanya ditampilkan (tidak dihitung di Kas Outlet)
+  let totalQris = 0, jumlahQris = 0;
+  try{ const qr = await sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','qris').gt('masuk_at', startOfDay.toISOString());
+       totalQris = (qr.data || []).reduce((a,t)=>a+Number(t.total),0); jumlahQris = (qr.data || []).length; }catch(e){}
   if(byRes.error) throw new Error('Gagal mengambil data uang keluar: ' + byRes.error.message);
   const biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
   const totalTunai = (txRes.data || []).reduce((a,t)=>a+Number(t.total),0);
@@ -3035,7 +3040,7 @@ async function ambilDataTutupKas(){
   let dana = { stok: 0, operasional: 0, rincian: {} };
   try{ const dr = await sb.rpc('dana_hitung_sisih', { p_cabang: activeCabangId }); if(!dr.error && dr.data) dana = dr.data; }catch(e){}
   return { paten, patenAktif, kasToko, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
-           jumlahTx: (txRes.data || []).length, totalTunai, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya,
+           jumlahTx: (txRes.data || []).length, totalTunai, totalQris, jumlahQris, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya,
            danaStok: Number(dana.stok || 0), danaOperasional: Number(dana.operasional || 0), danaRincian: dana.rincian || {} };
 }
 
@@ -3070,7 +3075,7 @@ function kasLangkah(n){
         <div class="tk-row"><span>Total keluar</span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
       ${htmlPengingatSetoranTK()}
-      <div class="tk-q">Semua belanja, es batu &amp; simpanan harian sudah dicatat?</div>
+      <div class="tk-q">Semua belanja sudah dicatat?</div>
       <button class="login-btn" onclick="kasLangkah(2)">✅ Sudah semua, lanjut</button>
       <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada yang lupa, catat dulu</button>`;
     return;
@@ -3084,8 +3089,9 @@ function kasLangkah(n){
       <div class="tk-list">
         <div class="tk-row"><span>${d.patenAktif ? 'Kas awal' : 'Saldo Kas Outlet'}<small>${ketAwal}${isOwner ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
-        <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja + simpanan</small></span><b>${fmt(d.totalBiaya)}</b></div>
+        <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja${(currentProfile && currentProfile.role !== 'kasir') ? ' + simpanan' : ''}</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
+      ${d.totalQris ? `<div class="tk-row" style="opacity:.85;"><span>📱 QRIS hari ini<small>${d.jumlahQris} transaksi · masuk rekening, tidak dihitung di Kas Outlet</small></span><b>${fmt(d.totalQris)}</b></div>` : ''}
       <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di Kas Outlet' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
       <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
@@ -3139,6 +3145,8 @@ function bagiAmplop(d, fisik){
   return { ds, dop, sisa: fisik - ds - dop };
 }
 function htmlAmplopTK(d, fisik){
+  // 2026-10-26 kasir sederhana: kasir tidak memisah uang ke amplop. Owner/Admin yang memindah dari Pusat Kendali.
+  return '<div class="tk-setor">💵 Semua uang tetap di Kas Outlet.</div>';
   const a = bagiAmplop(d, fisik);
   if(!a.ds && !a.dop) return '<div class="tk-setor">💵 Semua uang tetap jadi ' + escTG(namaKasCabang()) + '.</div>';
   const r = d.danaRincian || {};
@@ -3235,7 +3243,7 @@ async function submitHitungKas(){
     return;
   }
   const d = kasTK;
-  const { data: hasil, error } = await sb.rpc('kas_tutup', {
+  const { data: hasil, error } = await sb.rpc('kas_tutup_v2', {
     p_cabang: activeCabangId, p_kas_awal: d.kasAwal, p_kas_sistem: d.kasSistem, p_kas_fisik: kasFisik,
     p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString()
   });
@@ -5125,8 +5133,9 @@ function tutupKonfirmasiBayar(){
 // baru di sini transaksi BENERAN diproses & masuk database
 // tombol BAYAR TUNAI & PESANAN ONLINE dikunci bersamaan saat menyimpan (anti dobel)
 function aturTombolBayar(menyimpan, metode){
-  const t = document.getElementById('receiptBayarBtn'), g = document.getElementById('receiptGrabBtn'), sp = document.getElementById('receiptShopeeBtn');
-  t.disabled = menyimpan; if(g) g.disabled = menyimpan; if(sp) sp.disabled = menyimpan;
+  const t = document.getElementById('receiptBayarBtn'), g = document.getElementById('receiptGrabBtn'), sp = document.getElementById('receiptShopeeBtn'), q = document.getElementById('receiptQrisBtn');
+  t.disabled = menyimpan; if(g) g.disabled = menyimpan; if(sp) sp.disabled = menyimpan; if(q) q.disabled = menyimpan;
+  if(q) q.textContent = (menyimpan && metode === 'qris') ? 'Menyimpan...' : '📱 QRIS';
   t.textContent = (menyimpan && metode === 'tunai') ? 'Menyimpan...' : '💵 BAYAR TUNAI';
   if(g) g.textContent = (menyimpan && metode === 'grab') ? 'Menyimpan...' : '🛵 GrabFood';
   if(sp) sp.textContent = (menyimpan && metode === 'shopee') ? 'Menyimpan...' : '🛵 ShopeeFood';
@@ -5142,7 +5151,7 @@ async function konfirmasiBayar(metode){
   }
   // 'online' = pesanan Shopee/Grab: harga outlet, stok berkurang, TIDAK masuk saldo kas laci
   // 2026-10-19: online dipisah GrabFood / ShopeeFood (server menyimpan metode 'online' + platform)
-  selectedMetodeBayar = ['grab','shopee','online'].includes(metode) ? metode : 'tunai';
+  selectedMetodeBayar = ['grab','shopee','online','qris'].includes(metode) ? metode : 'tunai';
   aturTombolBayar(true, selectedMetodeBayar);
 
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
@@ -7878,8 +7887,9 @@ function gambarFormBelanja(){
   document.querySelectorAll('#belanjaKecilRutin .bk-rutin').forEach(b => b.classList.toggle('on', bkMode === 'rutin' && b.dataset.kat === bkKat));
   const tampil = (id, on) => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', !on); };
   tampil('belanjaInfoTabungan', bkKat === KATEGORI_TABUNGAN);
-  tampil('belanjaInfoDana', bkDana === 'dana_stok');
-  tampil('belanjaInfoStok', bkMode !== 'rutin' && BK_KATA_STOK.test(document.getElementById('belanjaKecilKet').value || ''));
+  tampil('bkStokBox', bkMode === 'stok');
+  const jl = document.getElementById('bkStokJmlLabel');
+  if(jl) jl.textContent = bkStok ? `Berapa ${satuanBeliStok(bkStok)}?` : 'Berapa?';
   const lbl = document.getElementById('belanjaKecilKetLabel');
   if(lbl) lbl.textContent = bkMode === 'rutin' ? 'Keterangan (opsional)' : 'Beli apa?';
   // isi nominal harian otomatis untuk setoran rutin (boleh diganti)
@@ -7898,7 +7908,48 @@ function isiKetBelanja(isi){
   if(!v || v === bkIsiTerakhir) ket.value = isi || '';
   bkIsiTerakhir = isi || '';
 }
-function kosongkanFormBelanja(){ bkMode = null; bkKat = null; bkManual = false; bkDana = 'tunai'; bkIsiTerakhir = ''; tandaiChipBelanja(null); gambarFormBelanja(); }
+function kosongkanFormBelanja(){ bkMode = null; bkKat = null; bkManual = false; bkDana = 'tunai'; bkIsiTerakhir = ''; bkStok = null; const j = document.getElementById('bkStokJumlah'); if(j) j.value = ''; tandaiChipBelanja(null); gambarFormBelanja(); }
+// ===== 2026-10-26 kasir sederhana: beli stok langsung di Belanja Harian (selalu Kas Outlet, stok otomatis bertambah) =====
+let bkStok = null, bkStokDaftar = [];
+async function muatStokBelanja(){
+  if(bkStokDaftar.length) return bkStokDaftar;
+  const { data } = await sb.from('bahan_baku').select('id, nama, satuan, satuan_beli, dihitung_stok').eq('dihitung_stok', true).eq('cabang_id', cabangSaring()).order('nama');
+  const urut = n => { const i = BELI_STOK_URUT.indexOf(String(n).toLowerCase()); return i < 0 ? 99 : i; };
+  bkStokDaftar = (data || []).sort((a,b) => urut(a.nama) - urut(b.nama) || a.nama.localeCompare(b.nama));
+  const sel = document.getElementById('bkStokPilih');
+  if(sel) sel.innerHTML = '<option value="">— pilih barang —</option>' + bkStokDaftar.map(b => `<option value="${b.id}">${escTG(String(b.nama).replace(/^Bubuk rasa /i,'Bubuk '))}</option>`).join('');
+  return bkStokDaftar;
+}
+function stokCocokKetikan(teks){
+  const t = String(teks || '').toLowerCase();
+  const cup = stokDariKetikan(t);
+  if(cup) return bkStokDaftar.find(b => b.nama.toLowerCase() === cup.toLowerCase()) || null;
+  return bkStokDaftar.find(b => { const n = b.nama.toLowerCase().replace(/^bubuk rasa /,''); return n.length > 2 && t.includes(n); })
+      || (/sedotan/.test(t) && bkStokDaftar.find(b => /sedotan/i.test(b.nama)))
+      || (/milo/.test(t) && bkStokDaftar.find(b => /milo/i.test(b.nama)))
+      || (/kopi|ice roast/.test(t) && bkStokDaftar.find(b => /kopi/i.test(b.nama)))
+      || (/\bteh\b|biang/.test(t) && !/rasa|bubuk/.test(t) && bkStokDaftar.find(b => /teh original/i.test(b.nama))) || null;
+}
+function setStokBelanja(b){
+  bkStok = b || null; bkMode = 'stok'; bkKat = 'Pembelian Stok'; bkManual = false; bkDana = 'tunai';
+  const sel = document.getElementById('bkStokPilih'); if(sel) sel.value = b ? b.id : '';
+  gambarFormBelanja();
+}
+async function pilihStokBelanja(el){
+  await muatStokBelanja();
+  const nama = String(el.dataset.stok || '').toLowerCase();
+  const b = nama ? bkStokDaftar.find(x => x.nama.toLowerCase() === nama) : null;
+  tandaiChipBelanja(el);
+  isiKetBelanja(b ? b.nama : '');
+  setStokBelanja(b);
+  setTimeout(() => { const j = document.getElementById(b ? 'bkStokJumlah' : 'bkStokPilih'); if(j) j.focus(); }, 50);
+}
+function gantiStokBelanja(){
+  const id = document.getElementById('bkStokPilih').value;
+  const b = bkStokDaftar.find(x => x.id === id) || null;
+  isiKetBelanja(b ? b.nama : '');
+  setStokBelanja(b);
+}
 function pilihModeBelanja(mode){
   bkMode = mode; bkManual = true; bkDana = 'tunai';
   bkKat = mode === 'resep' ? KATEGORI_BAYAR_HUTANG : 'Lainnya';
@@ -7924,6 +7975,14 @@ function tebakKategoriBelanja(){
   const teks = (document.getElementById('belanjaKecilKet').value || '').trim();
   const aktif = document.querySelector('#belanjaKecilKategori .bk-chip.on');
   if(!teks){ if(!bkManual){ bkMode = null; bkKat = null; bkDana = 'tunai'; tandaiChipBelanja(null); } bkIsiTerakhir = ''; gambarFormBelanja(); return; }
+  // barang stok (cup, sedotan, bubuk, kopi, Milo, teh) -> langsung jadi beli stok di form ini
+  if(BK_KATA_STOK.test(teks)){
+    if(!bkStokDaftar.length){ muatStokBelanja().then(() => tebakKategoriBelanja()); }
+    const b = stokCocokKetikan(teks);
+    const chip = b ? document.querySelector(`#belanjaKecilKategori .bk-chip.s[data-stok="${b.nama}"]`) : null;
+    tandaiChipBelanja(chip); bkIsiTerakhir = teks; setStokBelanja(b || bkStok); return;
+  }
+  if(bkMode === 'stok'){ bkStok = null; bkMode = null; bkKat = null; }
   const cocok = chipCocokKetikan(teks);
   if(cocok){ bkMode = cocok.dataset.mode; bkKat = cocok.dataset.kat; bkManual = false; bkDana = cocok.dataset.dana || 'tunai'; tandaiChipBelanja(cocok); bkIsiTerakhir = teks; gambarFormBelanja(); return; }
   if(aktif) tandaiChipBelanja(null);
@@ -7971,6 +8030,8 @@ function setoranKurang(st){
 }
 async function cekPengingatSetoran(){
   if(!currentProfile || !activeCabangId || !navigator.onLine) return;
+  // 2026-10-26: Simpanan Harian dicatat Owner/Admin, kasir tidak diingatkan
+  if(currentProfile.role === 'kasir'){ window.__setoranStatus = null; const b = document.getElementById('setoranBanner'); if(b) b.remove(); return; }
   try{
     const { data, error } = await sb.rpc('setoran_harian_status', { p_cabang: activeCabangId });
     if(error) throw error;
@@ -7994,6 +8055,7 @@ function tampilkanBannerSetoran(){
     `<button onclick="try{sessionStorage.setItem('setoranTunda', Date.now() + 30*60000)}catch(_){}; document.getElementById('setoranBanner').remove();" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:12px;cursor:pointer;">Nanti</button>`;
 }
 function htmlPengingatSetoranTK(){
+  if(currentProfile && currentProfile.role === 'kasir') return '';
   const kurang = setoranKurang();
   if(!kurang.length) return '';
   return `<div style="margin-top:12px;background:#fff4e0;border:2px solid #e0a030;border-radius:10px;padding:10px 12px;color:#7a4a00;font-size:13px;">
@@ -8114,7 +8176,12 @@ async function bukaBelanjaKecil(kategori){
   document.getElementById('belanjaKecilKet').value = '';
   document.getElementById('belanjaKecilError').classList.remove('show');
   if(kategori && !window.__setoranStatus) await cekPengingatSetoran();
+  // 2026-10-26: Simpanan Harian khusus Owner/Admin
+  const kasirSaja = currentProfile && currentProfile.role === 'kasir';
+  ['bkRutinJudul','belanjaKecilRutin'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.toggle('hidden', kasirSaja); });
+  if(kasirSaja && (kategori === KATEGORI_TABUNGAN || kategori === KATEGORI_KUR)) kategori = null;
   if(kategori) pilihKategoriBelanja(kategori); else kosongkanFormBelanja();
+  muatStokBelanja();
   document.getElementById('belanjaKecilOverlay').classList.add('show');
   await loadBelanjaKecilHariIni();
 }
@@ -8132,9 +8199,9 @@ async function submitBelanjaKecil(){
   const ket = document.getElementById('belanjaKecilKet').value.trim();
 
   if(!jumlah || jumlah <= 0){ errBox.textContent = 'Isi jumlah uang yang valid.'; errBox.classList.add('show'); return; }
+  if(bkMode === 'stok') return simpanStokBelanja(jumlah);
   if(!bkKat){ errBox.textContent = 'Pilih item belanja atau ketik "Beli apa?" dulu.'; errBox.classList.add('show'); return; }
   if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu item).'; errBox.classList.add('show'); return; }
-  if(bkMode !== 'rutin' && BK_KATA_STOK.test(ket)){ errBox.textContent = 'Cup, sedotan, teh, bubuk, kopi & Milo dicatat lewat 📦 Beli Stok (tombol di bawah), supaya stok bertambah.'; errBox.classList.add('show'); gambarFormBelanja(); return; }
   let dana = bkMode === 'rutin' ? 'tunai' : bkDana;
   if(!confirm(`Ambil ${fmt(jumlah)} dari ${dana === 'dana_stok' ? 'amplop Dana Stok' : 'Kas Outlet'} untuk ${labelKat(kategori)}?`)) return;
 
@@ -8168,6 +8235,24 @@ async function submitBelanjaKecil(){
   if(kategori === KATEGORI_KUR) showSuccessToast('📥', 'Setoran Harian tersimpan', fmt(jumlah));
   else if(dana === 'dana_stok') showSuccessToast('📦', 'Tersimpan dari Dana Stok', `${ket} ${fmt(jumlah)} · Kas Outlet tidak berubah`);
   cekPengingatSetoran();
+  await loadBelanjaKecilHariIni();
+}
+
+async function simpanStokBelanja(total){
+  const errBox = document.getElementById('belanjaKecilError');
+  const gagal = m => { errBox.textContent = m; errBox.classList.add('show'); };
+  const btn = document.getElementById('belanjaKecilSubmitBtn');
+  if(!bkStok) return gagal('Pilih barang stoknya dulu.');
+  const j = Number(document.getElementById('bkStokJumlah').value) || 0;
+  if(j <= 0) return gagal(`Isi berapa ${satuanBeliStok(bkStok)} yang dibeli.`);
+  if(!confirm(`Ambil ${fmt(total)} dari Kas Outlet untuk ${bkStok.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(bkStok)}?`)) return;
+  btn.disabled = true; btn.textContent = 'Menyimpan...';
+  const { error } = await sb.rpc('beli_stok_bahan', { p_cabang: activeCabangId, p_bahan: bkStok.id, p_jumlah: j, p_total: total, p_sumber_dana: 'tunai' });
+  btn.disabled = false; btn.textContent = 'Simpan';
+  if(error) return gagal('Gagal menyimpan: ' + error.message);
+  showSuccessToast('📦', 'Stok bertambah', `${bkStok.nama} +${j.toLocaleString('id-ID')} · ${fmt(total)} dari Kas Outlet`);
+  document.getElementById('belanjaKecilJumlah').value = ''; document.getElementById('belanjaKecilKet').value = '';
+  kosongkanFormBelanja();
   await loadBelanjaKecilHariIni();
 }
 
