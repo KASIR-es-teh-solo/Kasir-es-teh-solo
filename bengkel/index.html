@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="bengkel-2026-10-26.1">
+<meta name="app-version" content="bengkel-2026-10-26.2">
 <meta name="theme-color" content="#14171b">
 <title>Lancar Jaya Motors</title>
-<link rel="icon" href="ikon-192.png">
-<link rel="apple-touch-icon" href="ikon-192.png">
-<link rel="manifest" href="manifest.json">
+<link rel="icon" href="ikon-192.png?v=2">
+<link rel="apple-touch-icon" href="ikon-192.png?v=2">
+<link rel="manifest" href="manifest.json?v=2">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
   /* Lancar Jaya Motors: aplikasi bengkel, terpisah dari kasir es teh. Khusus Owner. */
@@ -100,7 +100,19 @@
   .bt-ok{background:var(--or);border:1px solid var(--or);color:#1d0e00;}
   .bt-merah{width:100%;margin-top:10px;padding:11px;border-radius:12px;background:transparent;border:1px solid rgba(240,138,128,.55);color:var(--merah);font-weight:800;font-size:14px;cursor:pointer;}
   .err{color:var(--merah);font-size:13px;font-weight:700;min-height:18px;margin-top:4px;}
-  .login{max-width:360px;margin:70px auto 0;}
+  .login{max-width:380px;margin:0 auto;display:flex;flex-direction:column;align-items:center;min-height:calc(100vh - 40px);padding-top:30px;}
+  .lg-latar{position:fixed;inset:0;z-index:-1;background:radial-gradient(500px 380px at 50% 16%,rgba(242,140,40,.28),transparent 70%),linear-gradient(180deg,#22272e,#121519 60%);}
+  .lg-logo{width:150px;height:150px;border-radius:36px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 2px rgba(242,140,40,.45);}
+  .lg-logo img{width:100%;height:100%;display:block;}
+  .lg-judul{margin:22px 0 0;font-size:26px;font-weight:900;letter-spacing:3px;text-align:center;}
+  .lg-judul span{color:var(--or1);}
+  .lg-sub{font-size:13px;color:var(--redup);font-weight:700;letter-spacing:2.5px;margin-top:6px;text-align:center;}
+  .lg-garis{width:56px;height:4px;border-radius:4px;background:linear-gradient(90deg,#ffb35c,#d9660f);margin:16px 0 26px;}
+  .lg-kartu{width:100%;border-radius:20px;padding:20px;}
+  .lg-kartu h2{margin:0 0 4px;font-size:19px;} .lg-kartu p{margin:0 0 16px;font-size:13px;color:var(--redup);}
+  .lg-btn{width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,#ffa64d,#e2741a);color:#1d0e00;font-size:17px;font-weight:900;letter-spacing:.5px;margin-top:4px;box-shadow:0 8px 22px rgba(242,140,40,.35);cursor:pointer;}
+  .lg-kaki{margin-top:auto;padding-top:30px;font-size:12px;color:#6f7984;font-weight:600;}
+  .muat img{width:96px;height:96px;border-radius:24px;display:block;margin:0 auto 14px;box-shadow:0 0 0 2px rgba(242,140,40,.4);}
   .keluar{width:100%;margin-top:18px;padding:10px;border:0;background:transparent;color:var(--redup2);font-weight:700;font-size:13px;cursor:pointer;}
   .muat{color:var(--redup);text-align:center;padding:70px 10px;font-weight:700;}
   .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#24190c;color:var(--or1);border:1px solid var(--or);padding:11px 16px;border-radius:12px;font-weight:800;font-size:14px;z-index:60;display:none;max-width:90vw;text-align:center;}
@@ -121,17 +133,22 @@
 </head>
 <body>
 <div class="wrap">
-  <div id="muat" class="muat">Memuat Lancar Jaya Motors…</div>
+  <div id="muat" class="muat"><img src="logo.svg" alt="">Memuat Lancar Jaya Motors…</div>
 
   <div id="loginBox" class="login" style="display:none;">
-    <div class="kartu">
-      <div class="t">LANCAR JAYA MOTORS</div>
-      <h1 style="margin-bottom:14px;">Masuk</h1>
-      <div class="fld"><label for="lgEmail">Email</label><input id="lgEmail" class="ket" type="email" autocomplete="username"></div>
-      <div class="fld"><label for="lgPass">Password</label><input id="lgPass" class="ket" type="password" autocomplete="current-password"></div>
-      <button class="bt-ok" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;" onclick="masuk()">Masuk</button>
+    <div class="lg-latar"></div>
+    <div class="lg-logo"><img src="logo.svg" alt="Logo Lancar Jaya Motors"></div>
+    <div class="lg-judul">LANCAR <span>JAYA</span></div>
+    <div class="lg-sub">MOTORS · BENGKEL MOTOR</div>
+    <div class="lg-garis"></div>
+    <div class="kartu lg-kartu">
+      <h2>Selamat datang, Boss 👋</h2><p>Masuk untuk kelola bengkel</p>
+      <div class="fld"><label for="lgEmail">Email</label><input id="lgEmail" class="ket" type="email" autocomplete="username" placeholder="✉️ email"></div>
+      <div class="fld"><label for="lgPass">Password</label><input id="lgPass" class="ket" type="password" autocomplete="current-password" placeholder="🔒 password" onkeydown="if(event.key==='Enter')masuk()"></div>
+      <button class="lg-btn" onclick="masuk()">MASUK</button>
       <div class="err" id="lgErr"></div>
     </div>
+    <div class="lg-kaki">🔧 Lancar Jaya Motors · khusus Owner</div>
   </div>
 
   <!-- BERANDA -->
