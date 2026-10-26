@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="app-version" content="bengkel-2026-10-26.1">
+<meta name="theme-color" content="#14171b">
+<title>Lancar Jaya Motors</title>
+<link rel="icon" href="ikon-192.png">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
+<style>
+  /* Lancar Jaya Motors: aplikasi bengkel, terpisah dari kasir es teh. Khusus Owner. */
+  :root{ --or:#f28c28; --or1:#ffa64d; --or2:#c96a10; --teks:#eef1f4; --redup:#a7b0ba; --redup2:#8b95a0;
+    --kartu:rgba(255,255,255,.055); --garis:rgba(255,255,255,.1); --hijau:#5fd38a; --merah:#f08a80; --kuning:#f3d27a; --bg:#14171b; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;min-height:100%;}
+  body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;-webkit-font-smoothing:antialiased;color:var(--teks);
+    background:radial-gradient(1200px 500px at 50% -120px,#2a2f36,var(--bg) 70%) fixed var(--bg);}
+  button,input,select{font-family:inherit;}
+  .wrap{max-width:680px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(96px + env(safe-area-inset-bottom,0px));}
+  .t{font-size:10.5px;letter-spacing:1.6px;color:var(--or);font-weight:800;}
+  h1{margin:3px 0 0;font-size:22px;font-weight:800;}
+  h2{margin:0 0 10px;font-size:19px;font-weight:800;}
+  .d{font-size:12.5px;color:var(--redup);margin-top:2px;}
+  .h{font-size:11px;letter-spacing:1.4px;color:var(--redup);font-weight:800;margin:20px 0 8px;display:flex;justify-content:space-between;align-items:center;}
+  .h a{color:var(--or1);letter-spacing:0;font-size:12.5px;text-decoration:none;cursor:pointer;}
+  .kartu{background:var(--kartu);border:1px solid var(--garis);border-radius:16px;padding:14px;}
+  .utama{background:linear-gradient(135deg,var(--or1),var(--or2));color:#1d0e00;border:0;box-shadow:0 10px 30px rgba(0,0,0,.4);margin-top:14px;}
+  .utama .lb{font-size:12.5px;font-weight:800;opacity:.85;}
+  .utama .nil{font-size:30px;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums;margin-top:2px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+  .mini{background:var(--kartu);border:1px solid var(--garis);border-radius:14px;padding:11px 10px;}
+  .mini .lb{font-size:11.5px;color:var(--redup);font-weight:700;}
+  .mini .nil{font-size:17px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums;word-break:break-word;}
+  .besar{display:flex;gap:10px;margin-top:12px;}
+  .besar button{flex:1;padding:15px 8px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;border:0;}
+  .b1{background:var(--or);color:#1d0e00;} .b2{background:transparent;color:var(--or1);border:1.5px solid rgba(242,140,40,.65) !important;}
+  .peringatan{margin-top:12px;background:rgba(240,138,128,.12);border:1px solid rgba(240,138,128,.4);border-radius:14px;padding:11px 13px;font-size:13px;font-weight:600;line-height:1.5;cursor:pointer;}
+  .peringatan b{color:var(--merah);}
+  .daftar{background:var(--kartu);border:1px solid var(--garis);border-radius:14px;padding:2px 14px;}
+  .baris{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);font-size:14px;}
+  .baris:first-child{border-top:0;}
+  .baris.klik{cursor:pointer;}
+  .baris small{display:block;font-size:11.5px;color:var(--redup2);margin-top:2px;font-weight:500;}
+  .baris .n{font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right;}
+  .baris.batal{opacity:.45;} .baris.batal .n{text-decoration:line-through;}
+  .plus{color:var(--hijau);} .min{color:var(--merah);} .kuning{color:var(--kuning);}
+  .kosong{color:var(--redup2);font-size:13px;padding:14px 0;text-align:center;}
+  .cari{width:100%;font-size:15px;padding:12px 14px;border-radius:12px;border:1px solid var(--garis);background:rgba(255,255,255,.06);color:var(--teks);outline:none;}
+  .cari:focus{border-color:var(--or);}
+  .seg{display:flex;background:rgba(255,255,255,.06);border:1px solid var(--garis);border-radius:12px;padding:3px;}
+  .seg button{flex:1;border:0;background:transparent;font-size:13px;font-weight:700;padding:9px 4px;border-radius:9px;color:var(--redup);cursor:pointer;}
+  .seg button.on{background:var(--or);color:#1d0e00;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{border:1.5px solid var(--garis);background:var(--kartu);color:var(--teks);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700;cursor:pointer;text-align:left;}
+  .chip small{display:block;font-size:12px;color:var(--or1);font-weight:800;margin-top:2px;}
+  .chip.tambah{border-style:dashed;color:var(--or1);}
+  .chip.habis small{color:var(--merah);}
+  /* keranjang */
+  .krj{margin-top:14px;background:#1d2228;border:1.5px solid rgba(242,140,40,.5);border-radius:16px;padding:12px 14px;}
+  .krj-item{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid rgba(255,255,255,.07);}
+  .krj-item:first-child{border-top:0;}
+  .krj-nama{flex:1;min-width:0;font-weight:700;font-size:14px;}
+  .krj-nama small{display:block;color:var(--redup2);font-weight:600;font-size:11.5px;}
+  .qty{display:flex;align-items:center;gap:6px;}
+  .qty button{width:32px;height:32px;border-radius:9px;border:1px solid var(--garis);background:rgba(255,255,255,.07);color:var(--teks);font-size:18px;font-weight:800;cursor:pointer;}
+  .qty span{min-width:20px;text-align:center;font-weight:800;}
+  .hrg{font-weight:800;font-variant-numeric:tabular-nums;min-width:82px;text-align:right;cursor:pointer;border-bottom:1px dashed var(--redup2);}
+  .total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--garis);}
+  .total b{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--or1);}
+  .bayar{width:100%;margin-top:12px;padding:16px;border:0;border-radius:14px;background:var(--or);color:#1d0e00;font-size:20px;font-weight:900;cursor:pointer;letter-spacing:.3px;}
+  .bayar:disabled{opacity:.4;}
+  /* bar bawah */
+  .nav{position:fixed;left:0;right:0;bottom:0;background:rgba(17,20,24,.97);border-top:1px solid var(--garis);display:flex;justify-content:center;z-index:40;
+    padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(10px);}
+  .nav div{display:flex;width:100%;max-width:680px;}
+  .nav button{flex:1;border:0;background:transparent;color:var(--redup2);padding:9px 2px 10px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .nav button i{font-style:normal;font-size:21px;line-height:1.1;filter:grayscale(.6);opacity:.8;}
+  .nav button.on{color:var(--or1);} .nav button.on i{filter:none;opacity:1;}
+  .hal{display:none;} .hal.on{display:block;}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:12px;}
+  .ov.on{display:flex;}
+  .md{background:#1d2228;border:1px solid rgba(242,140,40,.45);border-radius:18px;padding:18px;width:100%;max-width:460px;max-height:90vh;overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px));}
+  .md h3{margin:0 0 4px;font-size:17px;}
+  .md p{margin:0 0 12px;font-size:13px;color:var(--redup);line-height:1.45;}
+  .fld{margin-bottom:11px;}
+  .fld label{display:block;font-size:12.5px;font-weight:700;color:var(--redup);margin-bottom:4px;}
+  .fld input,.fld select{width:100%;font-size:19px;font-weight:700;padding:11px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--teks);outline:none;font-variant-numeric:tabular-nums;}
+  .fld select option{background:#1d2228;}
+  .fld input.ket{font-size:15px;font-weight:600;}
+  .fld input:focus,.fld select:focus{border-color:var(--or);}
+  .fld small{display:block;font-size:12px;margin-top:4px;font-weight:600;color:var(--redup2);}
+  .tbl{display:flex;gap:8px;margin-top:10px;}
+  .tbl button{flex:1;padding:13px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;}
+  .bt-batal{background:transparent;border:1px solid rgba(255,255,255,.25);color:var(--teks);}
+  .bt-ok{background:var(--or);border:1px solid var(--or);color:#1d0e00;}
+  .bt-merah{width:100%;margin-top:10px;padding:11px;border-radius:12px;background:transparent;border:1px solid rgba(240,138,128,.55);color:var(--merah);font-weight:800;font-size:14px;cursor:pointer;}
+  .err{color:var(--merah);font-size:13px;font-weight:700;min-height:18px;margin-top:4px;}
+  .login{max-width:360px;margin:70px auto 0;}
+  .keluar{width:100%;margin-top:18px;padding:10px;border:0;background:transparent;color:var(--redup2);font-weight:700;font-size:13px;cursor:pointer;}
+  .muat{color:var(--redup);text-align:center;padding:70px 10px;font-weight:700;}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#24190c;color:var(--or1);border:1px solid var(--or);padding:11px 16px;border-radius:12px;font-weight:800;font-size:14px;z-index:60;display:none;max-width:90vw;text-align:center;}
+  .pil{display:flex;gap:8px;}
+  .pil button{flex:1;padding:11px 6px;border-radius:11px;border:1.5px solid var(--garis);background:transparent;color:var(--redup);font-weight:800;font-size:13.5px;cursor:pointer;}
+  .pil button.on{border-color:var(--or);color:var(--or1);background:rgba(242,140,40,.1);}
+  .sar{position:relative;}
+  .saran{position:absolute;left:0;right:0;top:100%;background:#262c33;border:1px solid var(--garis);border-radius:11px;z-index:5;max-height:200px;overflow:auto;display:none;}
+  .saran div{padding:11px 12px;font-size:14.5px;font-weight:600;border-top:1px solid rgba(255,255,255,.06);cursor:pointer;}
+  .saran div:first-child{border-top:0;}
+  .rinci{font-size:13.5px;line-height:1.7;}
+  .rinci div{display:flex;justify-content:space-between;gap:10px;}
+  .rinci b{font-variant-numeric:tabular-nums;}
+  .lap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+  .lap .mini.lebar{grid-column:1/-1;}
+  .tag{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.08);color:var(--redup);margin-left:5px;vertical-align:1px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="muat" class="muat">Memuat Lancar Jaya Motors…</div>
+
+  <div id="loginBox" class="login" style="display:none;">
+    <div class="kartu">
+      <div class="t">LANCAR JAYA MOTORS</div>
+      <h1 style="margin-bottom:14px;">Masuk</h1>
+      <div class="fld"><label for="lgEmail">Email</label><input id="lgEmail" class="ket" type="email" autocomplete="username"></div>
+      <div class="fld"><label for="lgPass">Password</label><input id="lgPass" class="ket" type="password" autocomplete="current-password"></div>
+      <button class="bt-ok" style="width:100%;padding:13px;border-radius:12px;font-weight:800;font-size:15px;" onclick="masuk()">Masuk</button>
+      <div class="err" id="lgErr"></div>
+    </div>
+  </div>
+
+  <!-- BERANDA -->
+  <div class="hal" id="h-beranda">
+    <div class="t">🔧 LANCAR JAYA MOTORS</div>
+    <h1 id="sapa">Halo, Boss Leo</h1>
+    <div class="d" id="tgl"></div>
+    <div class="kartu utama" onclick="pindah('kas')">
+      <div class="lb">💰 Kas Bengkel</div>
+      <div class="nil" id="bSaldo">Rp0</div>
+    </div>
+    <div class="grid3">
+      <div class="mini"><div class="lb">Omzet hari ini</div><div class="nil" id="bOmzet">Rp0</div></div>
+      <div class="mini"><div class="lb">Laba hari ini</div><div class="nil plus" id="bLaba">Rp0</div></div>
+      <div class="mini"><div class="lb">Transaksi</div><div class="nil" id="bTrx">0</div></div>
+    </div>
+    <div id="bMenipis"></div>
+    <div class="besar">
+      <button class="b1" onclick="pindah('kasir')">🧾 Transaksi Baru</button>
+      <button class="b2" onclick="bukaBeli()">📦 Beli Sparepart</button>
+    </div>
+    <div class="h">TRANSAKSI TERAKHIR</div>
+    <div class="daftar" id="bRiwayat"></div>
+    <button class="keluar" onclick="keluar()">Keluar dari akun</button>
+  </div>
+
+  <!-- KASIR -->
+  <div class="hal" id="h-kasir">
+    <h2>🧾 Kasir</h2>
+    <input class="cari" id="kCari" placeholder="🔍 Cari jasa / sparepart…" oninput="gambarKasir()">
+    <div class="h">JASA SERVIS <a onclick="bukaJasa(null)">✏️ Atur Jasa</a></div>
+    <div class="chips" id="kJasa"></div>
+    <div class="h">SPAREPART <a onclick="bukaBeli()">+ Beli Sparepart</a></div>
+    <div class="chips" id="kPart"></div>
+    <div class="krj" id="krj">
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px;">🛒 Pesanan</div>
+      <div id="krjIsi"></div>
+      <div class="fld" style="margin-top:10px;margin-bottom:0;"><label for="kPlat">Plat nomor (boleh kosong)</label><input id="kPlat" class="ket" placeholder="mis. N 1234 AB" style="text-transform:uppercase;"></div>
+      <div class="total"><span style="font-weight:800;">TOTAL</span><b id="krjTotal">Rp0</b></div>
+      <button class="bayar" id="btBayar" onclick="bayar()" disabled>💵 BAYAR</button>
+    </div>
+  </div>
+
+  <!-- STOK -->
+  <div class="hal" id="h-stok">
+    <h2>📦 Stok Sparepart</h2>
+    <div class="besar" style="margin-top:0;"><button class="b1" onclick="bukaBeli()">📦 Beli Sparepart</button></div>
+    <div id="sMenipis"></div>
+    <div class="h">SEMUA SPAREPART <span id="sJml" style="letter-spacing:0;"></span></div>
+    <input class="cari" id="sCari" placeholder="🔍 Cari sparepart…" oninput="gambarStok()" style="margin-bottom:8px;">
+    <div class="daftar" id="sDaftar"></div>
+    <div class="h">RIWAYAT PEMBELIAN</div>
+    <div class="daftar" id="sBeli"></div>
+  </div>
+
+  <!-- KAS -->
+  <div class="hal" id="h-kas">
+    <h2>💰 Kas Bengkel</h2>
+    <div class="kartu utama" style="margin-top:0;">
+      <div class="lb">Saldo Kas Bengkel</div>
+      <div class="nil" id="kasSaldo">Rp0</div>
+    </div>
+    <div class="besar">
+      <button class="b2" onclick="bukaKas('masuk')">➕ Uang Masuk</button>
+      <button class="b1" onclick="bukaKas('keluar')">➖ Pengeluaran</button>
+    </div>
+    <div class="h">RIWAYAT KAS</div>
+    <div class="daftar" id="kasRiwayat"></div>
+  </div>
+
+  <!-- LAPORAN -->
+  <div class="hal" id="h-laporan">
+    <h2>📊 Laporan</h2>
+    <div class="seg" id="lapSeg">
+      <button data-p="hari" class="on">Hari ini</button><button data-p="7">7 hari</button><button data-p="bulan">Bulan ini</button><button data-p="30">30 hari</button>
+    </div>
+    <div id="lapIsi"><div class="kosong">Memuat…</div></div>
+  </div>
+</div>
+
+<nav class="nav" id="nav" style="display:none;"><div>
+  <button data-h="beranda" class="on"><i>🏠</i>Beranda</button>
+  <button data-h="kasir"><i>🧾</i>Kasir</button>
+  <button data-h="stok"><i>📦</i>Stok</button>
+  <button data-h="kas"><i>💰</i>Kas</button>
+  <button data-h="laporan"><i>📊</i>Laporan</button>
+</div></nav>
+
+<!-- modal beli sparepart -->
+<div class="ov" id="ovBeli"><div class="md">
+  <h3>📦 Beli Sparepart</h3><p>Sparepart baru otomatis masuk daftar stok. Harga modal dihitung dari total bayar ÷ jumlah.</p>
+  <div class="fld sar"><label for="blNama">Nama sparepart</label><input id="blNama" class="ket" placeholder="ketik, mis. Oli MPX 0,8L" autocomplete="off" oninput="saranBeli()"><div class="saran" id="blSaran"></div>
+    <small id="blInfo"></small></div>
+  <div class="grid2" style="margin-top:0;">
+    <div class="fld"><label for="blJml">Jumlah</label><input id="blJml" inputmode="numeric" placeholder="0" oninput="infoBeli()"></div>
+    <div class="fld"><label for="blTotal">Total bayar (Rp)</label><input id="blTotal" inputmode="numeric" placeholder="0" oninput="infoBeli()"></div>
+  </div>
+  <div class="fld"><label for="blJual">Harga jual per pcs (Rp)</label><input id="blJual" inputmode="numeric" placeholder="boleh kosong"><small id="blModal"></small></div>
+  <div class="fld"><label>Uang dari</label><div class="pil" id="blSumber"><button data-v="kas" class="on">💰 Kas Bengkel</button><button data-v="lain">👛 Uang lain</button></div></div>
+  <div class="err" id="blErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovBeli')">Batal</button><button class="bt-ok" id="blOk" onclick="simpanBeli()">Simpan</button></div>
+</div></div>
+
+<!-- modal ubah sparepart -->
+<div class="ov" id="ovPart"><div class="md">
+  <h3 id="ptJudul">Sparepart</h3><p id="ptInfo"></p>
+  <div class="fld"><label for="ptNama">Nama</label><input id="ptNama" class="ket"></div>
+  <div class="grid2" style="margin-top:0;">
+    <div class="fld"><label for="ptJual">Harga jual (Rp)</label><input id="ptJual" inputmode="numeric"></div>
+    <div class="fld"><label for="ptMin">Batas menipis</label><input id="ptMin" inputmode="numeric"></div>
+  </div>
+  <div class="fld"><label for="ptStok">Stok sekarang (hitung fisik)</label><input id="ptStok" inputmode="numeric"><small>Ubah hanya kalau hasil hitung di rak beda dengan aplikasi.</small></div>
+  <div class="err" id="ptErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovPart')">Batal</button><button class="bt-ok" onclick="simpanPart()">Simpan</button></div>
+  <button class="bt-merah" onclick="hapusPart()">🗑️ Sembunyikan dari daftar</button>
+</div></div>
+
+<!-- modal jasa -->
+<div class="ov" id="ovJasa"><div class="md">
+  <h3>✏️ Atur Jasa Servis</h3><p>Daftar harga tetap. Ketuk jasa untuk ubah.</p>
+  <div class="daftar" id="jsDaftar" style="margin-bottom:12px;"></div>
+  <div class="fld"><label for="jsNama" id="jsLabel">Tambah jasa baru</label><input id="jsNama" class="ket" placeholder="mis. Ganti Oli"></div>
+  <div class="fld"><label for="jsHarga">Harga (Rp)</label><input id="jsHarga" inputmode="numeric" placeholder="0"></div>
+  <div class="err" id="jsErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovJasa')">Tutup</button><button class="bt-ok" onclick="simpanJasa()">Simpan</button></div>
+  <button class="bt-merah" id="jsHapus" style="display:none;" onclick="hapusJasa()">🗑️ Hapus jasa ini</button>
+</div></div>
+
+<!-- modal item lain / ubah harga -->
+<div class="ov" id="ovItem"><div class="md">
+  <h3 id="itJudul">Jasa lain</h3><p id="itSub"></p>
+  <div class="fld" id="itNamaF"><label for="itNama">Nama</label><input id="itNama" class="ket" placeholder="mis. Las knalpot"></div>
+  <div class="fld"><label for="itHarga">Harga (Rp)</label><input id="itHarga" inputmode="numeric" placeholder="0"></div>
+  <div class="err" id="itErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovItem')">Batal</button><button class="bt-ok" id="itOk">OK</button></div>
+</div></div>
+
+<!-- modal kas -->
+<div class="ov" id="ovKas"><div class="md">
+  <h3 id="ksJudul"></h3><p id="ksSub"></p>
+  <div class="fld"><label>Kategori</label><div class="chips" id="ksKat"></div></div>
+  <div class="fld"><label for="ksJml">Jumlah (Rp)</label><input id="ksJml" inputmode="numeric" placeholder="0"></div>
+  <div class="fld"><label for="ksKet">Keterangan (boleh kosong)</label><input id="ksKet" class="ket"></div>
+  <div class="err" id="ksErr"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovKas')">Batal</button><button class="bt-ok" onclick="simpanKas()">Simpan</button></div>
+</div></div>
+
+<!-- modal detail transaksi -->
+<div class="ov" id="ovTrx"><div class="md">
+  <h3 id="trJudul">Transaksi</h3><p id="trSub"></p>
+  <div class="rinci" id="trIsi"></div>
+  <div class="tbl"><button class="bt-batal" onclick="tutup('ovTrx')">Tutup</button></div>
+  <button class="bt-merah" id="trBatal">🚫 Batalkan transaksi</button>
+</div></div>
+
+<div class="ov" id="ovYakin"><div class="md">
+  <h3 id="ykJudul">Yakin?</h3><p id="ykIsi" style="white-space:pre-line;color:var(--teks);font-size:14.5px;"></p>
+  <div class="tbl"><button class="bt-batal" onclick="jawabYakin(false)">Tidak</button><button class="bt-ok" id="ykOk" onclick="jawabYakin(true)">Ya</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const sb = supabase.createClient("https://ywoytgapbshpzrdwdtel.supabase.co", "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK");
+let D = null, krj = [], halaman = 'beranda', lapP = 'hari';
+const $ = id => document.getElementById(id);
+const fmt = n => (Number(n) < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(Number(n || 0))).toLocaleString('id-ID');
+const angka = el => Number(String(el.value || '').replace(/[^0-9]/g, '')) || 0;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jam = t => new Date(t).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+const tgl = t => new Date(t).toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' });
+const hariIni = t => new Date(t).toDateString() === new Date().toDateString();
+const waktu = t => hariIni(t) ? 'Hari ini ' + jam(t) : tgl(t) + ' ' + jam(t);
+const qtyT = q => Number(q).toLocaleString('id-ID');
+function rapikan(el){ const n = String(el.value).replace(/[^0-9]/g, ''); el.value = n ? Number(n).toLocaleString('id-ID') : ''; }
+document.querySelectorAll('input[inputmode="numeric"]').forEach(el => el.addEventListener('input', () => rapikan(el)));
+const isiAngka = (el, n) => { el.value = Number(n) ? Number(n).toLocaleString('id-ID') : ''; };
+function tutup(id){ $(id).classList.remove('on'); }
+function buka(id){ $(id).classList.add('on'); }
+function toast(t){ const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => el.style.display = 'none', 2600); }
+let _yakin = null;
+function yakin(judul, isi, ok){ $('ykJudul').textContent = judul; $('ykIsi').textContent = isi; $('ykOk').textContent = ok || 'Ya'; buka('ovYakin'); return new Promise(r => _yakin = r); }
+function jawabYakin(v){ tutup('ovYakin'); if(_yakin){ const r = _yakin; _yakin = null; r(v); } }
+function pilih(wadah, cb){ wadah.querySelectorAll('button').forEach(b => b.onclick = () => { wadah.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); cb && cb(b.dataset.v || b.dataset.p); }); }
+const pesanErr = e => String((e && e.message) || e || 'Gagal');
+
+// ===== mulai & login =====
+async function mulai(){
+  $('tgl').textContent = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const { data: { session } } = await sb.auth.getSession();
+  $('muat').style.display = 'none';
+  if(!session){ $('loginBox').style.display = ''; return; }
+  const { data: p } = await sb.from('users').select('nama, role').eq('id', session.user.id).single();
+  if(!p || p.role !== 'owner'){
+    $('loginBox').style.display = ''; $('lgErr').textContent = 'Aplikasi bengkel khusus Owner.';
+    await sb.auth.signOut(); return;
+  }
+  const j = new Date().getHours();
+  $('sapa').textContent = `Selamat ${j < 11 ? 'pagi' : j < 15 ? 'siang' : j < 18 ? 'sore' : 'malam'}, Boss Leo`;
+  $('nav').style.display = '';
+  pindah(location.hash.replace('#','') || 'beranda');
+  muat();
+}
+async function masuk(){
+  $('lgErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('lgEmail').value.trim(), password: $('lgPass').value });
+  if(error){ $('lgErr').textContent = 'Email atau password salah.'; return; }
+  $('loginBox').style.display = 'none'; mulai();
+}
+async function keluar(){ if(!(await yakin('Keluar?', 'Keluar dari aplikasi bengkel?', 'Ya, keluar'))) return; await sb.auth.signOut(); location.hash = ''; location.reload(); }
+
+function pindah(h){
+  if(!$('h-' + h)) h = 'beranda';
+  halaman = h;
+  document.querySelectorAll('.hal').forEach(x => x.classList.toggle('on', x.id === 'h-' + h));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.h === h));
+  history.replaceState(null, '', h === 'beranda' ? location.pathname : '#' + h);
+  window.scrollTo(0, 0);
+  if(h === 'laporan') muatLaporan();
+}
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => pindah(b.dataset.h));
+
+async function muat(){
+  const { data, error } = await sb.rpc('bengkel_data');
+  if(error){ toast('Gagal memuat: ' + pesanErr(error)); return; }
+  D = data; gambar();
+}
+function gambar(){ gambarBeranda(); gambarKasir(); gambarKeranjang(); gambarStok(); gambarKas(); }
+
+// ===== Beranda =====
+const menipis = () => (D ? D.part : []).filter(p => Number(p.stok) <= Number(p.stok_min));
+function htmlMenipis(){
+  const m = menipis(); if(!m.length) return '';
+  return `<div class="peringatan" onclick="pindah('stok')">⚠️ <b>${m.length} sparepart menipis/habis:</b> ${m.slice(0,6).map(p => esc(p.nama) + ' (' + qtyT(p.stok) + ')').join(', ')}${m.length > 6 ? ', …' : ''}</div>`;
+}
+function htmlTrx(t){
+  const isi = (t.item || []).map(i => i.nama + (Number(i.qty) > 1 ? ' ×' + qtyT(i.qty) : '')).join(', ');
+  return `<div class="baris klik ${t.batal ? 'batal' : ''}" onclick="detailTrx(${t.id})"><div>${esc(isi || '-')}${t.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(t.waktu)}${t.plat ? ' · ' + esc(t.plat) : ''}</small></div><div class="n">${fmt(t.total)}</div></div>`;
+}
+function gambarBeranda(){
+  $('bSaldo').textContent = fmt(D.saldo_kas);
+  $('bOmzet').textContent = fmt(D.hari_ini.omzet);
+  $('bLaba').textContent = fmt(D.hari_ini.laba);
+  $('bTrx').textContent = D.hari_ini.trx;
+  $('bMenipis').innerHTML = htmlMenipis();
+  const r = D.trx.slice(0, 8);
+  $('bRiwayat').innerHTML = r.length ? r.map(htmlTrx).join('') : '<div class="kosong">Belum ada transaksi. Ketuk 🧾 Transaksi Baru.</div>';
+}
+function detailTrx(id){
+  const t = D.trx.find(x => x.id === id); if(!t) return;
+  $('trJudul').textContent = (t.batal ? '🚫 ' : '🧾 ') + 'Transaksi #' + t.id;
+  $('trSub').textContent = waktu(t.waktu) + (t.plat ? ' · ' + t.plat : '') + (t.batal ? ' · DIBATALKAN' : '');
+  $('trIsi').innerHTML = (t.item || []).map(i => `<div><span>${i.jenis === 'jasa' ? '🔧' : '⚙️'} ${esc(i.nama)}${Number(i.qty) > 1 ? ' ×' + qtyT(i.qty) : ''}</span><b>${fmt(i.qty * i.harga)}</b></div>`).join('')
+    + `<div style="border-top:1px solid var(--garis);margin-top:6px;padding-top:6px;"><span><b>TOTAL</b></span><b style="color:var(--or1);font-size:17px;">${fmt(t.total)}</b></div>`;
+  $('trBatal').style.display = t.batal ? 'none' : '';
+  $('trBatal').onclick = async () => {
+    if(!(await yakin('Batalkan transaksi?', `Transaksi ${fmt(t.total)} dibatalkan.\nStok sparepart kembali & uang Kas Bengkel dikurangi lagi.`, 'Ya, batalkan'))) return;
+    const { error } = await sb.rpc('bengkel_trx_batal', { p_id: id });
+    if(error){ toast(pesanErr(error)); return; }
+    tutup('ovTrx'); toast('Transaksi dibatalkan'); muat();
+  };
+  buka('ovTrx');
+}
+
+// ===== Kasir =====
+function gambarKasir(){
+  if(!D) return;
+  const q = $('kCari').value.trim().toLowerCase();
+  const cocok = n => !q || String(n).toLowerCase().includes(q);
+  const js = D.jasa.filter(j => cocok(j.nama));
+  $('kJasa').innerHTML = js.map(j => `<button class="chip" onclick="tambahJasa(${j.id})">🔧 ${esc(j.nama)}<small>${fmt(j.harga)}</small></button>`).join('')
+    + `<button class="chip tambah" onclick="jasaLain()">+ Jasa lain<small>isi sendiri</small></button>`
+    + (D.jasa.length ? '' : `<div class="kosong" style="width:100%;text-align:left;padding:4px 0 0;">Daftar jasa belum diisi — ketuk ✏️ Atur Jasa.</div>`);
+  const ps = D.part.filter(p => cocok(p.nama));
+  $('kPart').innerHTML = ps.length ? ps.map(p => `<button class="chip ${Number(p.stok) <= 0 ? 'habis' : ''}" onclick="tambahPart(${p.id})">⚙️ ${esc(p.nama)}<small>${Number(p.harga_jual) ? fmt(p.harga_jual) : 'harga belum diisi'} · stok ${qtyT(p.stok)}</small></button>`).join('')
+    : `<div class="kosong" style="width:100%;text-align:left;padding:4px 0 0;">${D.part.length ? 'Tidak ditemukan.' : 'Belum ada sparepart — ketuk + Beli Sparepart.'}</div>`;
+}
+function tambahJasa(id){
+  const j = D.jasa.find(x => x.id === id); if(!j) return;
+  const ada = krj.find(k => k.jenis === 'jasa' && k.id === id);
+  if(ada) ada.qty++; else krj.push({ jenis:'jasa', id, nama:j.nama, qty:1, harga:Number(j.harga) });
+  gambarKeranjang(); toast('+ ' + j.nama);
+}
+function jasaLain(){
+  $('itJudul').textContent = '🔧 Jasa lain'; $('itSub').textContent = 'Jasa yang tidak ada di daftar harga.';
+  $('itNamaF').style.display = ''; $('itNama').value = ''; $('itHarga').value = ''; $('itErr').textContent = '';
+  $('itOk').onclick = () => {
+    const nama = $('itNama').value.trim(), h = angka($('itHarga'));
+    if(!nama){ $('itErr').textContent = 'Isi nama jasa.'; return; }
+    krj.push({ jenis:'jasa', id:null, nama, qty:1, harga:h }); tutup('ovItem'); gambarKeranjang();
+  };
+  buka('ovItem'); setTimeout(() => $('itNama').focus(), 50);
+}
+function tambahPart(id){
+  const p = D.part.find(x => x.id === id); if(!p) return;
+  const ada = krj.find(k => k.jenis === 'part' && k.id === id);
+  if(ada) ada.qty++; else krj.push({ jenis:'part', id, nama:p.nama, qty:1, harga:Number(p.harga_jual) || 0 });
+  gambarKeranjang();
+  const dipakai = krj.find(k => k.jenis === 'part' && k.id === id).qty;
+  if(dipakai > Number(p.stok)) toast('⚠️ Stok ' + p.nama + ' di aplikasi tinggal ' + qtyT(p.stok));
+  else if(!ada && !Number(p.harga_jual)) ubahHarga(krj.findIndex(k => k.jenis === 'part' && k.id === id));
+  else toast('+ ' + p.nama);
+}
+function ubahQty(i, d){ krj[i].qty += d; if(krj[i].qty <= 0) krj.splice(i, 1); gambarKeranjang(); }
+function ubahHarga(i){
+  const k = krj[i];
+  $('itJudul').textContent = 'Ubah harga'; $('itSub').textContent = k.nama + (k.qty > 1 ? ' (harga per pcs)' : '');
+  $('itNamaF').style.display = 'none'; isiAngka($('itHarga'), k.harga); $('itErr').textContent = '';
+  $('itOk').onclick = () => { k.harga = angka($('itHarga')); tutup('ovItem'); gambarKeranjang(); };
+  buka('ovItem'); setTimeout(() => $('itHarga').select(), 50);
+}
+function gambarKeranjang(){
+  $('krjIsi').innerHTML = krj.length ? krj.map((k, i) => `<div class="krj-item">
+      <div class="krj-nama">${k.jenis === 'jasa' ? '🔧' : '⚙️'} ${esc(k.nama)}<small>${k.qty > 1 ? qtyT(k.qty) + ' × ' + fmt(k.harga) : 'ketuk harga untuk ubah'}</small></div>
+      <div class="qty"><button onclick="ubahQty(${i},-1)">−</button><span>${k.qty}</span><button onclick="ubahQty(${i},1)">+</button></div>
+      <div class="hrg" onclick="ubahHarga(${i})">${fmt(k.qty * k.harga)}</div></div>`).join('')
+    : '<div class="kosong" style="padding:8px 0;">Pilih jasa / sparepart di atas.</div>';
+  const tot = krj.reduce((s, k) => s + k.qty * k.harga, 0);
+  $('krjTotal').textContent = fmt(tot);
+  $('btBayar').disabled = !krj.length;
+}
+let sedangBayar = false;
+async function bayar(){
+  if(!krj.length || sedangBayar) return;
+  const nol = krj.find(k => !k.harga);
+  const tot = krj.reduce((s, k) => s + k.qty * k.harga, 0);
+  const isi = krj.map(k => `• ${k.nama}${k.qty > 1 ? ' ×' + k.qty : ''} = ${fmt(k.qty * k.harga)}`).join('\n');
+  if(!(await yakin('💵 Terima ' + fmt(tot) + '?', isi + (nol ? `\n\n⚠️ ${nol.nama} harganya Rp0.` : '') + '\n\nUang masuk ke Kas Bengkel.', 'Ya, bayar'))) return;
+  sedangBayar = true; $('btBayar').disabled = true;
+  const { error } = await sb.rpc('bengkel_jual', { p_item: krj.map(k => ({ jenis:k.jenis, id:k.id, nama:k.nama, qty:k.qty, harga:k.harga })), p_plat: $('kPlat').value, p_catatan: null });
+  sedangBayar = false;
+  if(error){ $('btBayar').disabled = false; toast('Gagal: ' + pesanErr(error)); return; }
+  krj = []; $('kPlat').value = ''; $('kCari').value = '';
+  toast('✅ Transaksi ' + fmt(tot) + ' tersimpan');
+  await muat(); pindah('beranda');
+}
+
+// ===== Jasa =====
+let jsEdit = null;
+function bukaJasa(id){
+  jsEdit = id ? D.jasa.find(j => j.id === id) : null;
+  $('jsDaftar').innerHTML = D.jasa.length ? D.jasa.map(j => `<div class="baris klik" onclick="bukaJasa(${j.id})"><div>🔧 ${esc(j.nama)}</div><div class="n">${fmt(j.harga)}</div></div>`).join('') : '<div class="kosong">Belum ada jasa.</div>';
+  $('jsLabel').textContent = jsEdit ? 'Ubah jasa' : 'Tambah jasa baru';
+  $('jsNama').value = jsEdit ? jsEdit.nama : ''; isiAngka($('jsHarga'), jsEdit ? jsEdit.harga : 0);
+  $('jsHapus').style.display = jsEdit ? '' : 'none'; $('jsErr').textContent = '';
+  buka('ovJasa');
+}
+async function simpanJasa(){
+  const nama = $('jsNama').value.trim(); if(!nama){ $('jsErr').textContent = 'Isi nama jasa.'; return; }
+  const { error } = await sb.rpc('bengkel_jasa_simpan', { p_id: jsEdit ? jsEdit.id : null, p_nama: nama, p_harga: angka($('jsHarga')), p_aktif: true });
+  if(error){ $('jsErr').textContent = pesanErr(error); return; }
+  toast('Jasa tersimpan'); await muat(); bukaJasa(null);
+}
+async function hapusJasa(){
+  if(!jsEdit || !(await yakin('Hapus jasa?', jsEdit.nama + ' dihapus dari daftar harga.', 'Ya, hapus'))) return;
+  const { error } = await sb.rpc('bengkel_jasa_simpan', { p_id: jsEdit.id, p_nama: jsEdit.nama, p_harga: jsEdit.harga, p_aktif: false });
+  if(error){ toast(pesanErr(error)); return; }
+  toast('Jasa dihapus'); await muat(); bukaJasa(null);
+}
+
+// ===== Beli sparepart =====
+let blSumber = 'kas';
+pilih($('blSumber'), v => blSumber = v);
+function bukaBeli(nama){
+  $('blNama').value = nama || ''; $('blJml').value = ''; $('blTotal').value = ''; $('blJual').value = ''; $('blErr').textContent = '';
+  blSumber = 'kas'; $('blSumber').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === 'kas'));
+  infoBeli(); buka('ovBeli'); if(!nama) setTimeout(() => $('blNama').focus(), 50);
+}
+const partNama = n => D.part.find(p => p.nama.toLowerCase() === String(n).trim().toLowerCase());
+function saranBeli(){
+  const q = $('blNama').value.trim().toLowerCase(), el = $('blSaran');
+  const s = q ? D.part.filter(p => p.nama.toLowerCase().includes(q) && p.nama.toLowerCase() !== q).slice(0, 6) : [];
+  el.innerHTML = s.map(p => `<div data-n="${esc(p.nama)}">${esc(p.nama)} <span style="color:var(--redup2);font-size:12px;">stok ${qtyT(p.stok)}</span></div>`).join('');
+  el.style.display = s.length ? 'block' : 'none';
+  el.querySelectorAll('div').forEach(d => d.onclick = () => { $('blNama').value = d.dataset.n; el.style.display = 'none'; infoBeli(); });
+  infoBeli();
+}
+function infoBeli(){
+  const p = partNama($('blNama').value);
+  $('blInfo').innerHTML = !$('blNama').value.trim() ? '' : p ? `Stok sekarang ${qtyT(p.stok)} · modal lama ${fmt(p.harga_modal)} · jual ${fmt(p.harga_jual)}` : '<span class="kuning">✨ Sparepart baru, otomatis ditambahkan ke daftar</span>';
+  if(p && !$('blJual').value && Number(p.harga_jual)) isiAngka($('blJual'), p.harga_jual);
+  const j = angka($('blJml')), t = angka($('blTotal'));
+  $('blModal').textContent = j && t ? 'Modal per pcs: ' + fmt(Math.round(t / j)) : '';
+}
+async function simpanBeli(){
+  const nama = $('blNama').value.trim(), j = angka($('blJml')), t = angka($('blTotal')), jual = angka($('blJual'));
+  if(!nama){ $('blErr').textContent = 'Isi nama sparepart.'; return; }
+  if(!j){ $('blErr').textContent = 'Isi jumlah.'; return; }
+  if(!t){ $('blErr').textContent = 'Isi total bayar.'; return; }
+  if(jual && jual < Math.round(t / j)){ if(!(await yakin('Harga jual di bawah modal', `Modal ${fmt(Math.round(t / j))}, harga jual ${fmt(jual)}. Tetap simpan?`, 'Tetap simpan'))) return; }
+  const p = partNama(nama);
+  $('blOk').disabled = true;
+  const { error } = await sb.rpc('bengkel_beli_part', { p_part_id: p ? p.id : null, p_nama_baru: nama, p_jumlah: j, p_total: t, p_harga_jual: jual || null, p_sumber: blSumber, p_ket: null });
+  $('blOk').disabled = false;
+  if(error){ $('blErr').textContent = pesanErr(error); return; }
+  tutup('ovBeli'); toast('✅ ' + nama + ' +' + j + ' masuk stok'); muat();
+}
+
+// ===== Stok =====
+function gambarStok(){
+  $('sMenipis').innerHTML = htmlMenipis().replace("onclick=\"pindah('stok')\"", '');
+  const q = $('sCari').value.trim().toLowerCase();
+  const ps = D.part.filter(p => !q || p.nama.toLowerCase().includes(q));
+  $('sJml').textContent = D.part.length ? '(' + D.part.length + ')' : '';
+  $('sDaftar').innerHTML = ps.length ? ps.map(p => {
+    const s = Number(p.stok), kls = s < 0 ? 'min' : s <= Number(p.stok_min) ? 'kuning' : '';
+    return `<div class="baris klik" onclick="bukaPart(${p.id})"><div>${esc(p.nama)}<small>modal ${fmt(p.harga_modal)} · jual ${Number(p.harga_jual) ? fmt(p.harga_jual) : '<span class="kuning">belum diisi</span>'}</small></div><div class="n ${kls}">${qtyT(s)}<small>stok</small></div></div>`;
+  }).join('') : `<div class="kosong">${D.part.length ? 'Tidak ditemukan.' : 'Belum ada sparepart. Ketuk 📦 Beli Sparepart — sparepart baru otomatis masuk sini.'}</div>`;
+  const b = D.beli.slice(0, 20);
+  $('sBeli').innerHTML = b.length ? b.map(x => `<div class="baris klik ${x.batal ? 'batal' : ''}" onclick="batalBeli(${x.id})"><div>${esc(x.nama)} × ${qtyT(x.jumlah)}${x.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(x.waktu)} · ${x.sumber === 'kas' ? 'Kas Bengkel' : 'Uang lain'}</small></div><div class="n">${fmt(x.total)}</div></div>`).join('') : '<div class="kosong">Belum ada pembelian.</div>';
+}
+let ptEdit = null;
+function bukaPart(id){
+  ptEdit = D.part.find(p => p.id === id); if(!ptEdit) return;
+  $('ptJudul').textContent = '⚙️ ' + ptEdit.nama;
+  $('ptInfo').textContent = 'Harga modal terakhir ' + fmt(ptEdit.harga_modal) + ' (ikut pembelian terbaru).';
+  $('ptNama').value = ptEdit.nama; isiAngka($('ptJual'), ptEdit.harga_jual); $('ptMin').value = qtyT(ptEdit.stok_min);
+  $('ptStok').value = Number(ptEdit.stok) < 0 ? '0' : qtyT(ptEdit.stok); $('ptErr').textContent = '';
+  buka('ovPart');
+}
+async function simpanPart(){
+  const nama = $('ptNama').value.trim(); if(!nama){ $('ptErr').textContent = 'Isi nama.'; return; }
+  const { error } = await sb.rpc('bengkel_part_simpan', { p_id: ptEdit.id, p_nama: nama, p_harga_jual: angka($('ptJual')), p_stok_min: angka($('ptMin')), p_aktif: true });
+  if(error){ $('ptErr').textContent = pesanErr(error); return; }
+  const stokBaru = angka($('ptStok'));
+  if(String($('ptStok').value).trim() !== '' && stokBaru !== Number(ptEdit.stok)){
+    const r = await sb.rpc('bengkel_stok_ubah', { p_id: ptEdit.id, p_stok: stokBaru });
+    if(r.error){ $('ptErr').textContent = pesanErr(r.error); return; }
+  }
+  tutup('ovPart'); toast('Tersimpan'); muat();
+}
+async function hapusPart(){
+  if(!(await yakin('Sembunyikan sparepart?', ptEdit.nama + ' tidak tampil lagi di Kasir & Stok. Riwayat tetap tersimpan. Kalau dibeli lagi, otomatis muncul kembali.', 'Ya, sembunyikan'))) return;
+  const { error } = await sb.rpc('bengkel_part_simpan', { p_id: ptEdit.id, p_nama: ptEdit.nama, p_harga_jual: ptEdit.harga_jual, p_stok_min: ptEdit.stok_min, p_aktif: false });
+  if(error){ toast(pesanErr(error)); return; }
+  tutup('ovPart'); toast('Disembunyikan'); muat();
+}
+async function batalBeli(id){
+  const b = D.beli.find(x => x.id === id); if(!b || b.batal) return;
+  if(!(await yakin('Batalkan pembelian?', `${b.nama} × ${qtyT(b.jumlah)} (${fmt(b.total)}).\nStok dikurangi lagi${b.sumber === 'kas' ? ' & uang kembali ke Kas Bengkel' : ''}.`, 'Ya, batalkan'))) return;
+  const { error } = await sb.rpc('bengkel_beli_batal', { p_id: id });
+  if(error){ toast(pesanErr(error)); return; }
+  toast('Pembelian dibatalkan'); muat();
+}
+
+// ===== Kas =====
+const KAT = { masuk: ['Modal / Tambah Uang', 'Lain-lain'], keluar: ['Listrik', 'Peralatan', 'Bensin / Transport', 'Makan / Minum', 'Ambil Owner', 'Lain-lain'] };
+let ksJenis = 'masuk', ksKat = '';
+function gambarKas(){
+  $('kasSaldo').textContent = fmt(D.saldo_kas);
+  $('kasRiwayat').innerHTML = D.kas.length ? D.kas.map(k => `<div class="baris ${k.manual && !k.batal ? 'klik' : ''} ${k.batal ? 'batal' : ''}" ${k.manual && !k.batal ? `onclick="batalKas(${k.id})"` : ''}>
+      <div>${esc(k.kategori)}${k.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(k.waktu)}${k.keterangan ? ' · ' + esc(k.keterangan) : ''}</small></div>
+      <div class="n ${k.jenis === 'masuk' ? 'plus' : 'min'}">${k.jenis === 'masuk' ? '+' : '−'}${fmt(k.jumlah)}</div></div>`).join('')
+    : '<div class="kosong">Belum ada catatan. Isi saldo awal lewat ➕ Uang Masuk.</div>';
+}
+function bukaKas(j){
+  ksJenis = j; ksKat = '';
+  $('ksJudul').textContent = j === 'masuk' ? '➕ Uang Masuk' : '➖ Pengeluaran';
+  $('ksSub').textContent = j === 'masuk' ? 'Mis. saldo awal Kas Bengkel atau tambahan uang dari Boss.' : 'Mis. bayar listrik, beli alat. Beli sparepart lewat 📦 Beli Sparepart.\n"Ambil Owner" tidak dihitung sebagai biaya di laporan.';
+  $('ksKat').innerHTML = KAT[j].map(k => `<button class="chip" data-v="${esc(k)}" style="padding:9px 11px;font-size:13.5px;">${esc(k)}</button>`).join('');
+  $('ksKat').querySelectorAll('button').forEach(b => b.onclick = () => { ksKat = b.dataset.v; $('ksKat').querySelectorAll('button').forEach(x => x.style.borderColor = x === b ? 'var(--or)' : ''); });
+  $('ksJml').value = ''; $('ksKet').value = ''; $('ksErr').textContent = '';
+  buka('ovKas');
+}
+async function simpanKas(){
+  const j = angka($('ksJml'));
+  if(!ksKat){ $('ksErr').textContent = 'Pilih kategori.'; return; }
+  if(!j){ $('ksErr').textContent = 'Isi jumlah.'; return; }
+  const { error } = await sb.rpc('bengkel_kas_catat', { p_jenis: ksJenis, p_kategori: ksKat, p_jumlah: j, p_ket: $('ksKet').value });
+  if(error){ $('ksErr').textContent = pesanErr(error); return; }
+  tutup('ovKas'); toast('Tersimpan'); muat();
+}
+async function batalKas(id){
+  const k = D.kas.find(x => x.id === id); if(!k) return;
+  if(!(await yakin('Batalkan catatan?', `${k.kategori} ${fmt(k.jumlah)} dibatalkan.`, 'Ya, batalkan'))) return;
+  const { error } = await sb.rpc('bengkel_kas_batal', { p_id: id });
+  if(error){ toast(pesanErr(error)); return; }
+  toast('Dibatalkan'); muat();
+}
+
+// ===== Laporan =====
+pilih($('lapSeg'), p => { lapP = p; muatLaporan(); });
+const tglISO = d => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+async function muatLaporan(){
+  const now = new Date(), dari = new Date(now);
+  if(lapP === '7') dari.setDate(now.getDate() - 6);
+  else if(lapP === '30') dari.setDate(now.getDate() - 29);
+  else if(lapP === 'bulan') dari.setDate(1);
+  $('lapIsi').innerHTML = '<div class="kosong">Memuat…</div>';
+  const { data: r, error } = await sb.rpc('bengkel_laporan', { p_dari: tglISO(dari), p_sampai: tglISO(now) });
+  if(error){ $('lapIsi').innerHTML = `<div class="kosong">Gagal: ${esc(pesanErr(error))}</div>`; return; }
+  const labaPart = r.part - r.modal_part, labaKotor = Number(r.jasa) + labaPart, bersih = labaKotor - r.biaya;
+  const harian = lapP === 'hari' ? '' : `<div class="h">PER HARI</div><div class="daftar">${r.per_hari.length ? r.per_hari.slice().reverse().map(x => `<div class="baris"><div>${tgl(x.tgl + 'T00:00:00')}</div><div class="n">${fmt(x.omzet)}<small class="plus">laba ${fmt(x.laba)}</small></div></div>`).join('') : '<div class="kosong">Belum ada transaksi.</div>'}</div>`;
+  $('lapIsi').innerHTML = `
+    <div class="kartu utama"><div class="lb">Laba Bersih</div><div class="nil">${fmt(bersih)}</div>
+      <div style="font-size:12.5px;font-weight:700;opacity:.85;margin-top:2px;">Omzet ${fmt(r.omzet)} · ${r.trx} transaksi</div></div>
+    <div class="lap">
+      <div class="mini"><div class="lb">🔧 Jasa</div><div class="nil">${fmt(r.jasa)}</div></div>
+      <div class="mini"><div class="lb">⚙️ Sparepart terjual</div><div class="nil">${fmt(r.part)}</div></div>
+      <div class="mini"><div class="lb">Modal sparepart</div><div class="nil min">−${fmt(r.modal_part)}</div></div>
+      <div class="mini"><div class="lb">Laba sparepart</div><div class="nil plus">${fmt(labaPart)}</div></div>
+      <div class="mini lebar"><div class="lb">Laba kotor (jasa + laba sparepart)</div><div class="nil plus">${fmt(labaKotor)}</div></div>
+      <div class="mini lebar"><div class="lb">Biaya operasional</div><div class="nil min">−${fmt(r.biaya)}</div>
+        ${r.biaya_rinci.length ? `<div class="rinci" style="margin-top:6px;font-size:12.5px;color:var(--redup);">${r.biaya_rinci.map(b => `<div><span>${esc(b.kategori)}</span><b>${fmt(b.jumlah)}</b></div>`).join('')}</div>` : ''}</div>
+    </div>
+    ${harian}
+    <div class="h">PALING LARIS</div>
+    <div class="daftar">${r.terlaris.length ? r.terlaris.map(x => `<div class="baris"><div>${x.jenis === 'jasa' ? '🔧' : '⚙️'} ${esc(x.nama)}<small>${qtyT(x.qty)}×</small></div><div class="n">${fmt(x.nilai)}</div></div>`).join('') : '<div class="kosong">Belum ada data.</div>'}</div>`;
+}
+
+document.addEventListener('click', e => { if(!e.target.closest('.sar')) $('blSaran').style.display = 'none'; });
+mulai();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
