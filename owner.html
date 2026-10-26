@@ -628,11 +628,8 @@ async function muatDana(cabs){
       <div class="baris"><span>🏠 Dana Operasional<small>sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji' : ''}</small></span><span class="kanan">${fmt(blm('operasional'))}${satu && blm('operasional') > 0 ? ` <button class="btn" onclick="danaPindah('${satu.id}','operasional',${blm('operasional')})">Pindahkan</button>` : ''}</span></div>
       <div class="info" style="margin-top:6px;">Uangnya masih di Kas Outlet. Tekan <b>Pindahkan</b> saat uang benar-benar dimasukkan ke amplop (misal seminggu sekali). Kas Outlet ikut berkurang.</div>
       ${satu ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn" onclick="danaAtur('${satu.id}','stok','masuk')">+ Dana Stok</button>
-        <button class="btn" onclick="danaAtur('${satu.id}','stok','keluar')">− Dana Stok</button>
-        <button class="btn" onclick="danaAtur('${satu.id}','operasional','masuk')">+ Dana Operasional</button>
-        <button class="btn" onclick="danaAtur('${satu.id}','operasional','keluar')">− Dana Operasional</button></div>
-      <div class="info" style="margin-top:6px;">Kalau isi amplop fisik beda dengan angka di sini, pakai tombol + (tambah) atau − (ambil) untuk koreksi. Semua koreksi tercatat di Log Aktivitas.</div>
+        <button class="btn" onclick="danaKoreksi('${satu.id}')">✏️ Koreksi amplop</button></div>
+      <div class="info" style="margin-top:6px;">Koreksi amplop dipakai kalau isi amplop fisik beda dengan angka di sini. Semua koreksi tercatat di Log Aktivitas.</div>
       <div class="baris" style="margin-top:6px;"><span>Gaji kasir ikut disisihkan<small>${cfg.gaji_aktif ? 'AKTIF' : 'OFF'} · aktifkan kalau sudah ada karyawan</small></span><span class="kanan"><button class="btn" onclick="danaGaji('${satu.id}', ${!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${cfg.gaji_aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>
       <div class="baris"><span>Patokan gas LPG<small>masuk Dana Stok per hari buka</small></span><span class="kanan"><button class="btn" onclick="danaGas('${satu.id}', ${!!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${fmt(cfg.gas_per_hari || 1650)}/hari</button></span></div>` : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk mengatur amplop.</div>'}
       <div class="sub">RIWAYAT AMPLOP</div>
@@ -648,6 +645,13 @@ async function danaAtur(cabangId, pos, jenis){
   const { error } = await sb.rpc('dana_atur', { p_cabang: cabangId, p_pos: pos, p_jenis: pilih === '1' ? 'masuk' : 'keluar', p_jumlah: r.jumlah, p_keterangan: r.ket || null });
   if(error){ alert('Gagal: ' + error.message); return; }
   muatPanel(); muatBeranda();
+}
+// 2026-10-26: 4 tombol koreksi digabung jadi satu
+async function danaKoreksi(cabangId){
+  const p = prompt('Koreksi amplop, ketik nomornya:\n1 = Tambah Dana Stok\n2 = Ambil Dana Stok\n3 = Tambah Dana Operasional\n4 = Ambil Dana Operasional', '1');
+  const m = { '1':['stok','masuk'], '2':['stok','keluar'], '3':['operasional','masuk'], '4':['operasional','keluar'] }[String(p || '').trim()];
+  if(!m) return;
+  return danaAtur(cabangId, m[0], m[1]);
 }
 async function danaPindah(cabangId, pos, saran){
   const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';

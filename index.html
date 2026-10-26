@@ -3065,7 +3065,39 @@ function kasLangkah(n){
   const ikon = k => ({'Es Batu':'🧊','Air Galon':'💧','Gas':'🔥','Kebersihan':'🧽','Tabungan':'💰','KUR BRI':'📥','Kresek':'🛍️','Lemon':'🍋','Bayar Hutang Bahan':'🍬','Pembelian Stok':'📦','Masuk dari Brankas Online':'🛵'}[k] || '📦');
   const strip = `<div class="tk-step">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</div>`;
   const tgl = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  // 2026-10-26 kasir sederhana: tutup kas cukup 1 layar (uang keluar + seharusnya + hitung uang)
   if(n === 1){
+    document.getElementById('kasModalTitle').textContent = '🔒 Tutup Kas';
+    const isOwner1 = currentProfile && currentProfile.role === 'owner';
+    const alasan1 = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
+    body.innerHTML = `
+      <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-list">
+        <div class="tk-row"><span>Saldo Kas Outlet<small>dari tutup kas terakhir${isOwner1 ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
+        <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
+        <details class="tk-row" style="display:block;"><summary style="display:flex;justify-content:space-between;cursor:pointer;list-style:none;"><span>− Uang keluar Kas Outlet<small>${d.biaya.length} catatan · ketuk untuk lihat</small></span><b>${fmt(d.totalBiaya)}</b></summary>
+          ${d.biaya.map(b=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0 0 10px;"><span>${ikon(b.kategori)} ${namaB(b)} · ${jam(b.created_at)}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</span></div>`).join('') || '<div style="font-size:12.5px;padding:4px 0 0 10px;">Belum ada</div>'}
+        </details>
+        ${d.totalQris ? `<div class="tk-row" style="opacity:.85;"><span>📱 QRIS (info)<small>${d.jumlahQris} transaksi · masuk rekening</small></span><b>${fmt(d.totalQris)}</b></div>` : ''}
+      </div>
+      <div class="tk-big"><small>Seharusnya Kas Outlet sekarang</small><b>${fmt(d.kasSistem)}</b></div>
+      <div style="font-weight:800;font-size:14px;color:#111;">Uang Kas Outlet yang dihitung sekarang</div>
+      <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
+      <div id="tkStatus"></div>
+      <div id="tkAlasan" class="hidden">
+        <div style="font-weight:800;font-size:14px;margin-top:10px;color:#111;">Kenapa? (pilih salah satu)</div>
+        <div class="tk-chips">${alasan1.map(a=>`<span onclick="kasPilihAlasan(this,'${a}')">${a === 'Lainnya' ? 'Lainnya…' : a}</span>`).join('')}</div>
+        <textarea id="kasCatatanInput" class="hidden" rows="2" placeholder="Tulis alasannya" style="width:100%;margin-top:8px;padding:10px 12px;border-radius:10px;border:1.5px solid #111;font-size:14px;box-sizing:border-box;"></textarea>
+      </div>
+      <div id="tkSetor"></div>
+      ${htmlPengingatSetoranTK()}
+      <div class="login-error" id="kasError"></div>
+      <button class="login-btn" id="kasSubmitBtn" onclick="submitHitungKas()">💾 Simpan Tutup Kas</button>
+      <button class="tk-btn-o" onclick="closeKasModal(); bukaBelanjaKecil();">➕ Ada belanja yang lupa dicatat</button>`;
+    setTimeout(()=>{ const el = document.getElementById('kasFisikInput'); if(el) el.focus(); }, 50);
+    return;
+  }
+  if(n === 'lama1'){
     document.getElementById('kasModalTitle').textContent = '🔒 Tutup Kas';
     body.innerHTML = strip + `
       <div class="tk-sub">${tgl} · cek dulu semua uang keluar Kas Outlet hari ini</div>
@@ -3122,7 +3154,7 @@ async function ubahKasAwalTK(){
   const n = Number(String(v).replace(/[^0-9]/g, ''));
   if(!Number.isFinite(n) || n < 0) return;
   kasTK.kasAwal = n; kasTK.kasSistem = n + kasTK.totalTunai - kasTK.totalBiaya;
-  kasLangkah(2);
+  kasLangkah(1);
 }
 
 function kasHitungLive(){
@@ -3146,7 +3178,7 @@ function bagiAmplop(d, fisik){
 }
 function htmlAmplopTK(d, fisik){
   // 2026-10-26 kasir sederhana: kasir tidak memisah uang ke amplop. Owner/Admin yang memindah dari Pusat Kendali.
-  return '<div class="tk-setor">💵 Semua uang tetap di Kas Outlet.</div>';
+  return '';
   const a = bagiAmplop(d, fisik);
   if(!a.ds && !a.dop) return '<div class="tk-setor">💵 Semua uang tetap jadi ' + escTG(namaKasCabang()) + '.</div>';
   const r = d.danaRincian || {};
@@ -8203,7 +8235,8 @@ async function submitBelanjaKecil(){
   if(!bkKat){ errBox.textContent = 'Pilih item belanja atau ketik "Beli apa?" dulu.'; errBox.classList.add('show'); return; }
   if(bkMode !== 'rutin' && !ket){ errBox.textContent = 'Isi "Beli apa?" dulu (atau tekan salah satu item).'; errBox.classList.add('show'); return; }
   let dana = bkMode === 'rutin' ? 'tunai' : bkDana;
-  if(!confirm(`Ambil ${fmt(jumlah)} dari ${dana === 'dana_stok' ? 'amplop Dana Stok' : 'Kas Outlet'} untuk ${labelKat(kategori)}?`)) return;
+  // 2026-10-26: konfirmasi cuma untuk belanja besar (> Rp100.000), belanja kecil langsung tersimpan
+  if(jumlah > 100000 && !confirm(`Ambil ${fmt(jumlah)} dari ${dana === 'dana_stok' ? 'amplop Dana Stok' : 'Kas Outlet'} untuk ${labelKat(kategori)}?`)) return;
 
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   const simpanBiaya = d => sb.from('biaya_operasional').insert({
@@ -8234,6 +8267,7 @@ async function submitBelanjaKecil(){
   kosongkanFormBelanja();
   if(kategori === KATEGORI_KUR) showSuccessToast('📥', 'Setoran Harian tersimpan', fmt(jumlah));
   else if(dana === 'dana_stok') showSuccessToast('📦', 'Tersimpan dari Dana Stok', `${ket} ${fmt(jumlah)} · Kas Outlet tidak berubah`);
+  else showSuccessToast('✅', 'Belanja tersimpan', `${ket || labelKat(kategori)} ${fmt(jumlah)} dari Kas Outlet`);
   cekPengingatSetoran();
   await loadBelanjaKecilHariIni();
 }
@@ -8245,7 +8279,7 @@ async function simpanStokBelanja(total){
   if(!bkStok) return gagal('Pilih barang stoknya dulu.');
   const j = Number(document.getElementById('bkStokJumlah').value) || 0;
   if(j <= 0) return gagal(`Isi berapa ${satuanBeliStok(bkStok)} yang dibeli.`);
-  if(!confirm(`Ambil ${fmt(total)} dari Kas Outlet untuk ${bkStok.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(bkStok)}?`)) return;
+  if(total > 100000 && !confirm(`Ambil ${fmt(total)} dari Kas Outlet untuk ${bkStok.nama} ${j.toLocaleString('id-ID')} ${satuanBeliStok(bkStok)}?`)) return;
   btn.disabled = true; btn.textContent = 'Menyimpan...';
   const { error } = await sb.rpc('beli_stok_bahan', { p_cabang: activeCabangId, p_bahan: bkStok.id, p_jumlah: j, p_total: total, p_sumber_dana: 'tunai' });
   btn.disabled = false; btn.textContent = 'Simpan';
