@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-27.1">
+<meta name="app-version" content="owner-2026-10-27.2">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -159,6 +159,13 @@
   </div>
 </div></div>
 
+<div class="overlay" id="pilOverlay">
+  <div class="modal">
+    <h4 id="pilJudul"></h4>
+    <div id="pilIsi"></div>
+    <div class="tbl"><button style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#e8efe9;" onclick="tutupPilih(null)">Batal</button></div>
+  </div>
+</div>
 <div class="overlay" id="nomOverlay">
   <div class="modal">
     <h4 id="nomJudul"></h4>
@@ -195,7 +202,7 @@ const IKON = {
   stok:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/>',
   menu:'<path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/>',
   karyawan:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  cabang:'<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>',
+  cabang:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   laporan:'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
@@ -216,7 +223,7 @@ const MODUL = [
   ['stok', 'Stok & Belanja', 'Sisa stok, opname & uang belanja'],
   ['menu', 'Menu $', 'Harga jual & harga modal'],
   ['karyawan', 'Karyawan', 'Aktif, absensi & izin'],
-  ['cabang', 'Cabang', 'Data cabang & pengaturan'],
+  ['cabang', 'Pengaturan', 'Gaji kasir, gas & stok opname'],
   ['laporan', 'Laporan', 'Tutup kas & log aktivitas']
 ];
 const cabDipilih = () => pilihan === 'semua' ? cabangList : cabangList.filter(c => c.id === pilihan);
@@ -393,7 +400,7 @@ async function muatBeranda(){
   ['aJual','aKas','aBrankas'].forEach(id => document.getElementById(id).textContent = '…');
   document.getElementById('aKasLbl').textContent = pilihan === 'semua' ? 'Kas semua cabang' : 'Kas ' + namaCab(pilihan);
   const ids = cabDipilih().map(c => c.id);
-  const info = { cabang: cabangList.length + ' cabang' };
+  const info = {};
   gambarModul(info);
   try{
     const per = await Promise.all(cabDipilih().map(kasCabang));
@@ -456,8 +463,8 @@ async function muatTugasMalam(per){
     const tutupHariIni = h.k.tutup && new Date(h.k.tutup) >= hari0;
     item.push({ ok: tutupHariIni, judul: 'Kasir tutup kas' + nm, ket: tutupHariIni ? 'jam ' + new Date(h.k.tutup).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : 'belum hari ini', tombol: tutupHariIni ? `<button class="btn" onclick="buka('laporan')">Lihat</button>` : '' });
     // 2. Simpanan Harian
-    if(h.st.wajib){ const tg = Number(h.st.tabungan_target || 0), ad = Number(h.st.tabungan || 0);
-      item.push({ ok: tg > 0 ? ad >= tg : ad > 0, judul: 'Simpanan Harian' + nm, ket: `${fmt(ad)} dari ${fmt(tg)}`, tombol: (tg > 0 ? ad < tg : ad <= 0) && !banyak ? `<button class="btn" onclick="brankasSimpanan()">Catat</button>` : '' }); }
+    { const tg = h.st.wajib ? Number(h.st.tabungan_target || 0) : 0, ad = Number(h.st.tabungan || 0);
+      item.push({ ok: tg > 0 ? ad >= tg : ad > 0, judul: 'Simpanan Harian' + nm, ket: tg > 0 ? `${fmt(ad)} dari ${fmt(tg)} · Kas Outlet → Brankas` : `${fmt(ad)} hari ini · Kas Outlet → Brankas`, tombol: (tg > 0 ? ad < tg : ad <= 0) && !banyak ? `<button class="btn" onclick="brankasSimpanan()">Catat</button>` : '' }); }
     // 3. QRIS
     if(Number(h.k.qris || 0) > 0){ const kk = 'qris_' + h.c.id;
       item.push({ ok: sudah(kk), judul: 'Cocokkan QRIS' + nm, ket: `${fmt(h.k.qris)} dengan mutasi rekening`, tombol: sudah(kk) ? '' : `<button class="btn" onclick="cekTugas('${kk}')">Sudah cocok</button>` }); }
@@ -478,12 +485,11 @@ async function muatUang(){
   const box = document.getElementById('uangIsi');
   if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
   const cabs = cabDipilih(), satu = cabs.length === 1 ? cabs[0] : null;
-  const [per, online, laba, amplop, brk] = await Promise.all([
+  const [per, online, laba, amplop] = await Promise.all([
     Promise.all(cabs.map(kasCabang)),
     Promise.all(cabs.map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
     Promise.all(cabs.map(c => sb.rpc('laba_bersih', { p_cabang: c.id, p_hari: 30 }).then(r => ({ c, d: r.data })))),
-    muatDana(cabs).catch(e => `<div class="sec"><h3>Amplop</h3><div class="kosong">Gagal memuat: ${esc(e.message || e)}</div></div>`),
-    saldoBrankas().catch(() => null)
+    muatDana(cabs).catch(e => `<div class="sec"><h3>Amplop</h3><div class="kosong">Gagal memuat: ${esc(e.message || e)}</div></div>`)
   ]);
   const tot = k => per.reduce((a, r) => a + r[k], 0);
   const n = (d, k) => Number((d || {})[k] || 0);
@@ -493,7 +499,7 @@ async function muatUang(){
   box.innerHTML = `
     <div class="gold" style="margin-bottom:10px;"><small>💵 Kas Outlet ${satu ? esc(namaCab(satu.id)) : 'semua cabang'} · uang di outlet sekarang</small><b class="n">${fmt(tot('kas'))}</b>
       <div class="r"><div>Tunai hari ini<b>${fmt(tot('tunai'))}</b></div><div>📱 QRIS hari ini<b>${fmt(tot('qris'))}</b></div></div>
-      <button class="gbtn gelap" style="width:100%;margin-top:8px;" onclick="brankasSimpanan()">💰 Simpanan Harian (Kas Outlet → Brankas)</button></div>
+</div>
     ${tot('qris') > 0 ? '<div class="info" style="margin:-4px 0 10px;">QRIS tidak masuk Kas Outlet. Cocokkan angka QRIS dengan mutasi rekening.</div>' : ''}
     ${per.length > 1 ? `<div class="sec"><h3>Per cabang</h3>${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · ${r.trx} transaksi · tutup kas ${r.tutup ? jamWIB(r.tutup) : 'belum'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}</div>` : `<div class="info" style="margin:-4px 0 10px;">Tutup kas terakhir: ${per[0] && per[0].tutup ? jamWIB(per[0].tutup) : 'belum pernah'}</div>`}
 
@@ -503,10 +509,6 @@ async function muatUang(){
     </div>
 
     ${amplop}
-
-    <div class="sec"><h3>🔒 Brankas <small>satu untuk semua cabang</small></h3>
-      <div class="baris"><span>Saldo Brankas<small>tambah, ambil & riwayat</small></span><span class="kanan" style="display:flex;gap:8px;align-items:center;">${brk == null ? '-' : fmt(brk)} <button class="btn" onclick="buka('brankas')">Buka ›</button></span></div>
-    </div>
 
     <div class="sec"><h3>📈 Laba bersih 30 hari <small>perkiraan</small></h3>
       <div class="baris"><span><b>${satu ? esc(namaCab(satu.id)) : 'Semua cabang'}</b><small>sudah dikurangi modal, gaji, sewa, listrik, gas, dll</small></span><span class="kanan ${totLaba < 0 ? 'min' : 'plus'}">${totLaba < 0 ? '− ' : ''}${fmt(Math.abs(totLaba))}</span></div>
@@ -547,12 +549,6 @@ async function muatBeli(){
   const totBeli = sum(beli, 'total'), totBelanja = sum(belanja, 'jumlah');
   // per cabang
   const perCab = cabs.map(c => ({ c, b: sum(beli.filter(r => r.cabang_id === c.id), 'total'), j: sum(belanja.filter(r => r.cabang_id === c.id), 'jumlah') }));
-  // per sumber dana
-  const dana = {};
-  // dikelompokkan per nama tampilan (tunai & kas_toko sama-sama "Kas Outlet", jangan dobel)
-  const kunciDana = r => r.sumber_dana === 'kas_toko' ? 'tunai' : (r.sumber_dana || 'tunai');
-  beli.forEach(r => dana[kunciDana(r)] = (dana[kunciDana(r)] || 0) + Number(r.total || 0));
-  belanja.forEach(r => dana[kunciDana(r)] = (dana[kunciDana(r)] || 0) + Number(r.jumlah || 0));
   // rekap bahan: jumlah dibeli, total, harga terakhir vs sebelumnya
   const bahan = {};
   [...beli].reverse().forEach(r => {
@@ -583,9 +579,6 @@ async function muatBeli(){
       <div class="r"><div>📦 Beli stok<b>${fmt(totBeli)}</b><span>${beli.length} kali</span></div><div>🧾 Belanja harian<b>${fmt(totBelanja)}</b><span>${belanja.length} kali</span></div></div></div>
     ${naik.length ? `<div class="al" style="cursor:default;">${ic('warn')}<span>Harga naik: ${naik.map(b => `${esc(b.nama)} ${rp(b.hargaAwal)} → ${rp(b.hargaAkhir)}`).join(' · ')}</span></div>` : ''}
     ${cabs.length > 1 ? `<div class="sec" style="margin-top:10px;"><h3>Per cabang</h3>${perCab.map(p => `<div class="baris"><span>${esc(rapiNama(p.c.nama))}<small>Beli stok ${fmt(p.b)} · Belanja ${fmt(p.j)}</small></span><span class="kanan">${fmt(p.b + p.j)}</span></div>`).join('')}</div>` : ''}
-    <div class="sec" style="margin-top:10px;"><h3>Sumber uang</h3>
-      ${Object.keys(dana).length ? Object.entries(dana).map(([k, v]) => `<div class="baris"><span>${danaLbl(k)}</span><span class="kanan">${fmt(v)}</span></div>`).join('') : '<div class="kosong">Belum ada.</div>'}
-    </div>
     <div class="sec"><h3>Bahan yang dibeli <small>harga per satuan</small></h3>
       ${rekap.map(b => { const up = b.hargaAwal > 0 && b.hargaAkhir > b.hargaAwal * 1.001, turun = b.hargaAwal > 0 && b.hargaAkhir < b.hargaAwal * 0.999;
         return `<div class="baris"><span>${esc(b.nama)}<small>${b.qty.toLocaleString('id-ID')} ${esc(b.sat)} · ${b.kali}× beli · harga terakhir ${rp(b.hargaAkhir)}${up ? ' <span class="label-cab">naik</span>' : turun ? ' <span class="label-cab" style="background:rgba(95,211,138,.15);color:var(--hijau)">turun</span>' : ''}</small></span><span class="kanan">${fmt(b.total)}</span></div>`; }).join('') || '<div class="kosong">Belum ada beli stok di periode ini.</div>'}
@@ -682,12 +675,24 @@ async function danaAtur(cabangId, pos, jenis){
   muatPanel(); muatBeranda();
 }
 // 2026-10-26: 4 tombol koreksi digabung jadi satu
+// 2026-10-27: tidak ketik angka lagi, tinggal ketuk 2 pilihan
 async function danaKoreksi(cabangId){
-  const p = prompt('Koreksi amplop, ketik nomornya:\n1 = Tambah Dana Stok\n2 = Ambil Dana Stok\n3 = Tambah Dana Operasional\n4 = Ambil Dana Operasional', '1');
-  const m = { '1':['stok','masuk'], '2':['stok','keluar'], '3':['operasional','masuk'], '4':['operasional','keluar'] }[String(p || '').trim()];
-  if(!m) return;
-  return danaAtur(cabangId, m[0], m[1]);
+  const jenis = await pilihTombol('Koreksi amplop', [['masuk','＋ Tambah ke amplop'],['keluar','− Ambil dari amplop']]);
+  if(!jenis) return;
+  const pos = await pilihTombol(jenis === 'masuk' ? 'Tambah ke amplop mana?' : 'Ambil dari amplop mana?', [['stok','📦 Dana Stok'],['operasional','🏠 Dana Operasional']]);
+  if(!pos) return;
+  return danaAtur(cabangId, pos, jenis);
 }
+let _pilSelesai = null;
+function pilihTombol(judul, opsi){
+  return new Promise(res => {
+    _pilSelesai = res;
+    document.getElementById('pilJudul').textContent = judul;
+    document.getElementById('pilIsi').innerHTML = opsi.map(([k, l]) => `<button class="btn" style="width:100%;padding:13px;font-size:15px;margin-bottom:8px;" onclick="tutupPilih('${k}')">${l}</button>`).join('');
+    document.getElementById('pilOverlay').classList.add('on');
+  });
+}
+function tutupPilih(k){ document.getElementById('pilOverlay').classList.remove('on'); const r = _pilSelesai; _pilSelesai = null; if(r) r(k); }
 async function danaPindah(cabangId, pos, saran){
   const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
   const r = await mintaNominal(`Pindahkan dari Kas Outlet ke amplop ${nama} berapa?`, String(saran || ''), true);
@@ -716,7 +721,7 @@ async function danaGas(cabangId, gaji, gas){
 async function aturOpname(cabangId, aktif){
   const { error } = await sb.rpc('atur_opname_cabang', { p_cabang: cabangId, p_aktif: aktif });
   if(error){ alert('Gagal mengubah: ' + error.message); return; }
-  muatStok();
+  muatPanel();
 }
 async function muatStok(){
   const box = document.getElementById('stokIsi');
@@ -735,8 +740,8 @@ async function muatStok(){
   const tglOp = d => new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const htmlOpname = c => {
     const aktif = opAktif[c.id] !== false;
-    const tombol = `<button class="btn" style="padding:3px 10px;font-size:11.5px;${aktif ? '' : 'color:var(--redup);border-color:rgba(255,255,255,.2);'}" onclick="aturOpname('${c.id}', ${!aktif})">${aktif ? 'ON' : 'OFF'}</button>`;
-    if(!aktif) return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME ${tombol}</div><div class="kosong">Stok opname dimatikan untuk cabang ini.</div>`;
+    const tombol = '';
+    if(!aktif) return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME ${tombol}</div><div class="kosong">Stok opname dimatikan untuk cabang ini (atur di ⚙️ Pengaturan).</div>`;
     const o = opname.find(x => x.cabang_id === c.id);
     const telat = opJadwal && (!o || new Date(o.created_at) < opJadwal);
     let isi = telat ? `<div class="baris"><span>Belum opname untuk jadwal ${tglOp(opJadwal)}</span><span class="kanan min">belum</span></div>` : '';
@@ -831,21 +836,19 @@ async function muatKaryawan(){
     </div>`;
 }
 
-// ---------- cabang ----------
+// ---------- pengaturan (2026-10-27: dulu modul Cabang; daftar cabang dobel dengan pilihan cabang di atas) ----------
 async function muatCabang(){
   const box = document.getElementById('cabangIsi');
-  box.innerHTML = '<div class="muat">Memuat…</div>';
-  const info = await Promise.all(cabangList.map(async c => {
-    const [m, u] = await Promise.all([
-      sb.from('produk').select('id', { count:'exact', head:true }).eq('cabang_id', c.id).eq('aktif', true),
-      sb.from('user_cabang').select('user_id', { count:'exact', head:true }).eq('cabang_id', c.id)
-    ]);
-    return { c, menu: m.count || 0, orang: u.count || 0 };
-  }));
-  box.innerHTML = `<div class="sec"><h3>Daftar cabang</h3>
-    ${info.map(i => `<div class="baris"><span><b>${esc(rapiNama(i.c.nama))}</b><small>${i.menu} menu aktif · ${i.orang} karyawan</small></span><span><button class="btn gold" onclick="pilihCabang('${i.c.id}');buka('beranda')">Lihat</button></span></div>`).join('')}
-    <div class="kosong">Tambah cabang baru (bisa salin menu dari cabang lain): lewat Buka aplikasi kasir → Pengaturan → Cabang (sementara).</div>
-  </div>` + await htmlAturAmplop().catch(() => '');
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  const [amplop, op] = await Promise.all([
+    htmlAturAmplop().catch(() => ''),
+    sb.from('cabang').select('id, opname_aktif').in('id', cabangList.map(c => c.id)).then(r => r.data || [], () => [])
+  ]);
+  box.innerHTML = amplop + `<div class="sec"><h3>Stok opname <small>2 minggu sekali, Jumat</small></h3>
+    ${cabangList.map(c => { const aktif = (op.find(x => x.id === c.id) || {}).opname_aktif !== false;
+      return `<div class="baris"><span>${esc(rapiNama(c.nama))}<small>${aktif ? 'ON · menu & pengingat opname muncul di kasir' : 'OFF · tidak ada opname di cabang ini'}</small></span><span class="kanan"><button class="btn" onclick="aturOpname('${c.id}', ${!aktif})">${aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>`; }).join('')}
+  </div>
+  <div class="sec info">Tambah cabang baru, akun karyawan, resep & SOP: lewat Buka Kasir → Pengaturan.</div>`;
 }
 
 // ---------- laporan ----------
@@ -862,9 +865,17 @@ async function muatLaporan(){
     <div class="sec"><h3>Riwayat tutup kas</h3>
       ${(tk.data || []).map(r => { const s = Number(r.selisih || 0); return `<div class="baris"><span>${esc(namaCab(r.cabang_id))} · ${jamWIB(r.waktu_tutup)}<small>${esc((r.ditutup && r.ditutup.nama) || '-')} · seharusnya ${fmt(r.kas_sistem)} · dihitung ${fmt(r.kas_fisik)}${r.catatan ? ' · ' + esc(r.catatan) : ''}</small></span><span class="kanan ${s < 0 ? 'min' : s > 0 ? 'plus' : ''}">${s === 0 ? '✅ pas' : (s < 0 ? 'kurang ' : 'lebih ') + fmt(Math.abs(s))}</span></div>`; }).join('') || '<div class="kosong">Belum ada tutup kas.</div>'}
     </div>
-    <div class="sec"><h3>Log aktivitas <small>siapa melakukan apa</small></h3>
-      ${logRows.map(l => `<div class="baris"><span>${esc(l.aksi)}<small>${esc(l.keterangan || '')}</small><small>${jamWIB(l.created_at)} · ${esc((l.pelaku && l.pelaku.nama) || '-')}${l.cabang_id ? ' · ' + esc(namaCab(l.cabang_id)) : ''}</small></span></div>`).join('') || '<div class="kosong">Belum ada log.</div>'}
+    <div class="sec"><h3>Log aktivitas <small>ketuk tanggal untuk rincian</small></h3>
+      ${logPerHari(logRows) || '<div class="kosong">Belum ada log.</div>'}
     </div>`;
+}
+// log dikelompokkan per hari (folder), 2026-10-27
+function logPerHari(rows){
+  const grup = [];
+  rows.forEach(l => { const d = new Date(l.created_at), k = d.toDateString(); let g = grup.find(x => x.k === k); if(!g){ g = { k, d, isi: [] }; grup.push(g); } g.isi.push(l); });
+  return grup.map(g => `<details class="fold"><summary><span class="fic">📁</span><span class="ft"><b>${esc(g.d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' }))}</b><small>${g.isi.length} aktivitas</small></span><span class="pan">▾</span></summary>
+    ${g.isi.map(l => `<div class="baris"><span>${esc(l.aksi)}<small>${esc(l.keterangan || '')}</small><small>${new Date(l.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc((l.pelaku && l.pelaku.nama) || '-')}${l.cabang_id ? ' · ' + esc(namaCab(l.cabang_id)) : ''}</small></span></div>`).join('')}
+  </details>`).join('');
 }
 
 // ---------- brankas (satu untuk semua cabang, khusus Owner) ----------
@@ -899,7 +910,6 @@ async function muatBrankas(){
   box.innerHTML = `
     <div class="gold" style="margin-bottom:10px;"><small>🔒 Saldo Brankas · khusus Owner</small><b class="n">${fmt(saldo)}</b>
       <div style="display:flex;gap:8px;margin-top:8px;"><button class="gbtn gelap" onclick="brankasTambah()">${ic('plus')} Tambah uang</button><button class="gbtn terang" onclick="brankasAmbil()">${ic('minus')} Ambil</button></div>
-      <button class="gbtn gelap" style="width:100%;margin-top:8px;" onclick="brankasSimpanan()">💰 Simpanan Harian (dari Kas Outlet)</button>
       <div class="r"><div>Masuk ${esc(namaBulan)}<b>${fmt(jml('masuk'))}</b></div><div>Diambil ${esc(namaBulan)}<b>${fmt(jml('keluar'))}</b></div></div></div>
     <div class="seg">${[['semua','Semua'],['masuk','Masuk'],['keluar','Diambil']].map(([k, l]) => `<button class="${k === brankasFilter ? 'on' : ''}" onclick="filterBrankas('${k}')">${l}</button>`).join('')}</div>
     <div class="sec"><h3>Riwayat Brankas <small>terbaru di atas</small></h3>
