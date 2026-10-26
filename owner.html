@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-26.1">
+<meta name="app-version" content="owner-2026-10-27.2">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -142,6 +142,7 @@
         </div>
       </div>
       <div class="al" id="aWarn" style="display:none;" onclick="buka('stok')"></div>
+      <div id="tugasMalam"></div>
       <div class="h">MODUL KENDALI</div>
       <div id="daftarModul"></div>
       <button class="kasir" onclick="keKasir()"><span data-ic="kasir" style="display:flex;font-size:18px;"></span>Buka Kasir</button>
@@ -149,11 +150,8 @@
     </div>
 
     <div class="panel" id="p-uang"><div id="uangIsi"></div></div>
-    <div class="panel" id="p-dana"><div id="danaIsi"></div></div>
     <div class="panel" id="p-brankas"><div id="brankasIsi"></div></div>
-    <div class="panel" id="p-stok"><div id="stokIsi"></div></div>
-    <div class="panel" id="p-online"><div id="onlineIsi"></div></div>
-    <div class="panel" id="p-beli"><div id="beliIsi"></div></div>
+    <div class="panel" id="p-stok"><div class="seg" id="stokTab"></div><div id="stokIsi"></div><div id="beliIsi" style="display:none;"></div></div>
     <div class="panel" id="p-menu"><div id="menuIsi"></div></div>
     <div class="panel" id="p-karyawan"><div id="karyawanIsi"></div></div>
     <div class="panel" id="p-cabang"><div id="cabangIsi"></div></div>
@@ -161,6 +159,13 @@
   </div>
 </div></div>
 
+<div class="overlay" id="pilOverlay">
+  <div class="modal">
+    <h4 id="pilJudul"></h4>
+    <div id="pilIsi"></div>
+    <div class="tbl"><button style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#e8efe9;" onclick="tutupPilih(null)">Batal</button></div>
+  </div>
+</div>
 <div class="overlay" id="nomOverlay">
   <div class="modal">
     <h4 id="nomJudul"></h4>
@@ -197,7 +202,7 @@ const IKON = {
   stok:'<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/>',
   menu:'<path d="m6 8 1.75 12.28a2 2 0 0 0 2 1.72h4.54a2 2 0 0 0 2-1.72L18 8"/><path d="M5 8h14"/><path d="M7 15a6.47 6.47 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/><path d="m12 8 1-6h2"/>',
   karyawan:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-  cabang:'<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>',
+  cabang:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   laporan:'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
   back:'<path d="M15 5l-7 7 7 7"/>',
@@ -211,16 +216,14 @@ const IKON = {
 };
 const icTebal = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
 const ic = k => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IKON[k] || ''}</svg>`;
+// 2026-10-27 Pusat Kendali mudah: 10 modul jadi 6. Keuangan + Amplop + Brankas Online = Uang; Persediaan + Pembelian = Stok & Belanja
 const MODUL = [
-  ['uang', 'Keuangan', 'Kas Outlet & laba bersih'],
-  ['dana', 'Amplop Dana', 'Dana Stok & Dana Operasional'],
-  ['online', 'Brankas Online', 'GrabFood & ShopeeFood belum cair'],
+  ['uang', 'Uang', 'Kas Outlet, Grab/Shopee, Amplop & laba'],
   ['brankas', 'Brankas', 'Saldo, tambah uang, ambil & riwayat'],
-  ['stok', 'Persediaan', 'Stok bahan & cup per cabang'],
-  ['beli', 'Pembelian', 'Belanja harian & beli stok per cabang'],
+  ['stok', 'Stok & Belanja', 'Sisa stok, opname & uang belanja'],
   ['menu', 'Menu $', 'Harga jual & harga modal'],
   ['karyawan', 'Karyawan', 'Aktif, absensi & izin'],
-  ['cabang', 'Cabang', 'Data cabang & pengaturan'],
+  ['cabang', 'Pengaturan', 'Gaji kasir, gas & stok opname'],
   ['laporan', 'Laporan', 'Tutup kas & log aktivitas']
 ];
 const cabDipilih = () => pilihan === 'semua' ? cabangList : cabangList.filter(c => c.id === pilihan);
@@ -251,7 +254,7 @@ async function mulai(){
   gambarCabang();
   document.getElementById('muat').style.display = 'none';
   document.getElementById('isi').style.display = '';
-  if(terakhir && terakhir.panel && terakhir.panel !== 'beranda' && (terakhir.panel === 'brankas' || MODUL.some(m => m[0] === terakhir.panel))){ muatBeranda(); buka(terakhir.panel); }
+  if(terakhir && terakhir.panel && terakhir.panel !== 'beranda' && (MODUL.some(m => m[0] === (MODUL_LAMA[terakhir.panel] || terakhir.panel)))){ muatBeranda(); buka(terakhir.panel); }
   else muatSemua();
 }
 // ingat halaman terakhir (supaya refresh tidak balik ke Beranda)
@@ -273,7 +276,11 @@ function pilihCabang(id){
   gambarCabang();
   muatSemua();
 }
+// kunci lama (tersimpan di HP / tombol lama) diarahkan ke modul baru
+const MODUL_LAMA = { dana:'uang', online:'uang', beli:'stok' };
 function buka(p){
+  if(p === 'beli') stokTab = 'beli';
+  p = MODUL_LAMA[p] || p;
   panelAktif = p;
   document.querySelectorAll('.panel').forEach(el => el.classList.toggle('on', el.id === 'p-' + p));
   document.getElementById('topBeranda').style.display = p === 'beranda' ? '' : 'none';
@@ -294,7 +301,7 @@ setInterval(() => { if(document.visibilityState === 'visible' && profil && panel
 function toggleBrankas(){ buka(panelAktif === 'brankas' ? 'beranda' : 'brankas'); }
 function muatSemua(){ muatBeranda(); if(panelAktif !== 'beranda') muatPanel(); }
 function muatPanel(){
-  ({ uang: muatUang, dana: muatDanaPanel, online: muatOnline, brankas: muatBrankas, stok: muatStok, beli: muatBeli, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
+  ({ uang: muatUang, brankas: muatBrankas, stok: muatStokBelanja, menu: muatMenu, karyawan: muatKaryawan, cabang: muatCabang, laporan: muatLaporan }[panelAktif] || (()=>{}))();
 }
 function keKasir(){
   // ke aplikasi kasir tanpa dilempar balik ke sini
@@ -393,7 +400,7 @@ async function muatBeranda(){
   ['aJual','aKas','aBrankas'].forEach(id => document.getElementById(id).textContent = '…');
   document.getElementById('aKasLbl').textContent = pilihan === 'semua' ? 'Kas semua cabang' : 'Kas ' + namaCab(pilihan);
   const ids = cabDipilih().map(c => c.id);
-  const info = { cabang: cabangList.length + ' cabang' };
+  const info = {};
   gambarModul(info);
   try{
     const per = await Promise.all(cabDipilih().map(kasCabang));
@@ -402,6 +409,7 @@ async function muatBeranda(){
     document.getElementById('aKas').textContent = fmt(t('kas'));
     document.getElementById('aKasRinci').textContent = `Penjualan ${fmt(t('tunai'))} · Pengeluaran ${fmt(t('keluarHari'))}`;
     info.uang = fmt(t('kas'));
+    muatTugasMalam(per).catch(() => {});
     try{ const ds = await Promise.all(cabDipilih().map(c => sb.rpc('dana_saldo', { p_cabang: c.id }).then(x => x.data || {}))); info.dana = fmt(ds.reduce((a, d) => a + Number(d.stok || 0) + Number(d.operasional || 0), 0)); }catch(_){}
     const tutup = per.map(r => r.tutup).filter(Boolean).sort().pop();
     if(tutup) info.laporan = `<span style="font-weight:600;color:var(--redup2)">${new Date(tutup).toLocaleString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>`;
@@ -430,37 +438,93 @@ async function muatBeranda(){
   gambarModul(info);
 }
 
-// ---------- uang ----------
+// ---------- Tugas Malam (2026-10-27): yang perlu Boss cek tiap malam, satu tempat ----------
+const kunciCekHari = k => 'pkCek_' + k + '_' + new Date().toLocaleDateString('en-CA');
+function cekTugas(k){ try{ localStorage.setItem(kunciCekHari(k), '1'); }catch(e){} muatTugasMalam(null).catch(() => {}); }
+let _perTerakhir = [];
+async function muatTugasMalam(per){
+  if(per) _perTerakhir = per; else per = _perTerakhir;
+  const box = document.getElementById('tugasMalam');
+  const cabs = cabDipilih(), banyak = cabs.length > 1;
+  const hasil = await Promise.all(cabs.map(async c => {
+    const [st, on, bp] = await Promise.all([
+      sb.rpc('setoran_harian_status', { p_cabang: c.id }).then(r => r.data || {}, () => ({})),
+      sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => Number((r.data || {}).saldo || 0), () => 0),
+      sb.rpc('dana_belum_pindah', { p_cabang: c.id }).then(r => r.data || {}, () => ({}))
+    ]);
+    return { c, st, on, bp, k: per.find(r => r.id === c.id) || {} };
+  }));
+  const hari0 = new Date(); hari0.setHours(0,0,0,0);
+  const sudah = k => { try{ return localStorage.getItem(kunciCekHari(k)) === '1'; }catch(e){ return false; } };
+  const item = [];
+  hasil.forEach(h => {
+    const nm = banyak ? ' · ' + namaCab(h.c.id) : '';
+    // 1. kasir tutup kas
+    const tutupHariIni = h.k.tutup && new Date(h.k.tutup) >= hari0;
+    item.push({ ok: tutupHariIni, judul: 'Kasir tutup kas' + nm, ket: tutupHariIni ? 'jam ' + new Date(h.k.tutup).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : 'belum hari ini', tombol: tutupHariIni ? `<button class="btn" onclick="buka('laporan')">Lihat</button>` : '' });
+    // 2. Simpanan Harian
+    { const tg = h.st.wajib ? Number(h.st.tabungan_target || 0) : 0, ad = Number(h.st.tabungan || 0);
+      item.push({ ok: tg > 0 ? ad >= tg : ad > 0, judul: 'Simpanan Harian' + nm, ket: tg > 0 ? `${fmt(ad)} dari ${fmt(tg)} · Kas Outlet → Brankas` : `${fmt(ad)} hari ini · Kas Outlet → Brankas`, tombol: (tg > 0 ? ad < tg : ad <= 0) && !banyak ? `<button class="btn" onclick="brankasSimpanan()">Catat</button>` : '' }); }
+    // 3. QRIS
+    if(Number(h.k.qris || 0) > 0){ const kk = 'qris_' + h.c.id;
+      item.push({ ok: sudah(kk), judul: 'Cocokkan QRIS' + nm, ket: `${fmt(h.k.qris)} dengan mutasi rekening`, tombol: sudah(kk) ? '' : `<button class="btn" onclick="cekTugas('${kk}')">Sudah cocok</button>` }); }
+    // 4. Grab/Shopee
+    if(h.on > 0) item.push({ ok: false, judul: 'Grab/Shopee belum cair' + nm, ket: fmt(h.on) + ' · cairkan kalau sudah ditransfer', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
+    // 5. Amplop
+    const blm = Number(h.bp.stok || 0) + Number(h.bp.operasional || 0);
+    if(blm > 100000) item.push({ ok: false, judul: 'Pindahkan uang amplop' + nm, ket: fmt(blm) + ' masih di Kas Outlet', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
+  });
+  const sisa = item.filter(i => !i.ok).length;
+  box.innerHTML = `<div class="h">TUGAS MALAM ${sisa ? `<span class="bd kn">${sisa} belum</span>` : '<span class="bd hj">beres semua</span>'}</div>
+    <div class="sec" style="margin-bottom:10px;">${item.map(i => `<div class="baris"><span>${i.ok ? '✅' : '⬜'} ${esc(i.judul)}<small>${esc(i.ket)}</small></span><span class="kanan">${i.tombol}</span></div>`).join('')}</div>`;
+}
+
+// ---------- uang (2026-10-27: Kas Outlet + Grab/Shopee + Amplop + Brankas + laba jadi satu halaman) ----------
+let labaBuka = false;
 async function muatUang(){
   const box = document.getElementById('uangIsi');
-  box.innerHTML = '<div class="muat">Memuat…</div>';
-  const cabs = cabDipilih();
-  const [per, online, laba, biaya] = await Promise.all([
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  const cabs = cabDipilih(), satu = cabs.length === 1 ? cabs[0] : null;
+  const [per, online, laba, amplop] = await Promise.all([
     Promise.all(cabs.map(kasCabang)),
     Promise.all(cabs.map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
     Promise.all(cabs.map(c => sb.rpc('laba_bersih', { p_cabang: c.id, p_hari: 30 }).then(r => ({ c, d: r.data })))),
-    sb.from('biaya_operasional').select('kategori, deskripsi, jumlah, sumber_dana, created_at, cabang_id, pencatat:dicatat_oleh(nama)')
-      .in('cabang_id', cabs.map(c => c.id).concat(NOL)).gte('created_at', new Date(Date.now() - 7*864e5).toISOString())
-      .order('created_at', { ascending:false }).limit(60)
+    muatDana(cabs).catch(e => `<div class="sec"><h3>Amplop</h3><div class="kosong">Gagal memuat: ${esc(e.message || e)}</div></div>`)
   ]);
   const tot = k => per.reduce((a, r) => a + r[k], 0);
   const n = (d, k) => Number((d || {})[k] || 0);
   const labaDari = d => d ? (n(d,'omzet') - n(d,'modal')) - (n(d,'gaji') + n(d,'sewa') + n(d,'listrik') + n(d,'galon') + n(d,'gas') + n(d,'kresek') + n(d,'lain')) : 0;
+  const totOnline = online.reduce((a, o) => a + Number(o.d.saldo || 0), 0);
+  const totLaba = laba.reduce((a, l) => a + labaDari(l.d), 0);
   box.innerHTML = `
-    <div class="sec"><h3>Kas & penjualan hari ini <small>per cabang</small></h3>
-      ${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · Pengeluaran ${fmt(r.keluarHari)} · ${r.trx} transaksi</small>${r.qris ? `<small>📱 QRIS hari ini ${fmt(r.qris)} · cocokkan dengan mutasi QRIS</small>` : ''}<small>Tutup kas terakhir: ${r.tutup ? jamWIB(r.tutup) : 'belum pernah'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}
-      ${per.length > 1 ? `<div class="baris"><span><b>Total</b><small>Penjualan ${fmt(tot('jual'))} · Pengeluaran ${fmt(tot('keluarHari'))}</small></span><span class="kanan" style="color:var(--emas)">${fmt(tot('kas'))}</span></div>` : ''}
+    <div class="gold" style="margin-bottom:10px;"><small>💵 Kas Outlet ${satu ? esc(namaCab(satu.id)) : 'semua cabang'} · uang di outlet sekarang</small><b class="n">${fmt(tot('kas'))}</b>
+      <div class="r"><div>Tunai hari ini<b>${fmt(tot('tunai'))}</b></div><div>📱 QRIS hari ini<b>${fmt(tot('qris'))}</b></div></div>
+</div>
+    ${tot('qris') > 0 ? '<div class="info" style="margin:-4px 0 10px;">QRIS tidak masuk Kas Outlet. Cocokkan angka QRIS dengan mutasi rekening.</div>' : ''}
+    ${per.length > 1 ? `<div class="sec"><h3>Per cabang</h3>${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · ${r.trx} transaksi · tutup kas ${r.tutup ? jamWIB(r.tutup) : 'belum'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}</div>` : `<div class="info" style="margin:-4px 0 10px;">Tutup kas terakhir: ${per[0] && per[0].tutup ? jamWIB(per[0].tutup) : 'belum pernah'}</div>`}
+
+    <div class="sec"><h3>🛵 Grab & Shopee belum cair <small>${fmt(totOnline)}</small></h3>
+      ${online.map(o => htmlBrankasOnline(o)).join('')}
+      <div class="info" style="margin-top:6px;">Tekan Cairkan saat uangnya sudah ditransfer, langsung masuk Kas Outlet.</div>
     </div>
 
-    <div class="sec"><h3>Laba bersih 30 hari <small>perkiraan</small></h3>
-      ${laba.map(l => { const v = labaDari(l.d); return `<div class="baris"><span><b>${esc(namaCab(l.c.id))}</b><small>Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'trx').toLocaleString('id-ID')} transaksi · ${n(l.d,'hari_buka')} hari buka</small></span><span class="kanan ${v < 0 ? 'min' : 'plus'}">${v < 0 ? '− ' : ''}${fmt(Math.abs(v))}</span></div>`; }).join('')}
-    </div>
+    ${amplop}
 
-    <div class="sec"><h3>Pengeluaran 7 hari terakhir <small>ketuk tanggal untuk rincian</small></h3>
-      ${folderPengeluaran(biaya.data || [])}
+    <div class="sec"><h3>📈 Laba bersih 30 hari <small>perkiraan</small></h3>
+      <div class="baris"><span><b>${satu ? esc(namaCab(satu.id)) : 'Semua cabang'}</b><small>sudah dikurangi modal, gaji, sewa, listrik, gas, dll</small></span><span class="kanan ${totLaba < 0 ? 'min' : 'plus'}">${totLaba < 0 ? '− ' : ''}${fmt(Math.abs(totLaba))}</span></div>
+      ${laba.length > 1 ? laba.map(l => { const v = labaDari(l.d); return `<div class="baris"><span>${esc(namaCab(l.c.id))}<small>Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'hari_buka')} hari buka</small></span><span class="kanan ${v < 0 ? 'min' : 'plus'}">${v < 0 ? '− ' : ''}${fmt(Math.abs(v))}</span></div>`; }).join('') : laba.map(l => `<div class="kosong" style="text-align:left;">Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'trx').toLocaleString('id-ID')} transaksi · ${n(l.d,'hari_buka')} hari buka</div>`).join('')}
     </div>`;
 }
 
+// ---------- Stok & Belanja (2026-10-27: Persediaan + Pembelian jadi satu modul, 2 tab) ----------
+let stokTab = 'stok';
+function gantiStokTab(t){ stokTab = t; muatStokBelanja(); }
+function muatStokBelanja(){
+  document.getElementById('stokTab').innerHTML = [['stok','📦 Sisa stok'],['beli','🧾 Uang belanja']].map(([k, l]) => `<button class="${k === stokTab ? 'on' : ''}" onclick="gantiStokTab('${k}')">${l}</button>`).join('');
+  document.getElementById('stokIsi').style.display = stokTab === 'stok' ? '' : 'none';
+  document.getElementById('beliIsi').style.display = stokTab === 'beli' ? '' : 'none';
+  return stokTab === 'beli' ? muatBeli() : muatStok();
+}
 // ---------- pembelian per cabang (cuma pantau; dicatat Admin/Kasir di aplikasi kasir) ----------
 let beliHari = 7;
 function periodeBeli(h){ beliHari = h; muatBeli(); }
@@ -485,10 +549,6 @@ async function muatBeli(){
   const totBeli = sum(beli, 'total'), totBelanja = sum(belanja, 'jumlah');
   // per cabang
   const perCab = cabs.map(c => ({ c, b: sum(beli.filter(r => r.cabang_id === c.id), 'total'), j: sum(belanja.filter(r => r.cabang_id === c.id), 'jumlah') }));
-  // per sumber dana
-  const dana = {};
-  beli.forEach(r => dana[r.sumber_dana || 'tunai'] = (dana[r.sumber_dana || 'tunai'] || 0) + Number(r.total || 0));
-  belanja.forEach(r => dana[r.sumber_dana || 'tunai'] = (dana[r.sumber_dana || 'tunai'] || 0) + Number(r.jumlah || 0));
   // rekap bahan: jumlah dibeli, total, harga terakhir vs sebelumnya
   const bahan = {};
   [...beli].reverse().forEach(r => {
@@ -519,9 +579,6 @@ async function muatBeli(){
       <div class="r"><div>📦 Beli stok<b>${fmt(totBeli)}</b><span>${beli.length} kali</span></div><div>🧾 Belanja harian<b>${fmt(totBelanja)}</b><span>${belanja.length} kali</span></div></div></div>
     ${naik.length ? `<div class="al" style="cursor:default;">${ic('warn')}<span>Harga naik: ${naik.map(b => `${esc(b.nama)} ${rp(b.hargaAwal)} → ${rp(b.hargaAkhir)}`).join(' · ')}</span></div>` : ''}
     ${cabs.length > 1 ? `<div class="sec" style="margin-top:10px;"><h3>Per cabang</h3>${perCab.map(p => `<div class="baris"><span>${esc(rapiNama(p.c.nama))}<small>Beli stok ${fmt(p.b)} · Belanja ${fmt(p.j)}</small></span><span class="kanan">${fmt(p.b + p.j)}</span></div>`).join('')}</div>` : ''}
-    <div class="sec" style="margin-top:10px;"><h3>Sumber uang</h3>
-      ${Object.keys(dana).length ? Object.entries(dana).map(([k, v]) => `<div class="baris"><span>${danaLbl(k)}</span><span class="kanan">${fmt(v)}</span></div>`).join('') : '<div class="kosong">Belum ada.</div>'}
-    </div>
     <div class="sec"><h3>Bahan yang dibeli <small>harga per satuan</small></h3>
       ${rekap.map(b => { const up = b.hargaAwal > 0 && b.hargaAkhir > b.hargaAwal * 1.001, turun = b.hargaAwal > 0 && b.hargaAkhir < b.hargaAwal * 0.999;
         return `<div class="baris"><span>${esc(b.nama)}<small>${b.qty.toLocaleString('id-ID')} ${esc(b.sat)} · ${b.kali}× beli · harga terakhir ${rp(b.hargaAkhir)}${up ? ' <span class="label-cab">naik</span>' : turun ? ' <span class="label-cab" style="background:rgba(95,211,138,.15);color:var(--hijau)">turun</span>' : ''}</small></span><span class="kanan">${fmt(b.total)}</span></div>`; }).join('') || '<div class="kosong">Belum ada beli stok di periode ini.</div>'}
@@ -530,41 +587,12 @@ async function muatBeli(){
     <div class="sec info">Pembelian & belanja dicatat Admin atau Kasir di aplikasi kasir. Di sini Boss memantau & membandingkan tiap cabang.</div>`;
 }
 
-// pengeluaran dikelompokkan per hari (folder: hari, tanggal, jumlah, total)
-function folderPengeluaran(rows){
-  if(!rows.length) return '<div class="kosong">Tidak ada pengeluaran.</div>';
-  const grup = [];
-  rows.forEach(b => {
-    const d = new Date(b.created_at); const k = d.toDateString();
-    let g = grup.find(x => x.k === k);
-    if(!g){ g = { k, d, isi: [] }; grup.push(g); }
-    g.isi.push(b);
-  });
-  return grup.map(g => {
-    const tot = g.isi.reduce((a, b) => a + Number(b.jumlah || 0), 0);
-    const hari = g.d.toLocaleDateString('id-ID', { weekday:'long' });
-    const tgl = g.d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
-    return `<details class="fold"><summary><span class="fic">📁</span><span class="ft"><b>${esc(hari)}, ${esc(tgl)}</b><small>${g.isi.length} pengeluaran</small></span><span class="kanan min">− ${fmt(tot)}</span><span class="pan">▾</span></summary>
-      ${g.isi.map(b => `<div class="baris"><span>${esc(labelKat(b.kategori))} · ${esc(String(b.deskripsi || '').split(' · ')[0])}<small>${new Date(b.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc(namaCab(b.cabang_id))} · ${esc((b.pencatat && b.pencatat.nama) || '-')} · ${b.sumber_dana === 'tunai' ? 'Kas Outlet' : b.sumber_dana === 'kas_toko' ? 'Kas Outlet' : b.sumber_dana === 'dana_stok' ? 'Dana Stok' : b.sumber_dana === 'dana_operasional' ? 'Dana Operasional' : 'uang lain'}</small></span><span class="kanan min">− ${fmt(b.jumlah)}</span></div>`).join('')}
-    </details>`;
-  }).join('');
-}
-
-async function muatOnline(){
-  const box = document.getElementById('onlineIsi');
-  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
-  const online = await Promise.all(cabDipilih().map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} }))));
-  const total = online.reduce((a, o) => a + Number(o.d.saldo || 0), 0);
-  box.innerHTML = `<div class="gold" style="margin-bottom:10px;"><small>Belum cair · GrabFood & ShopeeFood</small><b class="n">${fmt(total)}</b>
-      <span style="font-size:12px;font-weight:700;">Tekan Cairkan saat uangnya ditransfer, langsung masuk Kas Outlet.</span></div>
-    <div class="sec"><h3>Per platform <small>harga outlet</small></h3>${online.map(o => htmlBrankasOnline(o)).join('')}</div>`;
-}
 // ---------- Brankas Online di Pusat Kendali: saldo per platform + 1 tombol Cairkan ke Kas Outlet + riwayat ----------
 const BO_PF = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain' };
 let boBuka = {};
 function htmlBrankasOnline(o){
   const pp = o.d.per_platform || {}, id = o.c.id;
-  const pfs = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo) !== 0);
+  const pfs = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo || 0) !== 0);
   const riw = (o.d.riwayat || []).slice(0, 15);
   const lbl = r => r.jenis === 'masuk' ? `${BO_PF[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
     : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_PF[r.platform] || ''}`
@@ -587,14 +615,6 @@ async function boCairkan(cabangId, pf, saldo){
   muatSemua();
 }
 
-// ---------- amplop: Dana Stok & Dana Operasional (disisihkan tiap tutup kas) ----------
-// ---------- Amplop Dana (menu sendiri, 2026-10-24) ----------
-async function muatDanaPanel(){
-  const box = document.getElementById('danaIsi');
-  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
-  try{ box.innerHTML = await muatDana(cabDipilih()); }
-  catch(e){ box.innerHTML = `<div class="kosong">Gagal memuat: ${esc(e.message || e)}</div>`; }
-}
 async function muatDana(cabs){
   const ids = cabs.map(c => c.id);
   const [saldo, masuk, beli, keluar, bt] = await Promise.all([
@@ -620,21 +640,29 @@ async function muatDana(cabs){
   ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 60);
   const satu = cabs.length === 1 ? cabs[0] : null;
   const cfg = satu ? ((bt.data || []).find(x => x.cabang_id === satu.id) || { gaji_aktif:false, gas_per_hari:1650 }) : null;
-  return `<div class="sec"><h3>Amplop Dana <small>isi amplop sekarang</small></h3>
-      <div class="baris"><span>📦 Dana Stok<small>Cup, teh, sedotan, sealer, bubuk rasa, kopi ice roast, Milo, gas LPG</small></span><span class="kanan">${fmt(jml('stok'))}</span></div>
-      <div class="baris"><span>🏠 Dana Operasional<small>Sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji kasir' : ''}</small></span><span class="kanan">${fmt(jml('operasional'))}</span></div>
-      <div class="sub">BELUM DIPINDAH DARI KAS OUTLET</div>
-      <div class="baris"><span>📦 Dana Stok<small>sisihan tutup kas − stok yang sudah dibeli pakai Kas Outlet</small></span><span class="kanan">${fmt(blm('stok'))}${satu && blm('stok') > 0 ? ` <button class="btn" onclick="danaPindah('${satu.id}','stok',${blm('stok')})">Pindahkan</button>` : ''}</span></div>
-      <div class="baris"><span>🏠 Dana Operasional<small>sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji' : ''}</small></span><span class="kanan">${fmt(blm('operasional'))}${satu && blm('operasional') > 0 ? ` <button class="btn" onclick="danaPindah('${satu.id}','operasional',${blm('operasional')})">Pindahkan</button>` : ''}</span></div>
-      <div class="info" style="margin-top:6px;">Uangnya masih di Kas Outlet. Tekan <b>Pindahkan</b> saat uang benar-benar dimasukkan ke amplop (misal seminggu sekali). Kas Outlet ikut berkurang.</div>
-      ${satu ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn" onclick="danaKoreksi('${satu.id}')">✏️ Koreksi amplop</button></div>
-      <div class="info" style="margin-top:6px;">Koreksi amplop dipakai kalau isi amplop fisik beda dengan angka di sini. Semua koreksi tercatat di Log Aktivitas.</div>
-      <div class="baris" style="margin-top:6px;"><span>Gaji kasir ikut disisihkan<small>${cfg.gaji_aktif ? 'AKTIF' : 'OFF'} · aktifkan kalau sudah ada karyawan</small></span><span class="kanan"><button class="btn" onclick="danaGaji('${satu.id}', ${!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${cfg.gaji_aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>
-      <div class="baris"><span>Patokan gas LPG<small>masuk Dana Stok per hari buka</small></span><span class="kanan"><button class="btn" onclick="danaGas('${satu.id}', ${!!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${fmt(cfg.gas_per_hari || 1650)}/hari</button></span></div>` : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk mengatur amplop.</div>'}
-      <div class="sub">RIWAYAT AMPLOP</div>
-      ${rows.map(r => `<div class="baris"><span>${esc(r.judul)}<small>${jamWIB(r.t)} · ${r.pos}${cabs.length > 1 ? ' · ' + esc(namaCab(r.cab)) : ''}</small></span><span class="kanan ${r.n < 0 ? 'min' : 'plus'}">${r.n < 0 ? '−' : '+'} ${fmt(Math.abs(r.n))}</span></div>`).join('') || '<div class="kosong">Belum ada. Amplop terisi otomatis mulai tutup kas berikutnya.</div>'}
+  const isiAmplop = jml('stok') + jml('operasional'), belumTot = blm('stok') + blm('operasional');
+  return `<div class="sec"><h3>✉️ Amplop <small>isi ${fmt(isiAmplop)}</small></h3>
+      <div class="baris"><span>📦 Dana Stok<small>cup, teh, sedotan, sealer, bubuk rasa, gas</small></span><span class="kanan">${fmt(jml('stok'))}</span></div>
+      <div class="baris"><span>🏠 Dana Operasional<small>sewa, listrik${cfg && cfg.gaji_aktif ? ', gaji kasir' : ''}</small></span><span class="kanan">${fmt(jml('operasional'))}</span></div>
+      ${belumTot > 0 ? `<div class="sub">MASIH DI KAS OUTLET · BELUM DIPINDAH</div>
+      ${[['stok','📦 Dana Stok'],['operasional','🏠 Dana Operasional']].filter(([k]) => blm(k) > 0).map(([k, l]) => `<div class="baris"><span>${l}</span><span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt(blm(k))}${satu ? ` <button class="btn" onclick="danaPindah('${satu.id}','${k}',${blm(k)})">Pindahkan</button>` : ''}</span></div>`).join('')}
+      <div class="info" style="margin-top:6px;">Tekan <b>Pindahkan</b> saat uangnya benar-benar dimasukkan ke amplop. Kas Outlet ikut berkurang.</div>` : '<div class="info" style="margin-top:6px;">✅ Semua uang amplop sudah dipindah dari Kas Outlet.</div>'}
+      ${satu ? '' : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk memindah / koreksi amplop.</div>'}
+      <details class="fold" style="margin-top:8px;"><summary><span class="ft"><b>Riwayat & koreksi amplop</b><small>${rows.length} catatan terakhir</small></span><span class="pan">▾</span></summary>
+        ${satu ? `<button class="btn" style="margin:8px 0;" onclick="danaKoreksi('${satu.id}')">✏️ Koreksi amplop</button><div class="info">Pakai kalau isi amplop fisik beda dengan angka di sini. Tercatat di Log Aktivitas.</div>` : ''}
+        ${rows.map(r => `<div class="baris"><span>${esc(r.judul)}<small>${jamWIB(r.t)} · ${r.pos}${cabs.length > 1 ? ' · ' + esc(namaCab(r.cab)) : ''}</small></span><span class="kanan ${r.n < 0 ? 'min' : 'plus'}">${r.n < 0 ? '−' : '+'} ${fmt(Math.abs(r.n))}</span></div>`).join('') || '<div class="kosong">Belum ada.</div>'}
+      </details>
     </div>`;
+}
+// pengaturan amplop (gaji kasir & patokan gas) dipindah ke modul Cabang, 2026-10-27
+async function htmlAturAmplop(){
+  const { data } = await sb.from('biaya_tetap').select('cabang_id, gaji_aktif, gas_per_hari').in('cabang_id', cabangList.map(c => c.id).concat(NOL));
+  return `<div class="sec"><h3>Pengaturan amplop <small>per cabang</small></h3>
+    ${cabangList.map(c => { const cfg = (data || []).find(x => x.cabang_id === c.id) || { gaji_aktif:false, gas_per_hari:1650 };
+      return `<div class="sub">${esc(rapiNama(c.nama).toUpperCase())}</div>
+      <div class="baris"><span>Gaji kasir ikut disisihkan<small>${cfg.gaji_aktif ? 'AKTIF' : 'OFF'} · aktifkan kalau sudah ada karyawan</small></span><span class="kanan"><button class="btn" onclick="danaGaji('${c.id}', ${!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${cfg.gaji_aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>
+      <div class="baris"><span>Patokan gas LPG<small>masuk Dana Stok per hari buka</small></span><span class="kanan"><button class="btn" onclick="danaGas('${c.id}', ${!!cfg.gaji_aktif}, ${Number(cfg.gas_per_hari || 1650)})">${fmt(cfg.gas_per_hari || 1650)}/hari</button></span></div>`; }).join('')}
+  </div>`;
 }
 async function danaAtur(cabangId, pos, jenis){
   const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
@@ -647,12 +675,24 @@ async function danaAtur(cabangId, pos, jenis){
   muatPanel(); muatBeranda();
 }
 // 2026-10-26: 4 tombol koreksi digabung jadi satu
+// 2026-10-27: tidak ketik angka lagi, tinggal ketuk 2 pilihan
 async function danaKoreksi(cabangId){
-  const p = prompt('Koreksi amplop, ketik nomornya:\n1 = Tambah Dana Stok\n2 = Ambil Dana Stok\n3 = Tambah Dana Operasional\n4 = Ambil Dana Operasional', '1');
-  const m = { '1':['stok','masuk'], '2':['stok','keluar'], '3':['operasional','masuk'], '4':['operasional','keluar'] }[String(p || '').trim()];
-  if(!m) return;
-  return danaAtur(cabangId, m[0], m[1]);
+  const jenis = await pilihTombol('Koreksi amplop', [['masuk','＋ Tambah ke amplop'],['keluar','− Ambil dari amplop']]);
+  if(!jenis) return;
+  const pos = await pilihTombol(jenis === 'masuk' ? 'Tambah ke amplop mana?' : 'Ambil dari amplop mana?', [['stok','📦 Dana Stok'],['operasional','🏠 Dana Operasional']]);
+  if(!pos) return;
+  return danaAtur(cabangId, pos, jenis);
 }
+let _pilSelesai = null;
+function pilihTombol(judul, opsi){
+  return new Promise(res => {
+    _pilSelesai = res;
+    document.getElementById('pilJudul').textContent = judul;
+    document.getElementById('pilIsi').innerHTML = opsi.map(([k, l]) => `<button class="btn" style="width:100%;padding:13px;font-size:15px;margin-bottom:8px;" onclick="tutupPilih('${k}')">${l}</button>`).join('');
+    document.getElementById('pilOverlay').classList.add('on');
+  });
+}
+function tutupPilih(k){ document.getElementById('pilOverlay').classList.remove('on'); const r = _pilSelesai; _pilSelesai = null; if(r) r(k); }
 async function danaPindah(cabangId, pos, saran){
   const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
   const r = await mintaNominal(`Pindahkan dari Kas Outlet ke amplop ${nama} berapa?`, String(saran || ''), true);
@@ -681,7 +721,7 @@ async function danaGas(cabangId, gaji, gas){
 async function aturOpname(cabangId, aktif){
   const { error } = await sb.rpc('atur_opname_cabang', { p_cabang: cabangId, p_aktif: aktif });
   if(error){ alert('Gagal mengubah: ' + error.message); return; }
-  muatStok();
+  muatPanel();
 }
 async function muatStok(){
   const box = document.getElementById('stokIsi');
@@ -700,8 +740,8 @@ async function muatStok(){
   const tglOp = d => new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const htmlOpname = c => {
     const aktif = opAktif[c.id] !== false;
-    const tombol = `<button class="btn" style="padding:3px 10px;font-size:11.5px;${aktif ? '' : 'color:var(--redup);border-color:rgba(255,255,255,.2);'}" onclick="aturOpname('${c.id}', ${!aktif})">${aktif ? 'ON' : 'OFF'}</button>`;
-    if(!aktif) return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME ${tombol}</div><div class="kosong">Stok opname dimatikan untuk cabang ini.</div>`;
+    const tombol = '';
+    if(!aktif) return `<div class="sub" style="display:flex;justify-content:space-between;align-items:center;">STOK OPNAME ${tombol}</div><div class="kosong">Stok opname dimatikan untuk cabang ini (atur di ⚙️ Pengaturan).</div>`;
     const o = opname.find(x => x.cabang_id === c.id);
     const telat = opJadwal && (!o || new Date(o.created_at) < opJadwal);
     let isi = telat ? `<div class="baris"><span>Belum opname untuk jadwal ${tglOp(opJadwal)}</span><span class="kanan min">belum</span></div>` : '';
@@ -796,21 +836,19 @@ async function muatKaryawan(){
     </div>`;
 }
 
-// ---------- cabang ----------
+// ---------- pengaturan (2026-10-27: dulu modul Cabang; daftar cabang dobel dengan pilihan cabang di atas) ----------
 async function muatCabang(){
   const box = document.getElementById('cabangIsi');
-  box.innerHTML = '<div class="muat">Memuat…</div>';
-  const info = await Promise.all(cabangList.map(async c => {
-    const [m, u] = await Promise.all([
-      sb.from('produk').select('id', { count:'exact', head:true }).eq('cabang_id', c.id).eq('aktif', true),
-      sb.from('user_cabang').select('user_id', { count:'exact', head:true }).eq('cabang_id', c.id)
-    ]);
-    return { c, menu: m.count || 0, orang: u.count || 0 };
-  }));
-  box.innerHTML = `<div class="sec"><h3>Daftar cabang</h3>
-    ${info.map(i => `<div class="baris"><span><b>${esc(rapiNama(i.c.nama))}</b><small>${i.menu} menu aktif · ${i.orang} karyawan</small></span><span><button class="btn gold" onclick="pilihCabang('${i.c.id}');buka('beranda')">Lihat</button></span></div>`).join('')}
-    <div class="kosong">Tambah cabang baru (bisa salin menu dari cabang lain): lewat Buka aplikasi kasir → Pengaturan → Cabang (sementara).</div>
-  </div>`;
+  if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
+  const [amplop, op] = await Promise.all([
+    htmlAturAmplop().catch(() => ''),
+    sb.from('cabang').select('id, opname_aktif').in('id', cabangList.map(c => c.id)).then(r => r.data || [], () => [])
+  ]);
+  box.innerHTML = amplop + `<div class="sec"><h3>Stok opname <small>2 minggu sekali, Jumat</small></h3>
+    ${cabangList.map(c => { const aktif = (op.find(x => x.id === c.id) || {}).opname_aktif !== false;
+      return `<div class="baris"><span>${esc(rapiNama(c.nama))}<small>${aktif ? 'ON · menu & pengingat opname muncul di kasir' : 'OFF · tidak ada opname di cabang ini'}</small></span><span class="kanan"><button class="btn" onclick="aturOpname('${c.id}', ${!aktif})">${aktif ? 'Matikan' : 'Aktifkan'}</button></span></div>`; }).join('')}
+  </div>
+  <div class="sec info">Tambah cabang baru, akun karyawan, resep & SOP: lewat Buka Kasir → Pengaturan.</div>`;
 }
 
 // ---------- laporan ----------
@@ -827,9 +865,17 @@ async function muatLaporan(){
     <div class="sec"><h3>Riwayat tutup kas</h3>
       ${(tk.data || []).map(r => { const s = Number(r.selisih || 0); return `<div class="baris"><span>${esc(namaCab(r.cabang_id))} · ${jamWIB(r.waktu_tutup)}<small>${esc((r.ditutup && r.ditutup.nama) || '-')} · seharusnya ${fmt(r.kas_sistem)} · dihitung ${fmt(r.kas_fisik)}${r.catatan ? ' · ' + esc(r.catatan) : ''}</small></span><span class="kanan ${s < 0 ? 'min' : s > 0 ? 'plus' : ''}">${s === 0 ? '✅ pas' : (s < 0 ? 'kurang ' : 'lebih ') + fmt(Math.abs(s))}</span></div>`; }).join('') || '<div class="kosong">Belum ada tutup kas.</div>'}
     </div>
-    <div class="sec"><h3>Log aktivitas <small>siapa melakukan apa</small></h3>
-      ${logRows.map(l => `<div class="baris"><span>${esc(l.aksi)}<small>${esc(l.keterangan || '')}</small><small>${jamWIB(l.created_at)} · ${esc((l.pelaku && l.pelaku.nama) || '-')}${l.cabang_id ? ' · ' + esc(namaCab(l.cabang_id)) : ''}</small></span></div>`).join('') || '<div class="kosong">Belum ada log.</div>'}
+    <div class="sec"><h3>Log aktivitas <small>ketuk tanggal untuk rincian</small></h3>
+      ${logPerHari(logRows) || '<div class="kosong">Belum ada log.</div>'}
     </div>`;
+}
+// log dikelompokkan per hari (folder), 2026-10-27
+function logPerHari(rows){
+  const grup = [];
+  rows.forEach(l => { const d = new Date(l.created_at), k = d.toDateString(); let g = grup.find(x => x.k === k); if(!g){ g = { k, d, isi: [] }; grup.push(g); } g.isi.push(l); });
+  return grup.map(g => `<details class="fold"><summary><span class="fic">📁</span><span class="ft"><b>${esc(g.d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' }))}</b><small>${g.isi.length} aktivitas</small></span><span class="pan">▾</span></summary>
+    ${g.isi.map(l => `<div class="baris"><span>${esc(l.aksi)}<small>${esc(l.keterangan || '')}</small><small>${new Date(l.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${esc((l.pelaku && l.pelaku.nama) || '-')}${l.cabang_id ? ' · ' + esc(namaCab(l.cabang_id)) : ''}</small></span></div>`).join('')}
+  </details>`).join('');
 }
 
 // ---------- brankas (satu untuk semua cabang, khusus Owner) ----------
@@ -864,7 +910,6 @@ async function muatBrankas(){
   box.innerHTML = `
     <div class="gold" style="margin-bottom:10px;"><small>🔒 Saldo Brankas · khusus Owner</small><b class="n">${fmt(saldo)}</b>
       <div style="display:flex;gap:8px;margin-top:8px;"><button class="gbtn gelap" onclick="brankasTambah()">${ic('plus')} Tambah uang</button><button class="gbtn terang" onclick="brankasAmbil()">${ic('minus')} Ambil</button></div>
-      <button class="gbtn gelap" style="width:100%;margin-top:8px;" onclick="brankasSimpanan()">💰 Simpanan Harian (dari Kas Outlet)</button>
       <div class="r"><div>Masuk ${esc(namaBulan)}<b>${fmt(jml('masuk'))}</b></div><div>Diambil ${esc(namaBulan)}<b>${fmt(jml('keluar'))}</b></div></div></div>
     <div class="seg">${[['semua','Semua'],['masuk','Masuk'],['keluar','Diambil']].map(([k, l]) => `<button class="${k === brankasFilter ? 'on' : ''}" onclick="filterBrankas('${k}')">${l}</button>`).join('')}</div>
     <div class="sec"><h3>Riwayat Brankas <small>terbaru di atas</small></h3>
