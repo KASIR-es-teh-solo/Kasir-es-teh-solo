@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="bengkel-2026-10-26.4">
+<meta name="app-version" content="bengkel-2026-10-27.1">
 <meta name="theme-color" content="#14171b">
 <title>Lancar Jaya Motors</title>
 <link rel="icon" href="ljm-192.png">
@@ -39,7 +39,7 @@
   .besar button{flex:1;padding:15px 8px;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;border:0;}
   .b1{background:var(--or);color:#1d0e00;} .b2{background:transparent;color:var(--or1);border:1.5px solid rgba(242,140,40,.65) !important;}
   .peringatan{margin-top:12px;background:rgba(240,138,128,.12);border:1px solid rgba(240,138,128,.4);border-radius:14px;padding:11px 13px;font-size:13px;font-weight:600;line-height:1.5;cursor:pointer;}
-  .peringatan b{color:var(--merah);}
+  .peringatan b{color:var(--merah);} .peringatan.ringkas b{color:inherit;}
   .daftar{background:var(--kartu);border:1px solid var(--garis);border-radius:14px;padding:2px 14px;}
   .baris{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);font-size:14px;}
   .baris:first-child{border-top:0;}
@@ -157,7 +157,7 @@
     <h1 id="sapa">Halo, Boss Leo</h1>
     <div class="d" id="tgl"></div>
     <div class="kartu utama" onclick="pindah('kas')">
-      <div class="lb">💰 Kas Bengkel</div>
+      <div class="lb">💰 Celengan Bengkel</div>
       <div class="nil" id="bSaldo">Rp0</div>
     </div>
     <div class="grid3">
@@ -165,6 +165,7 @@
       <div class="mini"><div class="lb">Laba hari ini</div><div class="nil plus" id="bLaba">Rp0</div></div>
       <div class="mini"><div class="lb">Transaksi</div><div class="nil" id="bTrx">0</div></div>
     </div>
+    <div id="bRingkas"></div>
     <div id="bMenipis"></div>
     <div class="besar">
       <button class="b1" onclick="pindah('kasir')">🧾 Transaksi Baru</button>
@@ -206,9 +207,9 @@
 
   <!-- KAS -->
   <div class="hal" id="h-kas">
-    <h2>💰 Kas Bengkel</h2>
+    <h2>💰 Celengan Bengkel</h2>
     <div class="kartu utama" style="margin-top:0;">
-      <div class="lb">Saldo Kas Bengkel</div>
+      <div class="lb">Saldo Celengan Bengkel</div>
       <div class="nil" id="kasSaldo">Rp0</div>
     </div>
     <div class="besar">
@@ -247,7 +248,7 @@
     <div class="fld"><label for="blTotal">Total bayar (Rp)</label><input id="blTotal" inputmode="numeric" placeholder="0" oninput="infoBeli()"></div>
   </div>
   <div class="fld"><label for="blJual">Harga jual per pcs (Rp)</label><input id="blJual" inputmode="numeric" placeholder="boleh kosong"><small id="blModal"></small></div>
-  <div class="fld"><label>Uang dari</label><div class="pil" id="blSumber"><button data-v="kas" class="on">💰 Kas Bengkel</button><button data-v="lain">👛 Uang lain</button></div></div>
+  <div class="fld"><label>Uang dari</label><div class="pil" id="blSumber"><button data-v="kas" class="on">💰 Celengan Bengkel</button><button data-v="lain">👛 Uang lain</button></div></div>
   <div class="err" id="blErr"></div>
   <div class="tbl"><button class="bt-batal" onclick="tutup('ovBeli')">Batal</button><button class="bt-ok" id="blOk" onclick="simpanBeli()">Simpan</button></div>
 </div></div>
@@ -371,9 +372,9 @@ function pindah(h){
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => pindah(b.dataset.h));
 
 async function muat(){
-  const { data, error } = await sb.rpc('bengkel_data');
+  const [{ data, error }, rk] = await Promise.all([sb.rpc('bengkel_data'), sb.rpc('bengkel_ringkas').then(r => r, () => ({}))]);
   if(error){ toast('Gagal memuat: ' + pesanErr(error)); return; }
-  D = data; gambar();
+  D = data; RK = (rk && rk.data) || null; gambar();
 }
 function gambar(){ gambarBeranda(); gambarKasir(); gambarKeranjang(); gambarStok(); gambarKas(); }
 
@@ -387,7 +388,27 @@ function htmlTrx(t){
   const isi = (t.item || []).map(i => i.nama + (Number(i.qty) > 1 ? ' ×' + qtyT(i.qty) : '')).join(', ');
   return `<div class="baris klik ${t.batal ? 'batal' : ''}" onclick="detailTrx(${t.id})"><div>${esc(isi || '-')}${t.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(t.waktu)}${t.plat ? ' · ' + esc(t.plat) : ''}</small></div><div class="n">${fmt(t.total)}</div></div>`;
 }
+let RK = null;
+function htmlRingkas(){
+  if(!RK) return '';
+  const modal = Number(RK.modal), hasil = Number(RK.hasil);
+  const st = modal <= 0 || hasil >= modal ? ['🟢', '#5fd38a', modal <= 0 ? 'Bulan ini belum ada suntikan modal' : 'Bengkel sudah menghidupi dirinya sendiri']
+           : hasil >= modal * 0.8 ? ['🟡', '#f1d27a', 'Hampir impas']
+           : ['🔴', '#ef8a80', 'Bengkel masih disuntik lebih banyak dari hasilnya'];
+  const bln = new Date(RK.bulan + '-01T00:00:00').toLocaleDateString('id-ID', { month:'long' });
+  const tempo = new Date(RK.kur_tempo + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' });
+  const kurang = Number(RK.kur_kurang), hari = Number(RK.kur_hari_lagi);
+  const kur = kurang <= 0 ? '<span style="color:#5fd38a;">✅ Celengan sudah cukup untuk angsuran</span>'
+    : `Kurang <b>${fmt(kurang)}</b>${hari > 0 ? ` · perlu ±<b>${fmt(Math.ceil(kurang / hari / 1000) * 1000)}/hari</b>` : ''}`;
+  return `<div class="peringatan ringkas" style="background:var(--kartu);border-color:${st[1]};cursor:default;">
+      <div style="font-weight:800;">🏦 KUR ke-${RK.kur_ke}: ${fmt(RK.kur_angsuran)} · ${esc(tempo)} (${hari} hari lagi)</div>
+      <div style="margin-top:3px;">${kur}</div>
+      <div style="margin-top:8px;font-weight:800;">${st[0]} ${esc(bln)}: modal disuntik ${fmt(modal)} · hasil bengkel ${fmt(hasil)}</div>
+      <div style="color:${st[1]};font-weight:700;">${st[2]}</div>
+    </div>`;
+}
 function gambarBeranda(){
+  $('bRingkas').innerHTML = htmlRingkas();
   $('bSaldo').textContent = fmt(D.saldo_kas);
   $('bOmzet').textContent = fmt(D.hari_ini.omzet);
   $('bLaba').textContent = fmt(D.hari_ini.laba);
@@ -404,7 +425,7 @@ function detailTrx(id){
     + `<div style="border-top:1px solid var(--garis);margin-top:6px;padding-top:6px;"><span><b>TOTAL</b></span><b style="color:var(--or1);font-size:17px;">${fmt(t.total)}</b></div>`;
   $('trBatal').style.display = t.batal ? 'none' : '';
   $('trBatal').onclick = async () => {
-    if(!(await yakin('Batalkan transaksi?', `Transaksi ${fmt(t.total)} dibatalkan.\nStok sparepart kembali & uang Kas Bengkel dikurangi lagi.`, 'Ya, batalkan'))) return;
+    if(!(await yakin('Batalkan transaksi?', `Transaksi ${fmt(t.total)} dibatalkan.\nStok sparepart kembali & uang Celengan Bengkel dikurangi lagi.`, 'Ya, batalkan'))) return;
     const { error } = await sb.rpc('bengkel_trx_batal', { p_id: id });
     if(error){ toast(pesanErr(error)); return; }
     tutup('ovTrx'); toast('Transaksi dibatalkan'); muat();
@@ -475,7 +496,7 @@ async function bayar(){
   const nol = krj.find(k => !k.harga);
   const tot = krj.reduce((s, k) => s + k.qty * k.harga, 0);
   const isi = krj.map(k => `• ${k.nama}${k.qty > 1 ? ' ×' + k.qty : ''} = ${fmt(k.qty * k.harga)}`).join('\n');
-  if(!(await yakin('💵 Terima ' + fmt(tot) + '?', isi + (nol ? `\n\n⚠️ ${nol.nama} harganya Rp0.` : '') + '\n\nUang masuk ke Kas Bengkel.', 'Ya, bayar'))) return;
+  if(!(await yakin('💵 Terima ' + fmt(tot) + '?', isi + (nol ? `\n\n⚠️ ${nol.nama} harganya Rp0.` : '') + '\n\nUang masuk ke Celengan Bengkel.', 'Ya, bayar'))) return;
   sedangBayar = true; $('btBayar').disabled = true;
   const { error } = await sb.rpc('bengkel_jual', { p_item: krj.map(k => ({ jenis:k.jenis, id:k.id, nama:k.nama, qty:k.qty, harga:k.harga })), p_plat: $('kPlat').value, p_catatan: null });
   sedangBayar = false;
@@ -557,7 +578,7 @@ function gambarStok(){
     return `<div class="baris klik" onclick="bukaPart(${p.id})"><div>${esc(p.nama)}<small>modal ${fmt(p.harga_modal)} · jual ${Number(p.harga_jual) ? fmt(p.harga_jual) : '<span class="kuning">belum diisi</span>'}</small></div><div class="n ${kls}">${qtyT(s)}<small>stok</small></div></div>`;
   }).join('') : `<div class="kosong">${D.part.length ? 'Tidak ditemukan.' : 'Belum ada sparepart. Ketuk 📦 Beli Sparepart — sparepart baru otomatis masuk sini.'}</div>`;
   const b = D.beli.slice(0, 20);
-  $('sBeli').innerHTML = b.length ? b.map(x => `<div class="baris klik ${x.batal ? 'batal' : ''}" onclick="batalBeli(${x.id})"><div>${esc(x.nama)} × ${qtyT(x.jumlah)}${x.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(x.waktu)} · ${x.sumber === 'kas' ? 'Kas Bengkel' : 'Uang lain'}</small></div><div class="n">${fmt(x.total)}</div></div>`).join('') : '<div class="kosong">Belum ada pembelian.</div>';
+  $('sBeli').innerHTML = b.length ? b.map(x => `<div class="baris klik ${x.batal ? 'batal' : ''}" onclick="batalBeli(${x.id})"><div>${esc(x.nama)} × ${qtyT(x.jumlah)}${x.batal ? '<span class="tag">BATAL</span>' : ''}<small>${waktu(x.waktu)} · ${x.sumber === 'kas' ? 'Celengan Bengkel' : 'Uang lain'}</small></div><div class="n">${fmt(x.total)}</div></div>`).join('') : '<div class="kosong">Belum ada pembelian.</div>';
 }
 let ptEdit = null;
 function bukaPart(id){
@@ -587,14 +608,14 @@ async function hapusPart(){
 }
 async function batalBeli(id){
   const b = D.beli.find(x => x.id === id); if(!b || b.batal) return;
-  if(!(await yakin('Batalkan pembelian?', `${b.nama} × ${qtyT(b.jumlah)} (${fmt(b.total)}).\nStok dikurangi lagi${b.sumber === 'kas' ? ' & uang kembali ke Kas Bengkel' : ''}.`, 'Ya, batalkan'))) return;
+  if(!(await yakin('Batalkan pembelian?', `${b.nama} × ${qtyT(b.jumlah)} (${fmt(b.total)}).\nStok dikurangi lagi${b.sumber === 'kas' ? ' & uang kembali ke Celengan Bengkel' : ''}.`, 'Ya, batalkan'))) return;
   const { error } = await sb.rpc('bengkel_beli_batal', { p_id: id });
   if(error){ toast(pesanErr(error)); return; }
   toast('Pembelian dibatalkan'); muat();
 }
 
 // ===== Kas =====
-const KAT = { masuk: ['Modal / Tambah Uang', 'Lain-lain'], keluar: ['Listrik', 'Peralatan', 'Bensin / Transport', 'Makan / Minum', 'Ambil Owner', 'Lain-lain'] };
+const KAT = { masuk: ['Modal dari Boss', 'Lain-lain'], keluar: ['Bayar KUR BRI', 'Listrik', 'Peralatan', 'Bensin / Transport', 'Makan / Minum', 'Ambil Owner', 'Lain-lain'] };
 let ksJenis = 'masuk', ksKat = '';
 function gambarKas(){
   $('kasSaldo').textContent = fmt(D.saldo_kas);
@@ -606,7 +627,7 @@ function gambarKas(){
 function bukaKas(j){
   ksJenis = j; ksKat = '';
   $('ksJudul').textContent = j === 'masuk' ? '➕ Uang Masuk' : '➖ Pengeluaran';
-  $('ksSub').textContent = j === 'masuk' ? 'Mis. saldo awal Kas Bengkel atau tambahan uang dari Boss.' : 'Mis. bayar listrik, beli alat. Beli sparepart lewat 📦 Beli Sparepart.\n"Ambil Owner" tidak dihitung sebagai biaya di laporan.';
+  $('ksSub').textContent = j === 'masuk' ? 'Pilih "Modal dari Boss" kalau uang pribadi Boss dipakai untuk bengkel (termasuk talangan KUR).' : 'Bayar KUR tiap tanggal 4 pilih "Bayar KUR BRI". Beli sparepart lewat 📦 Beli Sparepart.\n"Bayar KUR BRI" & "Ambil Owner" tidak dihitung sebagai biaya di laporan.';
   $('ksKat').innerHTML = KAT[j].map(k => `<button class="chip" data-v="${esc(k)}" style="padding:9px 11px;font-size:13.5px;">${esc(k)}</button>`).join('');
   $('ksKat').querySelectorAll('button').forEach(b => b.onclick = () => { ksKat = b.dataset.v; $('ksKat').querySelectorAll('button').forEach(x => x.style.borderColor = x === b ? 'var(--or)' : ''); });
   $('ksJml').value = ''; $('ksKet').value = ''; $('ksErr').textContent = '';

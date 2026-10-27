@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-25.1">
+<meta name="app-version" content="tandon-2026-10-27.1">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -148,7 +148,7 @@
 
 <script>
 const sb = supabase.createClient("https://ywoytgapbshpzrdwdtel.supabase.co", "sb_publishable_yxfWIKFL9NbgcOZpnAqV-g_o6PhL0GK");
-const NAMA = { kontrakan:'🏠 Kontrakan', kur:'🏦 KUR BRI', keluarga:'👨‍👩‍👧 Dana Keluarga' };
+const NAMA = { kontrakan:'🏠 Kontrakan', kur:'🏦 KUR BRI', keluarga:'👨‍👩‍👧 Dana Keluarga', senang:'🎉 Celengan Senang' };
 const KEY = { kontrakan:'Kontrakan', kur:'Kur', keluarga:'Keluarga' };
 let data = null, filter = 'semua', profil = null;
 const fmt = n => (Number(n) < 0 ? '−Rp' : 'Rp') + Math.abs(Math.round(Number(n || 0))).toLocaleString('id-ID');
@@ -219,7 +219,22 @@ function gambar(){
   const statusKur = kurKurang <= 0 ? '<span class="aman">✅ Angsuran sudah cukup, siap dibayar</span>'
     : `Kurang <b>${fmt(kurKurang)}</b> · harus siap <b>${esc(siapK)}</b> (${kurHari} hari lagi)<br>Perlu <b class="${perHariKur > Number(k.kur_harian) ? 'bahaya' : ''}">${fmt(perHariKur)}/hari</b>${perHariKur > Number(k.kur_harian) ? ' <span class="bahaya">(lebih dari jatah Rp' + Number(k.kur_harian).toLocaleString('id-ID') + ')</span>' : ''}`;
   const pctKur = Math.min(100, Math.round(Number(d.kur) / Number(k.kur_angsuran) * 100));
+  const g = k, sudahG = d.gajian_sudah, jumat = new Date(d.hari_ini + 'T00:00:00').getDay() === 5;
+  const dapur = Number(g.gajian_jumlah) - Number(g.gajian_nafkah) - Number(g.gajian_rokok) - Number(g.gajian_senang);
+  const tglG = g.gajian_terakhir ? new Date(g.gajian_terakhir + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' }) : '';
   document.getElementById('kartu').innerHTML = `
+    <div class="kaleng" style="border-color:rgba(201,169,74,.55);">
+      <div class="k-top"><div><div class="k-nama">💵 Gajian Jumat</div><div class="k-ket">Uang hidup seminggu · diambil dari laba es teh</div></div></div>
+      <div class="k-saldo">${fmt(g.gajian_jumlah)}</div>
+      <div class="info" style="font-weight:600;">💝 Nafkah Boss Puspita <b>${fmt(g.gajian_nafkah)}</b> · 🚬 Rokok <b>${fmt(g.gajian_rokok)}</b><br>🍚 Dapur <b>${fmt(dapur)}</b> · 🎉 Celengan Senang <b>${fmt(g.gajian_senang)}</b></div>
+      <div class="info">${sudahG ? `<span class="aman">✅ Sudah gajian ${esc(tglG)}. Cukupkan sampai Jumat depan.</span>` : jumat ? '<span class="warn">⏰ Hari ini Jumat, waktunya gajian.</span>' : '⏳ Gajian berikutnya hari Jumat.'}</div>
+      ${sudahG || profil.role !== 'owner' ? '' : `<div class="aksi"><button class="btn isi" onclick="gajian()">💵 Ambil Gajian</button></div>`}
+    </div>
+    <div class="kaleng">
+      <div class="k-top"><div><div class="k-nama">🎉 Celengan Senang</div><div class="k-ket">Khusus jalan-jalan / makan di luar berdua · bukan untuk usaha</div></div></div>
+      <div class="k-saldo">${fmt(d.senang)}</div>
+      <div class="aksi"><button class="btn" onclick="bukaNom('senang','keluar')">🎉 Pakai untuk senang-senang</button></div>
+    </div>
     <div class="kaleng utama">
       <div class="k-top"><div><div class="k-nama">🏠 Kontrakan</div><div class="k-ket">Target ${fmt(k.kontrakan_target)} · bayar ${esc(tglK)}</div></div><div style="font-weight:800;font-size:13px;">${pctK}%</div></div>
       <div class="k-saldo">${fmt(d.kontrakan)}</div>
@@ -242,7 +257,7 @@ function gambar(){
       <div class="k-saldo">${fmt(d.keluarga)}</div>
       <div class="aksi"><button class="btn isi" onclick="bukaNom('keluarga','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('keluarga','keluar')">➖ Ambil</button></div>
     </div>`;
-  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['kur','KUR'],['keluarga','Keluarga']]
+  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['kur','KUR'],['keluarga','Keluarga'],['senang','Senang']]
     .map(([k2, l]) => `<button class="${k2 === filter ? 'on' : ''}" onclick="filter='${k2}';gambar()">${l}</button>`).join('');
   const rows = (d.riwayat || []).filter(r => filter === 'semua' || r.kaleng === filter).slice(0, 40);
   document.getElementById('riwayat').innerHTML = rows.map(r => `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Keluar'))}
@@ -273,6 +288,16 @@ async function bayarKur(){
   const { error } = await sb.rpc('kaleng_catat', { p_kaleng: 'kur', p_jenis: 'keluar', p_jumlah: Number(k.kur_angsuran), p_keterangan: `Bayar angsuran KUR ke-${data.kur_angsuran_ke}`, p_sumber: 'bayar_kur' });
   if(error){ toast('Gagal: ' + error.message); return; }
   toast('Angsuran KUR tercatat dibayar'); muat();
+}
+
+// gajian jumat
+async function gajian(){
+  const k = data.pengaturan;
+  const dapur = Number(k.gajian_jumlah) - Number(k.gajian_nafkah) - Number(k.gajian_rokok) - Number(k.gajian_senang);
+  if(!(await yakin('💵 Ambil Gajian ' + fmt(k.gajian_jumlah), `Ambil ${fmt(k.gajian_jumlah)} dari laba es teh, lalu bagi:\n💝 Nafkah Boss Puspita ${fmt(k.gajian_nafkah)}\n🚬 Rokok ${fmt(k.gajian_rokok)}\n🍚 Dapur ${fmt(dapur)}\n🎉 Celengan Senang ${fmt(k.gajian_senang)}\n\nAplikasi tidak mengubah Kas Outlet. Celengan Senang otomatis bertambah.`))) return;
+  const { error } = await sb.rpc('gajian_jumat');
+  if(error){ toast('Gagal: ' + error.message); return; }
+  toast('Gajian tercatat. Selamat menikmati, Boss!'); muat();
 }
 
 // bagi uang
