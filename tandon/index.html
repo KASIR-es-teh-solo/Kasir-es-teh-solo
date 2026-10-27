@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-27.1">
+<meta name="app-version" content="tandon-2026-10-27.2">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -119,10 +119,9 @@
 
 <!-- modal bagi uang -->
 <div class="ov" id="ovBagi"><div class="md">
-  <h3>🧮 Bagi Uang</h3><p>Isi uang yang mau dibagi. Kontrakan & KUR diisi dulu sesuai jatah, sisanya ke Dana Keluarga. Angka bisa diubah.</p>
+  <h3>🧮 Bagi Uang</h3><p>Isi uang yang mau dibagi. Kontrakan diisi dulu sesuai jatah, sisanya ke Dana Keluarga. Angka bisa diubah.</p>
   <div class="fld"><label for="bgTotal">Uang yang dibagi (Rp)</label><input id="bgTotal" inputmode="numeric" placeholder="0" oninput="hitungBagi()"></div>
   <div class="fld"><label for="bgKontrakan">🏠 Kontrakan</label><input id="bgKontrakan" inputmode="numeric" oninput="rapikan(this);cekBagi()"><small id="bgKontrakanInfo" class="warn"></small></div>
-  <div class="fld"><label for="bgKur">🏦 KUR BRI</label><input id="bgKur" inputmode="numeric" oninput="rapikan(this);cekBagi()"><small id="bgKurInfo" class="warn"></small></div>
   <div class="fld"><label for="bgKeluarga">👨‍👩‍👧 Dana Keluarga</label><input id="bgKeluarga" inputmode="numeric" oninput="rapikan(this);cekBagi()"></div>
   <div class="err" id="bgErr"></div>
   <div class="tbl"><button class="bt-batal" onclick="tutup('ovBagi')">Batal</button><button class="bt-ok" onclick="simpanBagi()">Simpan</button></div>
@@ -132,7 +131,6 @@
 <div class="ov" id="ovCocok"><div class="md">
   <h3>✅ Cocokkan Uang Fisik</h3><p>Hitung uang fisik tiap tandon lalu ketik jumlahnya. Kosongkan kalau tidak dihitung.</p>
   <div class="fld"><label for="ccKontrakan">🏠 Kontrakan</label><input id="ccKontrakan" inputmode="numeric" placeholder="" oninput="rapikan(this);cekCocok()"><small id="ccKontrakanInfo"></small></div>
-  <div class="fld"><label for="ccKur">🏦 KUR BRI</label><input id="ccKur" inputmode="numeric" oninput="rapikan(this);cekCocok()"><small id="ccKurInfo"></small></div>
   <div class="fld"><label for="ccKeluarga">👨‍👩‍👧 Dana Keluarga</label><input id="ccKeluarga" inputmode="numeric" oninput="rapikan(this);cekCocok()"><small id="ccKeluargaInfo"></small></div>
   <div class="fld"><label for="ccAlasan">Alasan kalau ada selisih</label><input id="ccAlasan" class="ket" placeholder="mis. lupa catat ambil uang"></div>
   <div class="err" id="ccErr"></div>
@@ -212,13 +210,6 @@ function gambar(){
   const perHariK = Number(d.kontrakan_per_hari);
   const statusK = Number(d.kontrakan_kurang) <= 0 ? '<span class="aman">✅ Target sudah terkumpul!</span>'
     : `Kurang <b>${fmt(d.kontrakan_kurang)}</b> · ${d.kontrakan_sisa_hari} hari lagi<br>Perlu <b>${fmt(perHariK)}/hari</b>${perHariK > Number(k.kontrakan_harian) ? ' <span class="bahaya">(di atas jatah Rp' + Number(k.kontrakan_harian).toLocaleString('id-ID') + ', tertinggal!)</span>' : ' <span class="aman">· sesuai jadwal</span>'}`;
-  const kurKurang = Number(d.kur_kurang), kurHari = Math.max(Number(d.kur_hari_lagi), 0);
-  const siapK = new Date(d.kur_siap_sebelum + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
-  const tempoK = new Date(d.kur_jatuh_tempo + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long' });
-  const perHariKur = kurHari > 0 ? Math.ceil(kurKurang / kurHari / 500) * 500 : kurKurang;
-  const statusKur = kurKurang <= 0 ? '<span class="aman">✅ Angsuran sudah cukup, siap dibayar</span>'
-    : `Kurang <b>${fmt(kurKurang)}</b> · harus siap <b>${esc(siapK)}</b> (${kurHari} hari lagi)<br>Perlu <b class="${perHariKur > Number(k.kur_harian) ? 'bahaya' : ''}">${fmt(perHariKur)}/hari</b>${perHariKur > Number(k.kur_harian) ? ' <span class="bahaya">(lebih dari jatah Rp' + Number(k.kur_harian).toLocaleString('id-ID') + ')</span>' : ''}`;
-  const pctKur = Math.min(100, Math.round(Number(d.kur) / Number(k.kur_angsuran) * 100));
   const g = k, sudahG = d.gajian_sudah, jumat = new Date(d.hari_ini + 'T00:00:00').getDay() === 5;
   const dapur = Number(g.gajian_jumlah) - Number(g.gajian_nafkah) - Number(g.gajian_rokok) - Number(g.gajian_senang);
   const tglG = g.gajian_terakhir ? new Date(g.gajian_terakhir + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' }) : '';
@@ -245,19 +236,11 @@ function gambar(){
       <div class="aksi"><button class="btn isi" onclick="bukaNom('kontrakan','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kontrakan','keluar')">➖ Ambil</button></div>
     </div>
     <div class="kaleng">
-      <div class="k-top"><div><div class="k-nama">🏦 KUR BRI</div><div class="k-ket">Angsuran ke-${d.kur_angsuran_ke} dari ${k.kur_tenor} · ${fmt(k.kur_angsuran)} · jatuh tempo ${esc(tempoK)}</div></div><div style="font-weight:800;font-size:13px;color:var(--emas1);">${pctKur}%</div></div>
-      <div class="k-saldo">${fmt(d.kur)}</div>
-      <div class="bar"><i style="width:${pctKur}%"></i></div>
-      <div class="info">${statusKur}</div>
-      <div class="aksi"><button class="btn isi" onclick="bukaNom('kur','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kur','keluar')">➖ Ambil</button>
-        ${Number(d.kur) >= Number(k.kur_angsuran) ? `<button class="btn isi" style="flex-basis:100%;" onclick="bayarKur()">💳 Bayar angsuran ke-${d.kur_angsuran_ke}</button>` : ''}</div>
-    </div>
-    <div class="kaleng">
       <div class="k-top"><div><div class="k-nama">👨‍👩‍👧 Dana Keluarga</div><div class="k-ket">Rumah tangga, dana darurat & tabungan cabang</div></div></div>
       <div class="k-saldo">${fmt(d.keluarga)}</div>
       <div class="aksi"><button class="btn isi" onclick="bukaNom('keluarga','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('keluarga','keluar')">➖ Ambil</button></div>
     </div>`;
-  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['kur','KUR'],['keluarga','Keluarga'],['senang','Senang']]
+  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['keluarga','Keluarga'],['senang','Senang']]
     .map(([k2, l]) => `<button class="${k2 === filter ? 'on' : ''}" onclick="filter='${k2}';gambar()">${l}</button>`).join('');
   const rows = (d.riwayat || []).filter(r => filter === 'semua' || r.kaleng === filter).slice(0, 40);
   document.getElementById('riwayat').innerHTML = rows.map(r => `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Keluar'))}
@@ -282,13 +265,6 @@ async function simpanNom(kaleng, jenis){
   if(error){ err.textContent = 'Gagal: ' + error.message; return; }
   tutup('ovNom'); toast(`${jenis === 'masuk' ? 'Masuk' : 'Keluar'} ${fmt(j)} · ${NAMA[kaleng]}`); muat();
 }
-async function bayarKur(){
-  const k = data.pengaturan;
-  if(!(await yakin('💳 Bayar angsuran KUR', `Angsuran ke-${data.kur_angsuran_ke}: ${fmt(k.kur_angsuran)}\nUang diambil dari tandon KUR BRI untuk disetor ke bank.`))) return;
-  const { error } = await sb.rpc('kaleng_catat', { p_kaleng: 'kur', p_jenis: 'keluar', p_jumlah: Number(k.kur_angsuran), p_keterangan: `Bayar angsuran KUR ke-${data.kur_angsuran_ke}`, p_sumber: 'bayar_kur' });
-  if(error){ toast('Gagal: ' + error.message); return; }
-  toast('Angsuran KUR tercatat dibayar'); muat();
-}
 
 // gajian jumat
 async function gajian(){
@@ -302,7 +278,7 @@ async function gajian(){
 
 // bagi uang
 function bukaBagi(){
-  ['bgTotal','bgKontrakan','bgKur','bgKeluarga'].forEach(id => document.getElementById(id).value = '');
+  ['bgTotal','bgKontrakan','bgKeluarga'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('bgErr').textContent = ''; hitungBagi(); buka('ovBagi');
   setTimeout(() => document.getElementById('bgTotal').focus(), 60);
 }
@@ -310,22 +286,19 @@ function hitungBagi(){
   const el = document.getElementById('bgTotal'); rapikan(el);
   const total = angka(el), k = data.pengaturan;
   const jatahK = Number(data.kontrakan_kurang) > 0 ? Math.max(Number(k.kontrakan_harian), Number(data.kontrakan_per_hari)) : 0;
-  const kurHari = Math.max(Number(data.kur_hari_lagi), 1);
-  const jatahKur = Number(data.kur_kurang) > 0 ? Math.min(Number(data.kur_kurang), Math.max(Number(k.kur_harian), Math.ceil(Number(data.kur_kurang) / kurHari / 500) * 500)) : 0;
-  const a = Math.min(total, jatahK), b = Math.min(total - a, jatahKur), c = total - a - b;
+  const a = Math.min(total, jatahK), c = total - a;
   const set = (id, v) => document.getElementById(id).value = total ? Number(v).toLocaleString('id-ID') : '';
-  set('bgKontrakan', a); set('bgKur', b); set('bgKeluarga', c);
+  set('bgKontrakan', a); set('bgKeluarga', c);
   document.getElementById('bgKontrakanInfo').textContent = jatahK ? `Jatah harian ${fmt(jatahK)}` : 'Target kontrakan sudah terkumpul';
-  document.getElementById('bgKurInfo').textContent = jatahKur ? `Jatah harian ${fmt(jatahKur)} (angsuran harus siap ${new Date(data.kur_siap_sebelum + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'short' })})` : 'Angsuran bulan ini sudah cukup';
   cekBagi();
 }
 function cekBagi(){
-  const t = angka(document.getElementById('bgTotal')), s = ['bgKontrakan','bgKur','bgKeluarga'].reduce((x, id) => x + angka(document.getElementById(id)), 0);
+  const t = angka(document.getElementById('bgTotal')), s = ['bgKontrakan','bgKeluarga'].reduce((x, id) => x + angka(document.getElementById(id)), 0);
   document.getElementById('bgErr').textContent = t && s !== t ? `Jumlah pembagian ${fmt(s)} belum sama dengan ${fmt(t)}.` : '';
 }
 async function simpanBagi(){
   const t = angka(document.getElementById('bgTotal'));
-  const isi = [['kontrakan','bgKontrakan'],['kur','bgKur'],['keluarga','bgKeluarga']].map(([k, id]) => [k, angka(document.getElementById(id))]).filter(x => x[1] > 0);
+  const isi = [['kontrakan','bgKontrakan'],['keluarga','bgKeluarga']].map(([k, id]) => [k, angka(document.getElementById(id))]).filter(x => x[1] > 0);
   const s = isi.reduce((x, y) => x + y[1], 0);
   if(!t || !isi.length){ document.getElementById('bgErr').textContent = 'Isi uang yang mau dibagi.'; return; }
   if(s !== t){ cekBagi(); return; }
@@ -339,12 +312,12 @@ async function simpanBagi(){
 
 // cocokkan
 function bukaCocok(){
-  ['ccKontrakan','ccKur','ccKeluarga','ccAlasan'].forEach(id => document.getElementById(id).value = '');
-  ['kontrakan','kur','keluarga'].forEach(k => document.getElementById('cc' + KEY[k]).placeholder = 'Aplikasi: ' + fmt(data[k]));
+  ['ccKontrakan','ccKeluarga','ccAlasan'].forEach(id => document.getElementById(id).value = '');
+  ['kontrakan','keluarga'].forEach(k => document.getElementById('cc' + KEY[k]).placeholder = 'Aplikasi: ' + fmt(data[k]));
   document.getElementById('ccErr').textContent = ''; cekCocok(); buka('ovCocok');
 }
 function cekCocok(){
-  ['kontrakan','kur','keluarga'].forEach(k => {
+  ['kontrakan','keluarga'].forEach(k => {
     const el = document.getElementById('cc' + KEY[k]), inf = document.getElementById('cc' + KEY[k] + 'Info');
     if(kosong(el)){ inf.textContent = ''; return; }
     const sel = angka(el) - Number(data[k]);
@@ -354,8 +327,8 @@ function cekCocok(){
 }
 async function simpanCocok(){
   const alasan = document.getElementById('ccAlasan').value.trim();
-  const beda = ['kontrakan','kur','keluarga'].map(k => { const el = document.getElementById('cc' + KEY[k]); return kosong(el) ? null : [k, angka(el) - Number(data[k])]; }).filter(x => x && x[1] !== 0);
-  const dihitung = ['kontrakan','kur','keluarga'].some(k => !kosong(document.getElementById('cc' + KEY[k])));
+  const beda = ['kontrakan','keluarga'].map(k => { const el = document.getElementById('cc' + KEY[k]); return kosong(el) ? null : [k, angka(el) - Number(data[k])]; }).filter(x => x && x[1] !== 0);
+  const dihitung = ['kontrakan','keluarga'].some(k => !kosong(document.getElementById('cc' + KEY[k])));
   if(!dihitung){ document.getElementById('ccErr').textContent = 'Isi minimal satu tandon.'; return; }
   if(!beda.length){ tutup('ovCocok'); toast('✅ Semua tandon cocok'); return; }
   if(!alasan){ document.getElementById('ccErr').textContent = 'Ada selisih, isi alasannya dulu.'; return; }
