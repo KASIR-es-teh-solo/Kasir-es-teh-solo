@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-27.2">
+<meta name="app-version" content="2026-10-27.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -3001,6 +3001,10 @@ let kasAwalOtomatisDari = null; // simpan info baris kas kemarin (kalau ada), bu
 // 1) cek semua uang keluar laci  2) rincian "seharusnya di laci" (kas awal paten, terkunci)  3) hitung uang, selisih langsung tampil.
 // Kelebihan di atas kas awal paten otomatis disetor ke Brankas (fungsi kas_tutup), sisa paten ditinggal untuk kembalian besok.
 let kasTK = null;
+// 2026-10-27 (Boss Leo): Simpanan Harian & pindah amplop dicatat Owner, tidak dimunculkan di kasir.
+// Untuk kasir, uangnya langsung dikurangkan dari kas awal (Kas Outlet tetap benar, tanpa baris pemberitahuan).
+const KAT_URUSAN_OWNER = ['Tabungan', 'Pindah ke Amplop'];
+const lihatUrusanOwner = () => !!(currentProfile && ['owner','admin'].includes(currentProfile.role));
 async function ambilDataTutupKas(){
   const [{ data: lastKas }, cfgRes] = await Promise.all([
     sb.from('kas_shift').select('kas_fisik, kas_ditinggal, waktu_tutup').eq('cabang_id', activeCabangId)
@@ -3033,7 +3037,12 @@ async function ambilDataTutupKas(){
   try{ const qr = await sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','qris').gt('masuk_at', startOfDay.toISOString());
        totalQris = (qr.data || []).reduce((a,t)=>a+Number(t.total),0); jumlahQris = (qr.data || []).length; }catch(e){}
   if(byRes.error) throw new Error('Gagal mengambil data uang keluar: ' + byRes.error.message);
-  const biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
+  let biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
+  if(!lihatUrusanOwner()){
+    const urusanOwner = biaya.filter(b => KAT_URUSAN_OWNER.includes(b.kategori));
+    kasAwal -= urusanOwner.reduce((a,b)=>a+Number(b.jumlah),0);
+    biaya = biaya.filter(b => !KAT_URUSAN_OWNER.includes(b.kategori));
+  }
   const totalTunai = (txRes.data || []).reduce((a,t)=>a+Number(t.total),0);
   const totalBiaya = biaya.reduce((a,b)=>a+Number(b.jumlah),0);
   // 2026-10-23 sistem amplop: yang harus disisihkan ke Dana Stok & Dana Operasional (dihitung server dari resep x penjualan tunai)
@@ -3318,7 +3327,7 @@ async function tampilkanLaporanKas(d){
 
   let biaya = [];
   const { data: rows, error } = await sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: d.sejak });
-  if(!error && rows) biaya = rows;
+  if(!error && rows) biaya = lihatUrusanOwner() ? rows : rows.filter(b => !KAT_URUSAN_OWNER.includes(b.kategori));
 
   const status = d.selisih === 0 ? ['pas','✅ KAS PAS — tidak ada selisih']
     : d.selisih < 0 ? ['kurang', '⚠️ KAS KURANG ' + fmt(Math.abs(d.selisih))]
@@ -8935,7 +8944,7 @@ async function loadBelanjaKecilHariIni(){
   if(error){ box.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
   const idBiaya = {};
   (biayaRes.data || []).forEach(b => { idBiaya[new Date(b.created_at).getTime() + '|' + b.kategori] = b.id; });
-  const rows = (data || []).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+  const rows = (data || []).filter(r => lihatUrusanOwner() || !KAT_URUSAN_OWNER.includes(r.kategori)).slice().sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
   const totalKas = rows.reduce((s,r)=>s+Number(r.jumlah),0);
   const barisKas = rows.map(r=>{
     const batal = Number(r.jumlah) === 0 && /^DIBATALKAN/.test(r.deskripsi || '');
