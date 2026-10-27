@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-27.3">
+<meta name="app-version" content="owner-2026-10-27.4">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -469,10 +469,9 @@ async function muatTugasMalam(per){
     if(Number(h.k.qris || 0) > 0){ const kk = 'qris_' + h.c.id;
       item.push({ ok: sudah(kk), judul: 'Cocokkan QRIS' + nm, ket: `${fmt(h.k.qris)} dengan mutasi rekening`, tombol: sudah(kk) ? '' : `<button class="btn" onclick="cekTugas('${kk}')">Sudah cocok</button>` }); }
     // 4. Grab/Shopee
-    const onGS = Number(h.on.saldo || 0) - Number(h.on.saldo_qris || 0), onQ = Number(h.on.saldo_qris || 0);
+    // QRIS tidak masuk Tugas Malam (cukup tombol Cairkan di modul Uang, permintaan Boss Leo 2026-10-27)
+    const onGS = Number(h.on.saldo || 0) - Number(h.on.saldo_qris || 0);
     if(onGS > 0) item.push({ ok: false, judul: 'Grab/Shopee belum cair' + nm, ket: fmt(onGS) + ' · cairkan kalau sudah ditransfer', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
-    // QRIS dicairkan seminggu sekali: pengingat cuma muncul hari Jumat
-    if(onQ > 0 && new Date().getDay() === 5) item.push({ ok: false, judul: 'Cairkan QRIS (Jumat)' + nm, ket: fmt(onQ) + ' belum cair', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
     // 5. Amplop
     const blm = Number(h.bp.stok || 0) + Number(h.bp.operasional || 0);
     if(blm > 100000) item.push({ ok: false, judul: 'Pindahkan uang amplop' + nm, ket: fmt(blm) + ' masih di Kas Outlet', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
