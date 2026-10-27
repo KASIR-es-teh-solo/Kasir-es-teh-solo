@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-27.3">
+<meta name="app-version" content="tandon-2026-10-28.1">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -98,11 +98,9 @@
     <div class="d" id="tgl"></div>
     <div id="kartu"></div>
     <div class="besar">
-      <button class="b-bagi" onclick="bukaBagi()">🧮 Bagi Uang</button>
       <button class="b-cocok" onclick="bukaCocok()">✅ Cocokkan</button>
     </div>
     <div class="h">RIWAYAT</div>
-    <div class="seg" id="filter"></div>
     <div class="riw" id="riwayat"></div>
     <button class="keluar" onclick="keluar()">Keluar dari akun</button>
   </div>
@@ -115,16 +113,6 @@
   <div class="fld"><label for="nomKet">Keterangan (boleh kosong)</label><input id="nomKet" class="ket" placeholder="mis. belanja mingguan"></div>
   <div class="err" id="nomErr"></div>
   <div class="tbl"><button class="bt-batal" onclick="tutup('ovNom')">Batal</button><button class="bt-ok" id="nomOk">Simpan</button></div>
-</div></div>
-
-<!-- modal bagi uang -->
-<div class="ov" id="ovBagi"><div class="md">
-  <h3>🧮 Bagi Uang</h3><p>Isi uang yang mau dibagi. Kontrakan diisi dulu sesuai jatah, sisanya ke Brankas Pribadi. Angka bisa diubah.</p>
-  <div class="fld"><label for="bgTotal">Uang yang dibagi (Rp)</label><input id="bgTotal" inputmode="numeric" placeholder="0" oninput="hitungBagi()"></div>
-  <div class="fld"><label for="bgKontrakan">🏠 Kontrakan</label><input id="bgKontrakan" inputmode="numeric" oninput="rapikan(this);cekBagi()"><small id="bgKontrakanInfo" class="warn"></small></div>
-  <div class="fld"><label for="bgKeluarga">🔐 Brankas Pribadi</label><input id="bgKeluarga" inputmode="numeric" oninput="rapikan(this);cekBagi()"></div>
-  <div class="err" id="bgErr"></div>
-  <div class="tbl"><button class="bt-batal" onclick="tutup('ovBagi')">Batal</button><button class="bt-ok" onclick="simpanBagi()">Simpan</button></div>
 </div></div>
 
 <!-- modal cocokkan -->
@@ -210,22 +198,7 @@ function gambar(){
   const perHariK = Number(d.kontrakan_per_hari);
   const statusK = Number(d.kontrakan_kurang) <= 0 ? '<span class="aman">✅ Target sudah terkumpul!</span>'
     : `Kurang <b>${fmt(d.kontrakan_kurang)}</b> · ${d.kontrakan_sisa_hari} hari lagi<br>Perlu <b>${fmt(perHariK)}/hari</b>${perHariK > Number(k.kontrakan_harian) ? ' <span class="bahaya">(di atas jatah Rp' + Number(k.kontrakan_harian).toLocaleString('id-ID') + ', tertinggal!)</span>' : ' <span class="aman">· sesuai jadwal</span>'}`;
-  const g = k, sudahG = d.gajian_sudah, jumat = new Date(d.hari_ini + 'T00:00:00').getDay() === 5;
-  const dapur = Number(g.gajian_jumlah) - Number(g.gajian_nafkah) - Number(g.gajian_rokok) - Number(g.gajian_senang);
-  const tglG = g.gajian_terakhir ? new Date(g.gajian_terakhir + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' }) : '';
   document.getElementById('kartu').innerHTML = `
-    <div class="kaleng" style="border-color:rgba(201,169,74,.55);">
-      <div class="k-top"><div><div class="k-nama">💵 Gajian Jumat</div><div class="k-ket">Uang hidup seminggu · diambil dari 🔐 Brankas Pribadi</div></div></div>
-      <div class="k-saldo">${fmt(g.gajian_jumlah)}</div>
-      <div class="info" style="font-weight:600;">💝 Nafkah Boss Puspita <b>${fmt(g.gajian_nafkah)}</b> · 🚬 Rokok <b>${fmt(g.gajian_rokok)}</b><br>🍚 Dapur <b>${fmt(dapur)}</b> · 🎉 Celengan Senang <b>${fmt(g.gajian_senang)}</b></div>
-      <div class="info">${!sudahG && Number(d.keluarga) < Number(g.gajian_jumlah) ? `<span class="bahaya">⚠️ Brankas Pribadi cuma ${fmt(d.keluarga)}. Isi dulu lewat ➕ Masukkan.</span><br>` : ''}${sudahG ? `<span class="aman">✅ Sudah gajian ${esc(tglG)}. Cukupkan sampai Jumat depan.</span>` : jumat ? '<span class="warn">⏰ Hari ini Jumat, waktunya gajian.</span>' : '⏳ Gajian berikutnya hari Jumat.'}</div>
-      ${sudahG || profil.role !== 'owner' ? '' : `<div class="aksi"><button class="btn isi" onclick="gajian()">💵 Ambil Gajian</button></div>`}
-    </div>
-    <div class="kaleng">
-      <div class="k-top"><div><div class="k-nama">🎉 Celengan Senang</div><div class="k-ket">Khusus jalan-jalan / makan di luar berdua · bukan untuk usaha</div></div></div>
-      <div class="k-saldo">${fmt(d.senang)}</div>
-      <div class="aksi"><button class="btn" onclick="bukaNom('senang','keluar')">🎉 Pakai untuk senang-senang</button></div>
-    </div>
     <div class="kaleng utama">
       <div class="k-top"><div><div class="k-nama">🏠 Kontrakan</div><div class="k-ket">Target ${fmt(k.kontrakan_target)} · bayar ${esc(tglK)}</div></div><div style="font-weight:800;font-size:13px;">${pctK}%</div></div>
       <div class="k-saldo">${fmt(d.kontrakan)}</div>
@@ -236,13 +209,11 @@ function gambar(){
       <div class="aksi"><button class="btn isi" onclick="bukaNom('kontrakan','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('kontrakan','keluar')">➖ Ambil</button></div>
     </div>
     <div class="kaleng">
-      <div class="k-top"><div><div class="k-nama">🔐 Brankas Pribadi</div><div class="k-ket">Uang pribadi Boss (laba yang dikumpulkan) · sumber Gajian Jumat</div></div></div>
+      <div class="k-top"><div><div class="k-nama">🔐 Brankas Pribadi</div><div class="k-ket">Uang pribadi Boss · tabungan di luar usaha</div></div></div>
       <div class="k-saldo">${fmt(d.keluarga)}</div>
       <div class="aksi"><button class="btn isi" onclick="bukaNom('keluarga','masuk')">➕ Masukkan</button><button class="btn" onclick="bukaNom('keluarga','keluar')">➖ Ambil</button></div>
     </div>`;
-  document.getElementById('filter').innerHTML = [['semua','Semua'],['kontrakan','Kontrakan'],['keluarga','Pribadi'],['senang','Senang']]
-    .map(([k2, l]) => `<button class="${k2 === filter ? 'on' : ''}" onclick="filter='${k2}';gambar()">${l}</button>`).join('');
-  const rows = (d.riwayat || []).filter(r => filter === 'semua' || r.kaleng === filter).slice(0, 40);
+  const rows = (d.riwayat || []).filter(r => r.kaleng === 'kontrakan' || r.kaleng === 'keluarga').slice(0, 40);
   document.getElementById('riwayat').innerHTML = rows.map(r => `<div class="baris"><span>${esc(r.keterangan || (r.jenis === 'masuk' ? 'Masuk' : 'Keluar'))}
       <small>${tglPendek(r.waktu)} ${new Date(r.waktu).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${NAMA[r.kaleng]} · ${esc(r.pencatat || '-')}</small></span>
       <span class="n ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada catatan.</div>';
@@ -264,50 +235,6 @@ async function simpanNom(kaleng, jenis){
   const { error } = await sb.rpc('kaleng_catat', { p_kaleng: kaleng, p_jenis: jenis, p_jumlah: j, p_keterangan: ket || null, p_sumber: 'manual' });
   if(error){ err.textContent = 'Gagal: ' + error.message; return; }
   tutup('ovNom'); toast(`${jenis === 'masuk' ? 'Masuk' : 'Keluar'} ${fmt(j)} · ${NAMA[kaleng]}`); muat();
-}
-
-// gajian jumat
-async function gajian(){
-  const k = data.pengaturan;
-  const dapur = Number(k.gajian_jumlah) - Number(k.gajian_nafkah) - Number(k.gajian_rokok) - Number(k.gajian_senang);
-  if(!(await yakin('💵 Ambil Gajian ' + fmt(k.gajian_jumlah), `Ambil ${fmt(k.gajian_jumlah)} dari 🔐 Brankas Pribadi, lalu bagi:\n💝 Nafkah Boss Puspita ${fmt(k.gajian_nafkah)}\n🚬 Rokok ${fmt(k.gajian_rokok)}\n🍚 Dapur ${fmt(dapur)}\n🎉 Celengan Senang ${fmt(k.gajian_senang)}\n\nSaldo Brankas Pribadi otomatis berkurang, Celengan Senang bertambah. Kas Outlet tidak disentuh.`))) return;
-  const { error } = await sb.rpc('gajian_jumat');
-  if(error){ toast('Gagal: ' + error.message); return; }
-  toast('Gajian tercatat. Selamat menikmati, Boss!'); muat();
-}
-
-// bagi uang
-function bukaBagi(){
-  ['bgTotal','bgKontrakan','bgKeluarga'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('bgErr').textContent = ''; hitungBagi(); buka('ovBagi');
-  setTimeout(() => document.getElementById('bgTotal').focus(), 60);
-}
-function hitungBagi(){
-  const el = document.getElementById('bgTotal'); rapikan(el);
-  const total = angka(el), k = data.pengaturan;
-  const jatahK = Number(data.kontrakan_kurang) > 0 ? Math.max(Number(k.kontrakan_harian), Number(data.kontrakan_per_hari)) : 0;
-  const a = Math.min(total, jatahK), c = total - a;
-  const set = (id, v) => document.getElementById(id).value = total ? Number(v).toLocaleString('id-ID') : '';
-  set('bgKontrakan', a); set('bgKeluarga', c);
-  document.getElementById('bgKontrakanInfo').textContent = jatahK ? `Jatah harian ${fmt(jatahK)}` : 'Target kontrakan sudah terkumpul';
-  cekBagi();
-}
-function cekBagi(){
-  const t = angka(document.getElementById('bgTotal')), s = ['bgKontrakan','bgKeluarga'].reduce((x, id) => x + angka(document.getElementById(id)), 0);
-  document.getElementById('bgErr').textContent = t && s !== t ? `Jumlah pembagian ${fmt(s)} belum sama dengan ${fmt(t)}.` : '';
-}
-async function simpanBagi(){
-  const t = angka(document.getElementById('bgTotal'));
-  const isi = [['kontrakan','bgKontrakan'],['keluarga','bgKeluarga']].map(([k, id]) => [k, angka(document.getElementById(id))]).filter(x => x[1] > 0);
-  const s = isi.reduce((x, y) => x + y[1], 0);
-  if(!t || !isi.length){ document.getElementById('bgErr').textContent = 'Isi uang yang mau dibagi.'; return; }
-  if(s !== t){ cekBagi(); return; }
-  if(!(await yakin('🧮 Bagi Uang ' + fmt(t), isi.map(([k, v]) => `${NAMA[k]}: ${fmt(v)}`).join('\n') + '\n\nMasukkan uang fisiknya ke tiap tandon.'))) return;
-  for(const [k, v] of isi){
-    const { error } = await sb.rpc('kaleng_catat', { p_kaleng: k, p_jenis: 'masuk', p_jumlah: v, p_keterangan: 'Bagi uang ' + fmt(t), p_sumber: 'bagi' });
-    if(error){ document.getElementById('bgErr').textContent = 'Gagal di ' + NAMA[k] + ': ' + error.message; muat(); return; }
-  }
-  tutup('ovBagi'); toast('Uang ' + fmt(t) + ' sudah dibagi'); muat();
 }
 
 // cocokkan

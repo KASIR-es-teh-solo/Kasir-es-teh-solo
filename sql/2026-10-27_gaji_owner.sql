@@ -1,0 +1,4 @@
+-- 2026-10-27 Gaji Owner Rp300.000 tiap Jumat dari Kas Outlet (migration gaji_owner_kas_outlet_2026_10_27 + laba_bersih_kecualikan_gaji_owner)
+-- gaji_owner_status(): minggu = Jumat s/d Kamis, mulai 30 Okt 2026; tombol tetap muncul sampai gaji minggu itu diambil.
+-- gaji_owner_ambil(p_cabang): catat biaya_operasional kategori 'Gaji Owner' sumber 'tunai' -> Kas Outlet berkurang (masuk tutup kas).
+-- laba_bersih: 'Gaji Owner' tidak dihitung biaya es teh. gajian_jumat() lama dicabut (Tandon Dollar disederhanakan).

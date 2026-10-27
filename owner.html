@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-27.4">
+<meta name="app-version" content="owner-2026-10-27.5">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -487,11 +487,12 @@ async function muatUang(){
   const box = document.getElementById('uangIsi');
   if(!box.innerHTML) box.innerHTML = '<div class="muat">Memuat…</div>';
   const cabs = cabDipilih(), satu = cabs.length === 1 ? cabs[0] : null;
-  const [per, online, laba, amplop] = await Promise.all([
+  const [per, online, laba, amplop, gj] = await Promise.all([
     Promise.all(cabs.map(kasCabang)),
     Promise.all(cabs.map(c => sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => ({ c, d: r.data || {} })))),
     Promise.all(cabs.map(c => sb.rpc('laba_bersih', { p_cabang: c.id, p_hari: 30 }).then(r => ({ c, d: r.data })))),
-    muatDana(cabs).catch(e => `<div class="sec"><h3>Amplop</h3><div class="kosong">Gagal memuat: ${esc(e.message || e)}</div></div>`)
+    muatDana(cabs).catch(e => `<div class="sec"><h3>Amplop</h3><div class="kosong">Gagal memuat: ${esc(e.message || e)}</div></div>`),
+    sb.rpc('gaji_owner_status').then(r => r.data || null, () => null)
   ]);
   const tot = k => per.reduce((a, r) => a + r[k], 0);
   const n = (d, k) => Number((d || {})[k] || 0);
@@ -509,6 +510,8 @@ async function muatUang(){
       ${online.map(o => htmlBrankasOnline(o)).join('')}
       <div class="info" style="margin-top:6px;">Tekan Cairkan saat uangnya sudah ditarik dan dimasukkan ke Kas Outlet. Kas Outlet langsung bertambah. QRIS bisa dicairkan seminggu sekali (misal tiap Jumat).</div>
     </div>
+
+    ${htmlGaji(gj, per)}
 
     ${amplop}
 
@@ -606,6 +609,32 @@ function htmlBrankasOnline(o){
       ${Number((pp[pf] || {}).saldo) > 0 ? `<button class="btn" onclick="boCairkan('${id}','${pf}',${Number((pp[pf] || {}).saldo)})">💵 Cairkan</button>` : ''}</span></div>`).join('')}
     <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatPanel()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>
     ${boBuka[id] ? (riw.map(r => `<div class="baris"><span>${lbl(r)}<small>${r.jenis === 'masuk' ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }) : jamWIB(r.waktu) + ' · ' + esc(r.pencatat || '-')}</small></span><span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada riwayat.</div>') : ''}`;
+}
+// 2026-10-27 Ambil Gaji Owner tiap Jumat (Kas Outlet otomatis berkurang, tidak dihitung biaya es teh)
+let gajiData = null;
+function htmlGaji(gj, per){
+  gajiData = gj; if(!gj) return '';
+  const tgl = t => new Date(t + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' });
+  const fc = (per || []).find(r => r.id === gj.cabang), kas = fc ? Number(fc.kas) : null;
+  gajiData.kas = kas;
+  let isi;
+  if(!gj.aktif) isi = `<div class="info">⏳ Mulai ${esc(tgl(gj.mulai))}.</div>`;
+  else if(gj.sudah) isi = `<div class="info">✅ Sudah diambil ${jamWIB(gj.sudah_waktu)}. Berikutnya ${esc(tgl(gj.jumat_depan))}.</div>`;
+  else isi = (kas !== null && kas < Number(gj.jumlah) ? `<div class="info" style="color:#ef8a80;">⚠️ Kas Outlet ${esc(namaCab(gj.cabang))} cuma ${fmt(kas)}.</div>` : '')
+    + `<button class="btn" style="width:100%;margin-top:8px;padding:11px;font-size:14.5px;background:var(--emas);color:#10140c;" onclick="ambilGaji()">💵 Ambil Gaji ${fmt(gj.jumlah)}</button>`;
+  return `<div class="sec"><h3>💵 Gaji Owner <small>tiap Jumat · untuk Boss Puspita</small></h3>
+      <div class="baris"><span>Gaji minggu ini<small>diambil dari Kas Outlet ${esc(namaCab(gj.cabang))}</small></span><span class="kanan">${fmt(gj.jumlah)}</span></div>
+      ${isi}
+    </div>`;
+}
+async function ambilGaji(){
+  const g = gajiData; if(!g) return;
+  if(g.kas !== null && g.kas < Number(g.jumlah)){ alert(`Kas Outlet cuma ${fmt(g.kas)}, belum cukup untuk gaji ${fmt(g.jumlah)}.\nCairkan QRIS dulu kalau ada.`); return; }
+  if(!confirm(`Ambil gaji ${fmt(g.jumlah)} dari Kas Outlet untuk Boss Puspita?\nKas Outlet otomatis berkurang.`)) return;
+  const { error } = await sb.rpc('gaji_owner_ambil', { p_cabang: g.cabang });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  alert(`✅ Gaji ${fmt(g.jumlah)} tercatat.\nAmbil uangnya dari Kas Outlet dan serahkan ke Boss Puspita.`);
+  muatSemua();
 }
 async function boCairkan(cabangId, pf, saldo){
   const r = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan belum cair ${fmt(saldo)}.\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, saldo, false);
