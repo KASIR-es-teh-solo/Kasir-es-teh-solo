@@ -2,3 +2,4 @@
 -- gaji_owner_status(): minggu = Jumat s/d Kamis, mulai 30 Okt 2026; tombol tetap muncul sampai gaji minggu itu diambil.
 -- gaji_owner_ambil(p_cabang): catat biaya_operasional kategori 'Gaji Owner' sumber 'tunai' -> Kas Outlet berkurang (masuk tutup kas).
 -- laba_bersih: 'Gaji Owner' tidak dihitung biaya es teh. gajian_jumat() lama dicabut (Tandon Dollar disederhanakan).
+-- 2026-10-28: kas_outlet_saldo(p_cabang) dipakai gaji_owner_status/ambil (tolak kalau Kas Outlet kurang). Tombol Gaji dipindah ke Tandon Dollar (migration gaji_owner_cek_kas_outlet).

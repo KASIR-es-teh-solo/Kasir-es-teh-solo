@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-28.1">
+<meta name="app-version" content="tandon-2026-10-28.2">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -178,9 +178,10 @@ async function masuk(){
 async function keluar(){ if(!(await yakin('Keluar?', 'Keluar dari Tandon Dollar?'))) return; await sb.auth.signOut(); location.reload(); }
 
 async function muat(){
-  const [{ data: d, error }, st] = await Promise.all([sb.rpc('kaleng_data'), sb.rpc('setoran_harian_status').then(r => r, () => ({}))]);
+  const [{ data: d, error }, st, gj] = await Promise.all([sb.rpc('kaleng_data'), sb.rpc('setoran_harian_status').then(r => r, () => ({})),
+    profil.role === 'owner' ? sb.rpc('gaji_owner_status').then(r => r.data || null, () => null) : Promise.resolve(null)]);
   if(error){ document.getElementById('kartu').innerHTML = `<div class="kaleng">Gagal memuat: ${esc(error.message)}</div>`; return; }
-  data = d; setoran = (st && st.data) || null; gambar();
+  data = d; setoran = (st && st.data) || null; gaji = gj; gambar();
 }
 // status setoran kasir hari ini (Tabungan → Kontrakan, KUR BRI → KUR)
 let setoran = null;
@@ -198,7 +199,7 @@ function gambar(){
   const perHariK = Number(d.kontrakan_per_hari);
   const statusK = Number(d.kontrakan_kurang) <= 0 ? '<span class="aman">✅ Target sudah terkumpul!</span>'
     : `Kurang <b>${fmt(d.kontrakan_kurang)}</b> · ${d.kontrakan_sisa_hari} hari lagi<br>Perlu <b>${fmt(perHariK)}/hari</b>${perHariK > Number(k.kontrakan_harian) ? ' <span class="bahaya">(di atas jatah Rp' + Number(k.kontrakan_harian).toLocaleString('id-ID') + ', tertinggal!)</span>' : ' <span class="aman">· sesuai jadwal</span>'}`;
-  document.getElementById('kartu').innerHTML = `
+  document.getElementById('kartu').innerHTML = htmlGaji() + `
     <div class="kaleng utama">
       <div class="k-top"><div><div class="k-nama">🏠 Kontrakan</div><div class="k-ket">Target ${fmt(k.kontrakan_target)} · bayar ${esc(tglK)}</div></div><div style="font-weight:800;font-size:13px;">${pctK}%</div></div>
       <div class="k-saldo">${fmt(d.kontrakan)}</div>
@@ -235,6 +236,33 @@ async function simpanNom(kaleng, jenis){
   const { error } = await sb.rpc('kaleng_catat', { p_kaleng: kaleng, p_jenis: jenis, p_jumlah: j, p_keterangan: ket || null, p_sumber: 'manual' });
   if(error){ err.textContent = 'Gagal: ' + error.message; return; }
   tutup('ovNom'); toast(`${jenis === 'masuk' ? 'Masuk' : 'Keluar'} ${fmt(j)} · ${NAMA[kaleng]}`); muat();
+}
+
+// gaji owner: Rp300.000 tiap Jumat dari Kas Outlet (urutan: aplikasi kasir beres dulu, baru ambil gaji)
+let gaji = null;
+function htmlGaji(){
+  const g = gaji; if(!g) return '';
+  const tgl = t => new Date(t + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' });
+  const kas = Number(g.kas_outlet || 0), kurang = kas < Number(g.jumlah);
+  const tombol = (teks, on) => `<button class="btn ${on ? 'isi' : ''}" style="flex-basis:100%;${on ? '' : 'opacity:.45;cursor:not-allowed;'}" ${on ? 'onclick="ambilGaji()"' : 'disabled'}>${teks}</button>`;
+  let info, btn;
+  if(!g.aktif){ info = '⏳ Gaji pertama Jumat ini.'; btn = tombol(`🔒 Bisa diambil ${esc(tgl(g.mulai))}`, false); }
+  else if(g.sudah){ info = `<span class="aman">✅ Sudah diambil ${new Date(g.sudah_waktu).toLocaleString('id-ID', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>`; btn = tombol(`🔒 Berikutnya ${esc(tgl(g.jumat_depan))}`, false); }
+  else if(kurang){ info = `<span class="bahaya">⚠️ Kas Outlet cuma ${fmt(kas)}. Bereskan dulu di aplikasi kasir.</span>`; btn = tombol('💵 Ambil Gaji ' + fmt(g.jumlah), false); }
+  else { info = `Kas Outlet sekarang ${fmt(kas)}`; btn = tombol('💵 Ambil Gaji ' + fmt(g.jumlah), true); }
+  return `<div class="kaleng" style="border-color:rgba(201,169,74,.6);">
+      <div class="k-top"><div><div class="k-nama">💵 Gaji Owner</div><div class="k-ket">Tiap Jumat · dari Kas Outlet · untuk Boss Puspita</div></div></div>
+      <div class="k-saldo">${fmt(g.jumlah)}</div>
+      <div class="info">${info}</div>
+      <div class="aksi">${btn}</div>
+    </div>`;
+}
+async function ambilGaji(){
+  const g = gaji; if(!g) return;
+  if(!(await yakin('💵 Ambil Gaji ' + fmt(g.jumlah), `Pastikan urusan aplikasi kasir sudah beres (tutup kas & cairkan QRIS).\n\nKas Outlet otomatis berkurang ${fmt(g.jumlah)}.\nAmbil uangnya dari Kas Outlet lalu serahkan ke Boss Puspita.`))) return;
+  const { error } = await sb.rpc('gaji_owner_ambil', { p_cabang: g.cabang });
+  if(error){ toast('Gagal: ' + error.message); return; }
+  toast('✅ Gaji ' + fmt(g.jumlah) + ' tercatat'); muat();
 }
 
 // cocokkan
