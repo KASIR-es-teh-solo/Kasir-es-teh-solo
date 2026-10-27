@@ -1,0 +1,6 @@
+-- 2026-10-27 (Boss Leo): QRIS ikut Brankas Online seperti Grab/Shopee.
+-- Saldo QRIS = transaksi metode_bayar 'qris' - brankas_online platform 'qris'.
+-- Cairkan QRIS (brankas_online_cairkan p_platform 'qris') -> baris ke_laci, Kas Outlet bertambah lewat laporan_biaya_kas.
+-- Fungsi lengkap diterapkan lewat migrasi brankas_online_qris_2026_10_27:
+--   brankas_online_data: tx = metode_bayar in ('online','qris'), platform qris, tambahan field saldo_qris.
+--   brankas_online_cairkan: platform 'qris' diizinkan, potongan tercatat "Potongan biaya QRIS".

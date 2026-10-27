@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-27.2">
+<meta name="app-version" content="owner-2026-10-27.3">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -449,7 +449,7 @@ async function muatTugasMalam(per){
   const hasil = await Promise.all(cabs.map(async c => {
     const [st, on, bp] = await Promise.all([
       sb.rpc('setoran_harian_status', { p_cabang: c.id }).then(r => r.data || {}, () => ({})),
-      sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => Number((r.data || {}).saldo || 0), () => 0),
+      sb.rpc('brankas_online_data', { p_cabang: c.id }).then(r => r.data || {}, () => ({})),
       sb.rpc('dana_belum_pindah', { p_cabang: c.id }).then(r => r.data || {}, () => ({}))
     ]);
     return { c, st, on, bp, k: per.find(r => r.id === c.id) || {} };
@@ -469,7 +469,10 @@ async function muatTugasMalam(per){
     if(Number(h.k.qris || 0) > 0){ const kk = 'qris_' + h.c.id;
       item.push({ ok: sudah(kk), judul: 'Cocokkan QRIS' + nm, ket: `${fmt(h.k.qris)} dengan mutasi rekening`, tombol: sudah(kk) ? '' : `<button class="btn" onclick="cekTugas('${kk}')">Sudah cocok</button>` }); }
     // 4. Grab/Shopee
-    if(h.on > 0) item.push({ ok: false, judul: 'Grab/Shopee belum cair' + nm, ket: fmt(h.on) + ' · cairkan kalau sudah ditransfer', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
+    const onGS = Number(h.on.saldo || 0) - Number(h.on.saldo_qris || 0), onQ = Number(h.on.saldo_qris || 0);
+    if(onGS > 0) item.push({ ok: false, judul: 'Grab/Shopee belum cair' + nm, ket: fmt(onGS) + ' · cairkan kalau sudah ditransfer', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
+    // QRIS dicairkan seminggu sekali: pengingat cuma muncul hari Jumat
+    if(onQ > 0 && new Date().getDay() === 5) item.push({ ok: false, judul: 'Cairkan QRIS (Jumat)' + nm, ket: fmt(onQ) + ' belum cair', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
     // 5. Amplop
     const blm = Number(h.bp.stok || 0) + Number(h.bp.operasional || 0);
     if(blm > 100000) item.push({ ok: false, judul: 'Pindahkan uang amplop' + nm, ket: fmt(blm) + ' masih di Kas Outlet', tombol: `<button class="btn" onclick="buka('uang')">Buka</button>` });
@@ -500,12 +503,12 @@ async function muatUang(){
     <div class="gold" style="margin-bottom:10px;"><small>💵 Kas Outlet ${satu ? esc(namaCab(satu.id)) : 'semua cabang'} · uang di outlet sekarang</small><b class="n">${fmt(tot('kas'))}</b>
       <div class="r"><div>Tunai hari ini<b>${fmt(tot('tunai'))}</b></div><div>📱 QRIS hari ini<b>${fmt(tot('qris'))}</b></div></div>
 </div>
-    ${tot('qris') > 0 ? '<div class="info" style="margin:-4px 0 10px;">QRIS tidak masuk Kas Outlet. Cocokkan angka QRIS dengan mutasi rekening.</div>' : ''}
+    ${tot('qris') > 0 ? '<div class="info" style="margin:-4px 0 10px;">QRIS masuk rekening dulu (lihat QRIS belum cair di bawah). Cocokkan angka QRIS dengan mutasi rekening.</div>' : ''}
     ${per.length > 1 ? `<div class="sec"><h3>Per cabang</h3>${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · ${r.trx} transaksi · tutup kas ${r.tutup ? jamWIB(r.tutup) : 'belum'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}</div>` : `<div class="info" style="margin:-4px 0 10px;">Tutup kas terakhir: ${per[0] && per[0].tutup ? jamWIB(per[0].tutup) : 'belum pernah'}</div>`}
 
-    <div class="sec"><h3>🛵 Grab & Shopee belum cair <small>${fmt(totOnline)}</small></h3>
+    <div class="sec"><h3>🛵 Grab, Shopee & QRIS belum cair <small>${fmt(totOnline)}</small></h3>
       ${online.map(o => htmlBrankasOnline(o)).join('')}
-      <div class="info" style="margin-top:6px;">Tekan Cairkan saat uangnya sudah ditransfer, langsung masuk Kas Outlet.</div>
+      <div class="info" style="margin-top:6px;">Tekan Cairkan saat uangnya sudah ditarik dan dimasukkan ke Kas Outlet. Kas Outlet langsung bertambah. QRIS bisa dicairkan seminggu sekali (misal tiap Jumat).</div>
     </div>
 
     ${amplop}
@@ -588,18 +591,18 @@ async function muatBeli(){
 }
 
 // ---------- Brankas Online di Pusat Kendali: saldo per platform + 1 tombol Cairkan ke Kas Outlet + riwayat ----------
-const BO_PF = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain' };
+const BO_PF = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', qris:'📱 QRIS', lain:'🛵 Online lain' };
 let boBuka = {};
 function htmlBrankasOnline(o){
   const pp = o.d.per_platform || {}, id = o.c.id;
-  const pfs = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo || 0) !== 0);
+  const pfs = ['grab','shopee','qris','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo || 0) !== 0);
   const riw = (o.d.riwayat || []).slice(0, 15);
-  const lbl = r => r.jenis === 'masuk' ? `${BO_PF[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
-    : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_PF[r.platform] || ''}`
+  const lbl = r => r.jenis === 'masuk' ? `${BO_PF[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} ${r.platform === 'qris' ? 'transaksi' : 'pesanan'}`
+    : r.jenis === 'selisih' ? `✂️ ${r.platform === 'qris' ? 'Potongan biaya' : 'Potongan komisi'} ${BO_PF[r.platform] || ''}`
     : r.jenis === 'cair' ? `🏦 ${BO_PF[r.platform] || ''} cair ke rekening`
     : `💵 ${BO_PF[r.platform] || ''} dicairkan ke Kas Outlet`;
   return `<div class="sub">${esc(namaCab(id).toUpperCase())} · TOTAL ${fmt(o.d.saldo)}</div>
-    ${pfs.map(pf => `<div class="baris"><span>${BO_PF[pf]}<small>Bulan ini ${Number((pp[pf] || {}).pesanan_bulan || 0)} pesanan · belum cair</small></span>
+    ${pfs.map(pf => `<div class="baris"><span>${BO_PF[pf]}<small>Bulan ini ${Number((pp[pf] || {}).pesanan_bulan || 0)} ${pf === 'qris' ? 'transaksi' : 'pesanan'} · belum cair</small></span>
       <span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt((pp[pf] || {}).saldo || 0)}
       ${Number((pp[pf] || {}).saldo) > 0 ? `<button class="btn" onclick="boCairkan('${id}','${pf}',${Number((pp[pf] || {}).saldo)})">💵 Cairkan</button>` : ''}</span></div>`).join('')}
     <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatPanel()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>

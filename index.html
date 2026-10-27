@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-27.3">
+<meta name="app-version" content="2026-10-27.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -474,7 +474,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bo-total{color:#fff;font-weight:800;font-size:16px;margin:0 0 12px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
   .bo-kartu-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-bottom:18px}
   .bo-kartu{border-radius:16px;padding:16px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  .bo-kartu.grab{background:linear-gradient(135deg,#00b14f,#007a37)}.bo-kartu.shopee{background:linear-gradient(135deg,#ff6a3d,#d73211)}.bo-kartu.lain{background:linear-gradient(135deg,#555,#2a2a2a)}
+  .bo-kartu.grab{background:linear-gradient(135deg,#00b14f,#007a37)}.bo-kartu.shopee{background:linear-gradient(135deg,#ff6a3d,#d73211)}.bo-kartu.lain{background:linear-gradient(135deg,#555,#2a2a2a)}.bo-kartu.qris{background:linear-gradient(135deg,#1e88e5,#0d47a1)}
   .bo-kartu .bo-nama{font-weight:800;font-size:15px}.bo-kartu .bo-saldo{font-size:28px;font-weight:800;margin:4px 0}
   .bo-kartu .bo-info{font-size:12.5px;line-height:1.5;opacity:.95}
   .bo-kartu .bo-btn{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -4537,7 +4537,7 @@ async function isiBerandaAdmin(){
     const pp = (data && data.per_platform) || {};
     set('admOnline', fmt((data && data.saldo) || 0));
     admSetV('brankasonline', fmt((data && data.saldo) || 0));
-    set('admOnlineRinci', `Grab ${fmt((pp.grab || {}).saldo || 0)} · Shopee ${fmt((pp.shopee || {}).saldo || 0)}`);
+    set('admOnlineRinci', `Grab ${fmt((pp.grab || {}).saldo || 0)} · Shopee ${fmt((pp.shopee || {}).saldo || 0)} · QRIS ${fmt((pp.qris || {}).saldo || 0)}`);
   }catch(e){ set('admOnline', '-'); }
   // barang hampir habis: cup ≤ batas + bahan yang stoknya habis
   try{
@@ -9239,7 +9239,7 @@ async function simpanPengaturanLaba(){
   loadLabaBersih();
 }
 
-const BO_NAMA = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain (data lama)' };
+const BO_NAMA = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', qris:'📱 QRIS', lain:'🛵 Online lain (data lama)' };
 let brankasOnlinePer = {};
 async function loadBrankasOnline(){
   const list = document.getElementById('brankasOnlineList');
@@ -9253,7 +9253,7 @@ async function loadBrankasOnline(){
   brankasOnlineSaldo = Number(data.saldo || 0);
   brankasOnlinePer = data.per_platform || {};
   document.getElementById('brankasOnlineSaldo').textContent = fmt(brankasOnlineSaldo);
-  kartu.innerHTML = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((brankasOnlinePer.lain||{}).saldo) !== 0).map(pf => {
+  kartu.innerHTML = ['grab','shopee','qris','lain'].filter(pf => pf !== 'lain' || Number((brankasOnlinePer.lain||{}).saldo) !== 0).map(pf => {
     const d = brankasOnlinePer[pf] || {};
     return `<div class="bo-kartu ${pf}">
       <div class="bo-nama">${BO_NAMA[pf]} · belum cair</div>
@@ -9264,7 +9264,7 @@ async function loadBrankasOnline(){
     </div>`;
   }).join('');
   const rows = data.riwayat || [];
-  const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
+  const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} ${r.platform === 'qris' ? 'transaksi' : 'pesanan'}`
     : r.jenis === 'cair' ? `🏦 ${BO_NAMA[r.platform] || 'Online'} cair ke rekening · diterima ${fmt(r.diterima || 0)}`
     : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_NAMA[r.platform] || 'Online'}`
     : `💵 ${BO_NAMA[r.platform] || 'Online'} dicairkan ke Kas Outlet`;
