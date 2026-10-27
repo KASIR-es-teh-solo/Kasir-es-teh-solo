@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="bengkel-2026-10-27.1">
+<meta name="app-version" content="bengkel-2026-10-27.2">
 <meta name="theme-color" content="#14171b">
 <title>Lancar Jaya Motors</title>
 <link rel="icon" href="ljm-192.png">
@@ -397,15 +397,31 @@ function htmlRingkas(){
            : ['🔴', '#ef8a80', 'Bengkel masih disuntik lebih banyak dari hasilnya'];
   const bln = new Date(RK.bulan + '-01T00:00:00').toLocaleDateString('id-ID', { month:'long' });
   const tempo = new Date(RK.kur_tempo + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'short' });
-  const kurang = Number(RK.kur_kurang), hari = Number(RK.kur_hari_lagi);
-  const kur = kurang <= 0 ? '<span style="color:#5fd38a;">✅ Celengan sudah cukup untuk angsuran</span>'
-    : `Kurang <b>${fmt(kurang)}</b>${hari > 0 ? ` · perlu ±<b>${fmt(Math.ceil(kurang / hari / 1000) * 1000)}/hari</b>` : ''}`;
+  const kurang = Number(RK.kur_kurang), setor = Number(RK.setor_jumat), sudah = Number(RK.setor_minggu_ini);
+  let kur;
+  if(kurang <= 0) kur = '<span style="color:#5fd38a;">✅ Uang di rekening BRI sudah cukup untuk autodebet</span>';
+  else if(sudah > 0 && !RK.hari_jumat) kur = `✅ Minggu ini sudah setor ${fmt(sudah)} · kurang <b>${fmt(kurang)}</b> · Jumat depan setor ±<b>${fmt(setor)}</b>`;
+  else kur = `${RK.hari_jumat ? '⏰ <b>Hari ini Jumat</b>, setor' : 'Jumat ini setor'} <b>${fmt(setor)}</b> ke BRI`
+    + (Number(RK.saldo) < setor ? `<br><span style="color:#ef8a80;">Celengan cuma ${fmt(RK.saldo)}, kurang ${fmt(setor - Number(RK.saldo))} → talangi & catat "Modal dari Boss"</span>` : '');
   return `<div class="peringatan ringkas" style="background:var(--kartu);border-color:${st[1]};cursor:default;">
-      <div style="font-weight:800;">🏦 KUR ke-${RK.kur_ke}: ${fmt(RK.kur_angsuran)} · ${esc(tempo)} (${hari} hari lagi)</div>
+      <div style="font-weight:800;">🏦 KUR ke-${RK.kur_ke}: ${fmt(RK.kur_angsuran)} · autodebet ${esc(tempo)}</div>
+      <div style="margin-top:3px;">Di rekening BRI: <b>${fmt(RK.bri)}</b>${kurang > 0 ? ` · kurang <b>${fmt(kurang)}</b>` : ''}</div>
       <div style="margin-top:3px;">${kur}</div>
-      <div style="margin-top:8px;font-weight:800;">${st[0]} ${esc(bln)}: modal disuntik ${fmt(modal)} · hasil bengkel ${fmt(hasil)}</div>
+      ${kurang > 0 ? `<button class="b1" style="width:100%;margin-top:8px;padding:10px;border-radius:11px;border:0;font-weight:800;cursor:pointer;" onclick="setorKur()">🏦 Setor KUR ke BRI</button>` : ''}
+      <div style="margin-top:10px;font-weight:800;">${st[0]} ${esc(bln)}: modal disuntik ${fmt(modal)} · hasil bengkel ${fmt(hasil)}</div>
       <div style="color:${st[1]};font-weight:700;">${st[2]}</div>
     </div>`;
+}
+async function setorKur(){
+  const saran = Math.min(Number(RK.setor_jumat), Number(RK.kur_kurang));
+  const v = prompt(`Setor KUR ke rekening BRI\nCelengan Bengkel: ${fmt(RK.saldo)}\nJumlah setor (Rp):`, String(saran));
+  if(v === null) return;
+  const j = Number(String(v).replace(/[^0-9]/g, ''));
+  if(!j){ toast('Isi jumlahnya dulu.'); return; }
+  if(j > Number(RK.saldo)){ toast(`Celengan cuma ${fmt(RK.saldo)}. Catat dulu "Modal dari Boss" untuk talangan.`); return; }
+  const { error } = await sb.rpc('bengkel_kas_catat', { p_jenis: 'keluar', p_kategori: 'Setor KUR ke BRI', p_jumlah: j, p_ket: 'Setor Jumat ke rekening BRI' });
+  if(error){ toast('Gagal: ' + pesanErr(error)); return; }
+  toast('Setor KUR ' + fmt(j) + ' tercatat'); muat();
 }
 function gambarBeranda(){
   $('bRingkas').innerHTML = htmlRingkas();
@@ -615,7 +631,7 @@ async function batalBeli(id){
 }
 
 // ===== Kas =====
-const KAT = { masuk: ['Modal dari Boss', 'Lain-lain'], keluar: ['Bayar KUR BRI', 'Listrik', 'Peralatan', 'Bensin / Transport', 'Makan / Minum', 'Ambil Owner', 'Lain-lain'] };
+const KAT = { masuk: ['Modal dari Boss', 'Lain-lain'], keluar: ['Listrik', 'Peralatan', 'Bensin / Transport', 'Makan / Minum', 'Ambil Owner', 'Lain-lain'] };
 let ksJenis = 'masuk', ksKat = '';
 function gambarKas(){
   $('kasSaldo').textContent = fmt(D.saldo_kas);
@@ -627,7 +643,7 @@ function gambarKas(){
 function bukaKas(j){
   ksJenis = j; ksKat = '';
   $('ksJudul').textContent = j === 'masuk' ? '➕ Uang Masuk' : '➖ Pengeluaran';
-  $('ksSub').textContent = j === 'masuk' ? 'Pilih "Modal dari Boss" kalau uang pribadi Boss dipakai untuk bengkel (termasuk talangan KUR).' : 'Bayar KUR tiap tanggal 4 pilih "Bayar KUR BRI". Beli sparepart lewat 📦 Beli Sparepart.\n"Bayar KUR BRI" & "Ambil Owner" tidak dihitung sebagai biaya di laporan.';
+  $('ksSub').textContent = j === 'masuk' ? 'Pilih "Modal dari Boss" kalau uang pribadi Boss dipakai untuk bengkel (termasuk talangan KUR).' : 'Setor KUR lewat tombol 🏦 Setor KUR di beranda. Beli sparepart lewat 📦 Beli Sparepart.\n"Ambil Owner" tidak dihitung sebagai biaya di laporan.';
   $('ksKat').innerHTML = KAT[j].map(k => `<button class="chip" data-v="${esc(k)}" style="padding:9px 11px;font-size:13.5px;">${esc(k)}</button>`).join('');
   $('ksKat').querySelectorAll('button').forEach(b => b.onclick = () => { ksKat = b.dataset.v; $('ksKat').querySelectorAll('button').forEach(x => x.style.borderColor = x === b ? 'var(--or)' : ''); });
   $('ksJml').value = ''; $('ksKet').value = ''; $('ksErr').textContent = '';

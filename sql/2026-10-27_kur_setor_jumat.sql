@@ -1,0 +1,7 @@
+-- 2026-10-27 KUR disetor tiap Jumat dari Celengan Bengkel ke rekening BRI (autodebet tgl 4).
+-- Dipasang lewat migration kur_setor_jumat_2026_10_27 (lihat Supabase):
+-- kaleng_pengaturan.kur_bri_awal=720000 (saldo rekening BRI per 27 Okt), kur_bri_awal_sudah=9
+-- saldo BRI = awal + semua 'Setor KUR ke BRI' - angsuran x (kur_sudah - kur_bri_awal_sudah)
+-- setor Jumat = kekurangan / jumlah Jumat sebelum tgl 4 (dibulatkan ke atas per Rp1.000)
+-- pg_cron 'kur-autodebet' 17:10 UTC tgl 4 (= 00:10 WIB tgl 5) -> kur_sudah + 1
+-- bengkel_kas_catat/batal tidak lagi mengubah kur_sudah; laporan tidak menghitung setor KUR sebagai biaya.
