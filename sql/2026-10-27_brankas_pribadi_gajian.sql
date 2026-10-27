@@ -1,0 +1,2 @@
+-- 2026-10-27 Tandon 'keluarga' tampil sebagai "Brankas Pribadi"; gajian_jumat() mengambil Rp550.000 dari Brankas Pribadi
+-- (ditolak kalau saldo kurang) + Celengan Senang +Rp50.000. Dipasang lewat migration brankas_pribadi_gajian_2026_10_27.
