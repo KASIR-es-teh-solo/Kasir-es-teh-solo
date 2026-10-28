@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-28.4">
+<meta name="app-version" content="owner-2026-10-28.5">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -510,6 +510,7 @@ async function muatUang(){
       <div class="baris"><span><b>${satu ? esc(namaCab(satu.id)) : 'Semua cabang'}</b><small>sudah dikurangi modal, gaji, sewa, listrik, gas, dll</small></span><span class="kanan ${totLaba < 0 ? 'min' : 'plus'}">${totLaba < 0 ? '− ' : ''}${fmt(Math.abs(totLaba))}</span></div>
       ${laba.length > 1 ? laba.map(l => { const v = labaDari(l.d); return `<div class="baris"><span>${esc(namaCab(l.c.id))}<small>Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'hari_buka')} hari buka</small></span><span class="kanan ${v < 0 ? 'min' : 'plus'}">${v < 0 ? '− ' : ''}${fmt(Math.abs(v))}</span></div>`; }).join('') : laba.map(l => `<div class="kosong" style="text-align:left;">Omzet ${fmt(n(l.d,'omzet'))} · ${n(l.d,'trx').toLocaleString('id-ID')} transaksi · ${n(l.d,'hari_buka')} hari buka</div>`).join('')}
     </div>`;
+  online.forEach(o => { if(boBuka[o.c.id] === 'pesanan') boMuatPesanan(o.c.id); });
 }
 
 // ---------- Stok & Belanja (2026-10-27: Persediaan + Pembelian jadi satu modul, 2 tab) ----------
@@ -589,7 +590,7 @@ let boBuka = {};
 function htmlBrankasOnline(o){
   const pp = o.d.per_platform || {}, id = o.c.id;
   const pfs = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((pp.lain || {}).saldo || 0) !== 0);
-  const riw = (o.d.riwayat || []).slice(0, 15);
+  const riw = (o.d.riwayat || []).filter(r => r.jenis !== 'masuk').slice(0, 20);
   const lbl = r => r.jenis === 'masuk' ? `${BO_PF[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
     : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_PF[r.platform] || ''}`
     : r.jenis === 'cair' ? `🏦 ${BO_PF[r.platform] || ''} cair ke rekening`
@@ -598,8 +599,37 @@ function htmlBrankasOnline(o){
     ${pfs.map(pf => `<div class="baris"><span>${BO_PF[pf]}<small>Bulan ini ${Number((pp[pf] || {}).pesanan_bulan || 0)} pesanan · belum cair</small></span>
       <span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt((pp[pf] || {}).saldo || 0)}
       ${Number((pp[pf] || {}).saldo) > 0 ? `<button class="btn" onclick="boCairkan('${id}','${pf}',${Number((pp[pf] || {}).saldo)})">💵 Cairkan</button>` : ''}</span></div>`).join('')}
-    <button class="btn" style="width:100%;margin-top:6px;" onclick="boBuka['${id}']=!boBuka['${id}'];muatPanel()">${boBuka[id] ? 'Tutup riwayat ▴' : 'Lihat riwayat ▾'}</button>
-    ${boBuka[id] ? (riw.map(r => `<div class="baris"><span>${lbl(r)}<small>${r.jenis === 'masuk' ? new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'short', day:'numeric', month:'short' }) : jamWIB(r.waktu) + ' · ' + esc(r.pencatat || '-')}</small></span><span class="kanan ${r.jenis === 'masuk' ? 'plus' : 'min'}">${r.jenis === 'masuk' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum ada riwayat.</div>') : ''}`;
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button class="btn" style="flex:1;${boBuka[id] === 'pesanan' ? 'background:var(--emas);color:#10140c;' : ''}" onclick="boBukaTab('${id}','pesanan')">📋 Pesanan online ${boBuka[id] === 'pesanan' ? '▴' : '▾'}</button>
+      <button class="btn" style="flex:1;${boBuka[id] === 'cair' ? 'background:var(--emas);color:#10140c;' : ''}" onclick="boBukaTab('${id}','cair')">💵 Riwayat cairkan ${boBuka[id] === 'cair' ? '▴' : '▾'}</button>
+    </div>
+    ${boBuka[id] === 'pesanan' ? `<div id="boPes_${id}"><div class="muat">Memuat…</div></div>` : ''}
+    ${boBuka[id] === 'cair' ? (riw.map(r => `<div class="baris"><span>${lbl(r)}<small>${jamWIB(r.waktu)} · ${esc(r.pencatat || '-')}</small></span><span class="kanan ${r.jenis === 'ke_laci' ? 'plus' : 'min'}">${r.jenis === 'ke_laci' ? '+' : '−'} ${fmt(r.jumlah)}</span></div>`).join('') || '<div class="kosong">Belum pernah dicairkan.</div>') : ''}`;
+}
+// 2026-10-28 (Boss Leo): riwayat pesanan online per pesanan (menu) & riwayat cairkan dipisah
+let boPf = 'semua', boHari = 7;
+function boBukaTab(id, tab){ boBuka[id] = boBuka[id] === tab ? null : tab; muatPanel(); }
+function boAtur(id, k, v){ if(k === 'pf') boPf = v; else boHari = v; boMuatPesanan(id); }
+async function boMuatPesanan(id){
+  const box = document.getElementById('boPes_' + id); if(!box) return;
+  const awal = new Date(); awal.setHours(0,0,0,0); awal.setDate(awal.getDate() - (boHari - 1));
+  let q = sb.from('transaksi').select('id, total, platform, created_at, transaksi_item(qty, ukuran, produk:produk_id(nama))')
+    .eq('cabang_id', id).eq('status', 'selesai').eq('metode_bayar', 'online').gte('created_at', awal.toISOString()).order('created_at', { ascending:false }).limit(500);
+  if(boPf !== 'semua') q = q.eq('platform', boPf);
+  const { data, error } = await q;
+  const seg = (arr, aktif, k) => `<div class="seg" style="margin:8px 0 6px;">${arr.map(([v, l]) => `<button class="${v === aktif ? 'on' : ''}" onclick="boAtur('${id}','${k}',${typeof v === 'number' ? v : `'${v}'`})">${l}</button>`).join('')}</div>`;
+  const atas = seg([['semua','Semua'],['shopee','🟠 Shopee'],['grab','🟢 Grab']], boPf, 'pf') + seg([[1,'Hari ini'],[7,'7 hari'],[30,'30 hari']], boHari, 'hari');
+  if(error){ box.innerHTML = atas + `<div class="kosong">Gagal memuat: ${esc(error.message)}</div>`; return; }
+  const rows = data || [];
+  const cup = t => (t.transaksi_item || []).reduce((a, i) => a + Number(i.qty || 0), 0);
+  const ring = pf => { const r = rows.filter(t => t.platform === pf); return r.length ? `<div class="baris"><span><b>${BO_PF[pf]}</b><small>${r.length} pesanan · ${r.reduce((a,t)=>a+cup(t),0)} cup · harga outlet</small></span><span class="kanan">${fmt(r.reduce((a,t)=>a+Number(t.total||0),0))}</span></div>` : ''; };
+  let tglLalu = '';
+  box.innerHTML = atas + ['shopee','grab'].filter(pf => boPf === 'semua' || boPf === pf).map(ring).join('') + (rows.map(t => {
+    const d = new Date(t.created_at), tgl = d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+    const kepala = tgl !== tglLalu ? `<div class="sub">${esc(tgl.toUpperCase())}</div>` : ''; tglLalu = tgl;
+    const isi = (t.transaksi_item || []).map(i => `${Number(i.qty)}× ${esc(i.produk ? i.produk.nama : '(menu terhapus)')}${i.ukuran ? ' (' + esc(i.ukuran) + ')' : ''}`).join(', ');
+    return kepala + `<div class="baris"><span>${d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${BO_PF[t.platform] || '🛵 Online'}<small>${isi || '-'}</small></span><span class="kanan">${fmt(t.total)}</span></div>`;
+  }).join('') || '<div class="kosong">Belum ada pesanan online di periode ini.</div>');
 }
 async function boCairkan(cabangId, pf, saldo){
   const r = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan belum cair ${fmt(saldo)}.\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, saldo, false);
