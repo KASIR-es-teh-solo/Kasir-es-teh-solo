@@ -1,0 +1,3 @@
+-- 2026-10-29 (Boss Leo): Simpanan Harian & pindah amplop khusus Owner.
+-- dana_pindahkan: cek is_owner(). Policy brankas_insert_kasir (kasir/admin boleh insert brankas masuk) dimatikan: with check (false).
+-- Lengkap di migrasi simpanan_amplop_khusus_owner_2026_10_29.
