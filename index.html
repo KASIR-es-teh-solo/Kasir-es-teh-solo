@@ -10,12 +10,27 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-28.3">
+<meta name="app-version" content="2026-10-29.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
 // supaya tablet yang masih terbuka mendapat pemberitahuan "ada versi baru".
 var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || 'tanpa-versi';
+// ===== 2026-10-29 (Boss Leo): Aplikasi Kasir punya alamat & login sendiri (…/kasir/ -> index.html?app=kasir) =====
+// Mode kasir: login 1 form (khusus akun kasir; Owner tetap boleh). Alamat biasa: login Owner/Admin.
+var APP_KASIR = /[?&]app=kasir\b/.test(location.search);
+if(APP_KASIR){
+  document.title = 'Kasir Outlet Es Teh S.O.L.O';
+  try{
+    var mLink = document.querySelector('link[rel="manifest"]');
+    if(mLink){
+      var mf = JSON.parse(decodeURIComponent(mLink.getAttribute('href').replace(/^data:application\/manifest\+json,/, '')));
+      mf.name = 'Kasir Outlet Es Teh S.O.L.O'; mf.short_name = 'Kasir Outlet';
+      mf.start_url = new URL('index.html?app=kasir', location.href).href; mf.id = mf.start_url;
+      mLink.setAttribute('href', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(mf)));
+    }
+  }catch(e){}
+}
 
 // ===== CATATAN ERROR OTOMATIS =====
 // Dipasang paling awal supaya error apa pun (termasuk library gagal dimuat) ikut tercatat.
@@ -866,6 +881,20 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <button class="login-btn" id="loginBtn" onclick="doLogin()">Masuk sebagai <span id="loginRoleLabel">Owner</span></button>
   </div>
 </div>
+<script>
+// 2026-10-29: layar login dipisah. Aplikasi Kasir = 1 form tanpa pilihan peran; alamat biasa = Owner / Admin saja.
+(function(){
+  var tabs = document.querySelector('#loginView .role-tabs');
+  if(APP_KASIR){
+    if(tabs) tabs.style.display = 'none';
+    var sub = document.querySelector('#loginView .sub'); if(sub) sub.textContent = 'Kasir Outlet — Silakan Login';
+    var b = document.getElementById('loginBtn'); if(b) b.textContent = 'Masuk';
+  } else {
+    var tk = document.querySelector('#loginView .role-tab[data-role="kasir"]'); if(tk) tk.remove();
+    var sub2 = document.querySelector('#loginView .sub'); if(sub2) sub2.textContent = 'Admin & Owner — Silakan Login';
+  }
+})();
+</script>
 
 <!-- ===================== APP VIEW ===================== -->
 <div id="appView" class="hidden">
@@ -2038,7 +2067,7 @@ const sbTemp = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 
 let currentUser = null;
 let currentProfile = null;
-let selectedLoginRole = 'owner';
+let selectedLoginRole = (typeof APP_KASIR !== 'undefined' && APP_KASIR) ? 'kasir' : 'owner';
 let isManualLoginAttempt = false;
 
 // Tulisan tombol login "Masuk sebagai <role>". Selalu ditulis ulang lengkap dengan <span id="loginRoleLabel">
@@ -2047,6 +2076,7 @@ const LABEL_ROLE_LOGIN = { owner:'Owner', admin:'Admin', kasir:'Kasir' };
 function setTombolLogin(role){
   const btn = document.getElementById('loginBtn');
   if(!btn) return;
+  if(APP_KASIR){ btn.textContent = 'Masuk'; return; }
   btn.innerHTML = 'Masuk sebagai <span id="loginRoleLabel"></span>';
   document.getElementById('loginRoleLabel').textContent = LABEL_ROLE_LOGIN[role] || role;
 }
@@ -2210,7 +2240,16 @@ async function loadProfileAndEnter(){
     return;
   }
 
-  if(isManualLoginAttempt && profile.role !== selectedLoginRole){
+  // 2026-10-29: akun kasir selalu pakai Aplikasi Kasir; akun admin tidak bisa masuk Aplikasi Kasir
+  if(profile.role === 'kasir' && !APP_KASIR){ location.replace('index.html?app=kasir'); return; }
+  if(APP_KASIR && profile.role === 'admin'){
+    document.getElementById('loginError').textContent = 'Akun Admin masuk lewat alamat Admin & Owner, bukan Aplikasi Kasir.';
+    document.getElementById('loginError').classList.add('show');
+    await sb.auth.signOut({ scope: 'local' });
+    isManualLoginAttempt = false;
+    return;
+  }
+  if(isManualLoginAttempt && !APP_KASIR && profile.role !== selectedLoginRole){
     const labelMap = { owner:'Owner', admin:'Admin', kasir:'Kasir' };
     document.getElementById('loginError').textContent = `Akun ini terdaftar sebagai ${labelMap[profile.role] || profile.role}, bukan ${labelMap[selectedLoginRole]}. Pilih tab yang sesuai lalu coba lagi.`;
     document.getElementById('loginError').classList.add('show');
@@ -2228,7 +2267,7 @@ async function loadProfileAndEnter(){
 
   // Owner dibawa ke Pusat Kendali (owner.html); aplikasi kasir tetap bisa dibuka lewat tombol "Buka Kasir" di sana
   if(profile.role === 'owner'){
-    let keKasir = /[?&]kasir=1/.test(location.search);
+    let keKasir = /[?&]kasir=1/.test(location.search) || APP_KASIR;
     try{ if(sessionStorage.getItem('ownerKeKasir') === '1') keKasir = true; }catch(e){}
     if(!keKasir && navigator.onLine){ location.replace('owner.html'); return; }
     try{ sessionStorage.setItem('ownerKeKasir', '1'); }catch(e){}
@@ -4097,9 +4136,9 @@ function resetKeHalamanLogin(){
   document.getElementById('loginEmail').value = '';
   document.getElementById('loginPassword').value = '';
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector('.role-tab[data-role="owner"]').classList.add('active');
-  selectedLoginRole = 'owner';
-  setTombolLogin('owner');
+  const tabAwal = document.querySelector('.role-tab[data-role="owner"]'); if(tabAwal) tabAwal.classList.add('active');
+  selectedLoginRole = APP_KASIR ? 'kasir' : 'owner';
+  setTombolLogin(selectedLoginRole);
 }
 
 // HP karyawan dibuka lagi dari layar mati / pindah aplikasi -> langsung cek logout paksa
