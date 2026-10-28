@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-28.2">
+<meta name="app-version" content="2026-10-28.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -1631,8 +1631,23 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
         <div id="tjList"><div class="empty-msg">Memuat...</div></div>
       </div>
     </div>
-    <button class="login-btn" style="margin-top:12px;" onclick="loadHariIniGabung()">🔄 Perbarui</button>
+    <button class="login-btn" style="margin-top:12px;background:#ee4d2d;border-color:#c73a1d;" onclick="bukaPesananOnline('semua')">🛵 Riwayat Pesanan ShopeeFood & GrabFood</button>
+    <button class="login-btn" style="margin-top:8px;" onclick="loadHariIniGabung()">🔄 Perbarui</button>
     <button class="modal-close" onclick="tutupPenjualanHariIni()">Tutup</button>
+  </div>
+</div>
+
+<!-- 2026-10-28 (Boss Leo): riwayat pesanan online per pesanan (menu), untuk dicocokkan dengan Shopee Partner / GrabMerchant -->
+<div class="overlay" id="pesananOnlineOverlay" style="z-index:9500;">
+  <div class="modal" style="max-width:520px;">
+    <h3>🛵 Riwayat Pesanan Online</h3>
+    <p id="poSub" style="font-size:12px;font-weight:600;margin:0 0 8px;">-</p>
+    <div id="poPlatform" style="display:flex;gap:6px;margin-bottom:6px;"></div>
+    <div id="poPeriode" style="display:flex;gap:6px;margin-bottom:8px;"></div>
+    <div id="poRingkas" style="font-size:13px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="poList" style="max-height:55vh;overflow:auto;"><div class="empty-msg">Memuat...</div></div>
+    <p style="font-size:11px;margin:8px 0 0;">Harga di sini = harga outlet. Jam = saat kasir menekan tombol ShopeeFood/GrabFood.</p>
+    <button class="modal-close" onclick="document.getElementById('pesananOnlineOverlay').classList.remove('show')">Tutup</button>
   </div>
 </div>
 
@@ -8379,7 +8394,7 @@ async function loadPenjualanHariIni(){
     <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Per metode bayar</div>
     ${Object.keys(perMetode).length === 0 ? '<div class="empty-msg">Belum ada penjualan.</div>' :
       Object.entries(perMetode).map(([m,v])=>`
-        <div class="stock-row"><span>${escTG(labelMetode[m] || m)} <span style="opacity:.9;font-size:12px;font-weight:600;">· ${v.n} trx</span></span><span>${fmt(v.total)}</span></div>
+        <div class="stock-row"${(m === 'shopee' || m === 'grab') ? ` style="cursor:pointer;" onclick="poHari=1;bukaPesananOnline('${m}')"` : ''}><span>${escTG(labelMetode[m] || m)} <span style="opacity:.9;font-size:12px;font-weight:600;">· ${v.n} trx${(m === 'shopee' || m === 'grab') ? ' · lihat ›' : ''}</span></span><span>${fmt(v.total)}</span></div>
       `).join('')}
 
     <div style="font-size:12px;font-weight:800;margin:12px 0 6px;">Menu terjual</div>
@@ -8857,6 +8872,51 @@ function bukaMenuLaporan(){ tampilkanLaporanTertutup(); }
 let tjData = [];
 // Transaksi sekarang satu tampilan dengan Hari Ini
 async function bukaTransaksiJam(){ await bukaPenjualanHariIni(); }
+
+// ===== Riwayat Pesanan Online (2026-10-28, permintaan Boss Leo) =====
+let poPf = 'semua', poHari = 7;
+function bukaPesananOnline(pf){
+  if(!activeCabangId){ alert('Belum ada cabang aktif.'); return; }
+  poPf = pf || 'semua';
+  document.getElementById('pesananOnlineOverlay').classList.add('show');
+  muatPesananOnline();
+}
+function aturPesananOnline(k, v){ if(k === 'pf') poPf = v; else poHari = v; muatPesananOnline(); }
+async function muatPesananOnline(){
+  const list = document.getElementById('poList');
+  const tombol = (arr, aktif, k) => arr.map(([v, l]) => `<button type="button" onclick="aturPesananOnline('${k}', ${typeof v === 'number' ? v : `'${v}'`})" style="flex:1;padding:8px 4px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;border:1.5px solid #111;${v === aktif ? 'background:#111;color:#fff;' : 'background:#fff;color:#111;'}">${l}</button>`).join('');
+  document.getElementById('poPlatform').innerHTML = tombol([['semua','Semua'],['shopee','🟠 ShopeeFood'],['grab','🟢 GrabFood']], poPf, 'pf');
+  document.getElementById('poPeriode').innerHTML = tombol([[1,'Hari ini'],[7,'7 hari'],[30,'30 hari']], poHari, 'hari');
+  const cabang = (userAllowedCabang || []).find(c => c.id === activeCabangId);
+  document.getElementById('poSub').textContent = cabang ? cabang.nama : '';
+  if(!navigator.onLine){ list.innerHTML = '<div class="empty-msg">Sedang offline.</div>'; return; }
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  const awal = new Date(); awal.setHours(0,0,0,0); awal.setDate(awal.getDate() - (poHari - 1));
+  let q = sb.from('transaksi').select('id, total, platform, created_at, transaksi_item(qty, ukuran, produk:produk_id(nama))')
+    .eq('cabang_id', activeCabangId).eq('status', 'selesai').eq('metode_bayar', 'online')
+    .gte('created_at', awal.toISOString()).order('created_at', { ascending:false }).limit(500);
+  if(poPf !== 'semua') q = q.eq('platform', poPf);
+  const { data, error } = await q;
+  if(error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escTG(error.message)}</div>`; return; }
+  const rows = data || [];
+  const nama = { shopee:'🟠 ShopeeFood', grab:'🟢 GrabFood' };
+  const cupDari = t => (t.transaksi_item || []).reduce((a, i) => a + Number(i.qty || 0), 0);
+  const per = pf => rows.filter(t => t.platform === pf);
+  const ringkas = pf => { const r = per(pf); return r.length ? `${nama[pf]}: <b>${r.length}</b> pesanan · ${r.reduce((a,t)=>a+cupDari(t),0)} cup · <b>${fmt(r.reduce((a,t)=>a+Number(t.total||0),0))}</b>` : ''; };
+  document.getElementById('poRingkas').innerHTML = (poPf === 'semua' ? ['shopee','grab'].map(ringkas).filter(Boolean).join('<br>') : ringkas(poPf)) || '';
+  if(!rows.length){ list.innerHTML = '<div class="empty-msg">Belum ada pesanan online di periode ini.</div>'; return; }
+  let tglLalu = '';
+  list.innerHTML = rows.map(t => {
+    const d = new Date(t.created_at);
+    const tgl = d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+    const kepala = tgl !== tglLalu ? `<div style="font-size:12px;font-weight:800;margin:10px 0 4px;opacity:.85;">${escTG(tgl.toUpperCase())}</div>` : '';
+    tglLalu = tgl;
+    const item = (t.transaksi_item || []).map(i => `${Number(i.qty)}× ${escTG(i.produk ? i.produk.nama : '(menu terhapus)')}${i.ukuran ? ' (' + escTG(i.ukuran) + ')' : ''}`).join('<br>');
+    return kepala + `<div style="border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:8px;margin-bottom:6px;background:#fff;color:#111;">
+      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px;"><span>🕒 ${d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} · ${nama[t.platform] || '🛵 Online'}</span><span>${fmt(t.total)}</span></div>
+      <div style="font-size:12.5px;margin-top:4px;line-height:1.45;">${item || '-'}</div></div>`;
+  }).join('');
+}
 function tutupTransaksiJam(){ tutupPenjualanHariIni(); }
 async function loadTransaksiJam(){
   const list = document.getElementById('tjList');
