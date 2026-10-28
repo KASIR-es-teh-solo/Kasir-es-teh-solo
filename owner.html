@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-28.2">
+<meta name="app-version" content="owner-2026-10-28.3">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -465,9 +465,7 @@ async function muatTugasMalam(per){
     // 2. Simpanan Harian
     { const tg = h.st.wajib ? Number(h.st.tabungan_target || 0) : 0, ad = Number(h.st.tabungan || 0);
       item.push({ ok: tg > 0 ? ad >= tg : ad > 0, judul: 'Simpanan Harian' + nm, ket: tg > 0 ? `${fmt(ad)} dari ${fmt(tg)} · Kas Outlet → Brankas` : `${fmt(ad)} hari ini · Kas Outlet → Brankas`, tombol: (tg > 0 ? ad < tg : ad <= 0) && !banyak ? `<button class="btn" onclick="brankasSimpanan()">Catat</button>` : '' }); }
-    // 3. QRIS
-    if(Number(h.k.qris || 0) > 0){ const kk = 'qris_' + h.c.id;
-      item.push({ ok: sudah(kk), judul: 'Cocokkan QRIS' + nm, ket: `${fmt(h.k.qris)} dengan mutasi rekening`, tombol: sudah(kk) ? '' : `<button class="btn" onclick="cekTugas('${kk}')">Sudah cocok</button>` }); }
+    // 3. QRIS: 2026-10-28 total QRIS diisi dari mutasi saat tutup kas, jadi tidak perlu dicocokkan lagi di sini
     // 4. Grab/Shopee
     // QRIS tidak masuk Tugas Malam (cukup tombol Cairkan di modul Uang, permintaan Boss Leo 2026-10-27)
     const onGS = Number(h.on.saldo || 0) - Number(h.on.saldo_qris || 0);
@@ -500,9 +498,9 @@ async function muatUang(){
   const totLaba = laba.reduce((a, l) => a + labaDari(l.d), 0);
   box.innerHTML = `
     <div class="gold" style="margin-bottom:10px;"><small>💵 Kas Outlet ${satu ? esc(namaCab(satu.id)) : 'semua cabang'} · uang di outlet sekarang</small><b class="n">${fmt(tot('kas'))}</b>
-      <div class="r"><div>Tunai hari ini<b>${fmt(tot('tunai'))}</b></div><div>📱 QRIS hari ini<b>${fmt(tot('qris'))}</b></div></div>
+      <div class="r"><div>Penjualan hari ini<b>${fmt(tot('tunai') + tot('qris'))}</b><span>tunai + QRIS</span></div><div>📱 QRIS belum cair<b>${fmt(online.reduce((a, o) => a + Number(o.d.saldo_qris || 0), 0))}</b></div></div>
 </div>
-    ${tot('qris') > 0 ? '<div class="info" style="margin:-4px 0 10px;">QRIS masuk rekening dulu (lihat QRIS belum cair di bawah). Cocokkan angka QRIS dengan mutasi rekening.</div>' : ''}
+    <div class="info" style="margin:-4px 0 10px;">Kasir cukup tekan BAYAR untuk tunai & QRIS. Total QRIS diisi dari mutasi saat tutup kas, jadi sebelum tutup kas angka Kas Outlet masih termasuk uang QRIS hari ini.</div>
     ${per.length > 1 ? `<div class="sec"><h3>Per cabang</h3>${per.map(r => `<div class="baris"><span>${esc(namaCab(r.id))}<small>Penjualan ${fmt(r.jual)} · ${r.trx} transaksi · tutup kas ${r.tutup ? jamWIB(r.tutup) : 'belum'}</small></span><span class="kanan">${fmt(r.kas)}</span></div>`).join('')}</div>` : `<div class="info" style="margin:-4px 0 10px;">Tutup kas terakhir: ${per[0] && per[0].tutup ? jamWIB(per[0].tutup) : 'belum pernah'}</div>`}
 
     <div class="sec"><h3>🛵 Grab, Shopee & QRIS belum cair <small>${fmt(totOnline)}</small></h3>
@@ -859,13 +857,13 @@ async function muatLaporan(){
   box.innerHTML = '<div class="muat">Memuat…</div>';
   const ids = cabDipilih().map(c => c.id).concat(NOL);
   const [tk, log] = await Promise.all([
-    sb.from('kas_shift').select('cabang_id, kas_sistem, kas_fisik, selisih, total_biaya, catatan, waktu_tutup, ditutup:ditutup_oleh(nama)').in('cabang_id', ids).order('waktu_tutup', { ascending:false }).limit(20),
+    sb.from('kas_shift').select('cabang_id, kas_sistem, kas_fisik, selisih, total_biaya, qris, catatan, waktu_tutup, ditutup:ditutup_oleh(nama)').in('cabang_id', ids).order('waktu_tutup', { ascending:false }).limit(20),
     sb.from('log_aktivitas').select('aksi, keterangan, created_at, cabang_id, pelaku:user_id(nama)').order('created_at', { ascending:false }).limit(150)
   ]);
   const logRows = (log.data || []).filter(l => pilihan === 'semua' || !l.cabang_id || l.cabang_id === pilihan);
   box.innerHTML = `
     <div class="sec"><h3>Riwayat tutup kas</h3>
-      ${(tk.data || []).map(r => { const s = Number(r.selisih || 0); return `<div class="baris"><span>${esc(namaCab(r.cabang_id))} · ${jamWIB(r.waktu_tutup)}<small>${esc((r.ditutup && r.ditutup.nama) || '-')} · seharusnya ${fmt(r.kas_sistem)} · dihitung ${fmt(r.kas_fisik)}${r.catatan ? ' · ' + esc(r.catatan) : ''}</small></span><span class="kanan ${s < 0 ? 'min' : s > 0 ? 'plus' : ''}">${s === 0 ? '✅ pas' : (s < 0 ? 'kurang ' : 'lebih ') + fmt(Math.abs(s))}</span></div>`; }).join('') || '<div class="kosong">Belum ada tutup kas.</div>'}
+      ${(tk.data || []).map(r => { const s = Number(r.selisih || 0); return `<div class="baris"><span>${esc(namaCab(r.cabang_id))} · ${jamWIB(r.waktu_tutup)}<small>${esc((r.ditutup && r.ditutup.nama) || '-')} · seharusnya ${fmt(r.kas_sistem)} · dihitung ${fmt(r.kas_fisik)}${Number(r.qris) > 0 ? ' · QRIS ' + fmt(r.qris) : ''}${r.catatan ? ' · ' + esc(r.catatan) : ''}</small></span><span class="kanan ${s < 0 ? 'min' : s > 0 ? 'plus' : ''}">${s === 0 ? '✅ pas' : (s < 0 ? 'kurang ' : 'lebih ') + fmt(Math.abs(s))}</span></div>`; }).join('') || '<div class="kosong">Belum ada tutup kas.</div>'}
     </div>
     <div class="sec"><h3>Log aktivitas <small>ketuk tanggal untuk rincian</small></h3>
       ${logPerHari(logRows) || '<div class="kosong">Belum ada log.</div>'}

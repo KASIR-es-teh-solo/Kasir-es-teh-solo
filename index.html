@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-27.5">
+<meta name="app-version" content="2026-10-28.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -2001,14 +2001,13 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <hr>
     <div class="receipt-total"><span>TOTAL</span><span id="receiptTotal">Rp 0</span></div>
     <div class="sub" style="margin-top:10px;">Terima kasih sudah pesan!</div>
-    <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar('tunai')" style="margin-top:10px;padding:26px 12px;font-size:26px;font-weight:800;letter-spacing:1px;border-radius:14px;">💵 BAYAR TUNAI</button>
-    <!-- 2026-10-26 kasir sederhana: QRIS dipisah dari tunai (uangnya masuk rekening, tidak dihitung di Kas Outlet) -->
-    <button class="receipt-close" id="receiptQrisBtn" onclick="konfirmasiBayar('qris')" style="margin-top:10px;padding:26px 12px;font-size:26px;font-weight:800;letter-spacing:1px;background:#1565c0;color:#fff;border:2px solid #0d47a1;border-radius:14px;">📱 BAYAR QRIS</button>
+    <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar('tunai')" style="margin-top:10px;padding:26px 12px;font-size:26px;font-weight:800;letter-spacing:1px;border-radius:14px;">💵 BAYAR</button>
+    <!-- 2026-10-28 (Boss Puspita): tombol QRIS dihapus. Tunai & QRIS sama-sama tekan BAYAR; total QRIS diisi dari mutasi saat tutup kas -->
     <div style="display:flex;gap:8px;margin-top:22px;">
       <button class="receipt-close" id="receiptGrabBtn" onclick="konfirmasiBayar('grab')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#00b14f;color:#fff;border:2px solid #00873c;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 GrabFood</button>
       <button class="receipt-close" id="receiptShopeeBtn" onclick="konfirmasiBayar('shopee')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#ee4d2d;color:#fff;border:2px solid #c73a1d;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 ShopeeFood</button>
     </div>
-    <div class="sub" style="margin-top:4px;font-size:11px;">QRIS &amp; pesanan online tidak masuk Kas Outlet.</div>
+    <div class="sub" style="margin-top:4px;font-size:11px;">Bayar tunai atau QRIS: tekan BAYAR. Pesanan online tidak masuk Kas Outlet.</div>
     <button class="receipt-close" onclick="tutupKonfirmasiBayar()" style="background:transparent;color:var(--forest-dark);border:1px solid var(--line-soft);margin-top:8px;">KEMBALI</button>
   </div>
 </div>
@@ -3049,7 +3048,7 @@ async function ambilDataTutupKas(){
   let dana = { stok: 0, operasional: 0, rincian: {} };
   try{ const dr = await sb.rpc('dana_hitung_sisih', { p_cabang: activeCabangId }); if(!dr.error && dr.data) dana = dr.data; }catch(e){}
   return { paten, patenAktif, kasToko, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
-           jumlahTx: (txRes.data || []).length, totalTunai, totalQris, jumlahQris, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya,
+           jumlahTx: (txRes.data || []).length, totalTunai, totalQris, jumlahQris, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya, kasDasar: kasAwal + totalTunai - totalBiaya, qris: 0,
            danaStok: Number(dana.stok || 0), danaOperasional: Number(dana.operasional || 0), danaRincian: dana.rincian || {} };
 }
 
@@ -3080,16 +3079,18 @@ function kasLangkah(n){
     const isOwner1 = currentProfile && currentProfile.role === 'owner';
     const alasan1 = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
     body.innerHTML = `
-      <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-sub">Seharusnya: <b class="tkSeharusnya">${fmt(d.kasSistem)}</b></div>
       <div class="tk-list">
         <div class="tk-row"><span>Saldo Kas Outlet<small>dari tutup kas terakhir${isOwner1 ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
-        <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
+        <div class="tk-row"><span>+ Penjualan<small>${d.jumlahTx} transaksi · tunai + QRIS</small></span><b>${fmt(d.totalTunai)}</b></div>
         <details class="tk-row" style="display:block;"><summary style="display:flex;justify-content:space-between;cursor:pointer;list-style:none;"><span>− Uang keluar Kas Outlet<small>${d.biaya.length} catatan · ketuk untuk lihat</small></span><b>${fmt(d.totalBiaya)}</b></summary>
           ${d.biaya.map(b=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0 0 10px;"><span>${ikon(b.kategori)} ${namaB(b)} · ${jam(b.created_at)}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</span></div>`).join('') || '<div style="font-size:12.5px;padding:4px 0 0 10px;">Belum ada</div>'}
         </details>
-        ${d.totalQris ? `<div class="tk-row" style="opacity:.85;"><span>📱 QRIS (info)<small>${d.jumlahQris} transaksi · masuk rekening</small></span><b>${fmt(d.totalQris)}</b></div>` : ''}
+        <div class="tk-row" style="display:block;"><span style="display:block;">− 📱 QRIS hari ini<small>lihat total di mutasi QRIS · isi 0 kalau tidak ada</small></span>
+          <input type="text" inputmode="numeric" class="input-rupiah" id="kasQrisInput" placeholder="0" value="${d.qris ? Number(d.qris).toLocaleString('id-ID') : ''}" oninput="kasQrisLive()" autocomplete="off" style="width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1.5px solid #1565c0;font-size:18px;font-weight:800;box-sizing:border-box;">
+          ${d.totalQris ? `<small style="display:block;margin-top:4px;color:#0d47a1;">Sudah tercatat lewat tombol QRIS lama: ${fmt(d.totalQris)} (${d.jumlahQris} transaksi). Isi sisanya saja, jangan dobel.</small>` : ''}</div>
       </div>
-      <div class="tk-big"><small>Seharusnya Kas Outlet sekarang</small><b>${fmt(d.kasSistem)}</b></div>
+      <div class="tk-big"><small>Seharusnya Kas Outlet sekarang</small><b class="tkSeharusnya">${fmt(d.kasSistem)}</b></div>
       <div style="font-weight:800;font-size:14px;color:#111;">Uang Kas Outlet yang dihitung sekarang</div>
       <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
       <div id="tkStatus"></div>
@@ -3162,10 +3163,19 @@ async function ubahKasAwalTK(){
   if(v === null) return;
   const n = Number(String(v).replace(/[^0-9]/g, ''));
   if(!Number.isFinite(n) || n < 0) return;
-  kasTK.kasAwal = n; kasTK.kasSistem = n + kasTK.totalTunai - kasTK.totalBiaya;
+  kasTK.kasAwal = n; kasTK.kasDasar = n + kasTK.totalTunai - kasTK.totalBiaya; kasTK.kasSistem = kasTK.kasDasar - (kasTK.qris || 0);
   kasLangkah(1);
 }
 
+// 2026-10-28: QRIS diisi total dari mutasi -> "seharusnya" Kas Outlet dikurangi QRIS
+function kasQrisLive(){
+  const d = kasTK; if(!d) return;
+  const q = angkaRupiah('kasQrisInput');
+  d.qris = isNaN(q) ? 0 : q;
+  d.kasSistem = d.kasDasar - d.qris;
+  document.querySelectorAll('#kasModalBody .tkSeharusnya').forEach(el => el.textContent = fmt(d.kasSistem));
+  kasHitungLive();
+}
 function kasHitungLive(){
   const d = kasTK; const fisik = angkaRupiah('kasFisikInput');
   const st = document.getElementById('tkStatus'), al = document.getElementById('tkAlasan'), se = document.getElementById('tkSetor');
@@ -3274,19 +3284,20 @@ async function submitHitungKas(){
   try{ baru = await ambilDataTutupKas(); }
   catch(e){ btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas'; errBox.textContent = e.message; errBox.classList.add('show'); return; }
   const kasAwalDipakai = (currentProfile && currentProfile.role === 'owner') ? kasTK.kasAwal : baru.kasAwal;
-  baru.kasSistem = kasAwalDipakai + baru.totalTunai - baru.totalBiaya; baru.kasAwal = kasAwalDipakai;
+  baru.kasDasar = kasAwalDipakai + baru.totalTunai - baru.totalBiaya; baru.kasAwal = kasAwalDipakai;
+  baru.qris = kasTK.qris || 0; baru.kasSistem = baru.kasDasar - baru.qris;
   if(baru.kasSistem !== kasTK.kasSistem){
     kasTK = Object.assign(baru, { alasan: kasTK.alasan });
     btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
-    document.querySelector('#kasModalBody .tk-sub').innerHTML = `Seharusnya: <b>${fmt(kasTK.kasSistem)}</b>`;
+    document.querySelectorAll('#kasModalBody .tkSeharusnya').forEach(el => el.textContent = fmt(kasTK.kasSistem));
     kasHitungLive();
     errBox.textContent = 'Ada transaksi / belanja baru, angka "seharusnya" diperbarui. Cek lagi lalu Simpan.'; errBox.classList.add('show');
     return;
   }
   const d = kasTK;
-  const { data: hasil, error } = await sb.rpc('kas_tutup_v2', {
+  const { data: hasil, error } = await sb.rpc('kas_tutup_v3', {
     p_cabang: activeCabangId, p_kas_awal: d.kasAwal, p_kas_sistem: d.kasSistem, p_kas_fisik: kasFisik,
-    p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString()
+    p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString(), p_qris: d.qris || 0
   });
   btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
   if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
@@ -3298,7 +3309,7 @@ async function submitHitungKas(){
   try{
     await tampilkanLaporanKas({
       kasAwal: d.kasAwal, kasFisik, kasSistem: d.kasSistem, selisih, catatan,
-      totalTunai: d.totalTunai, jumlahTx: d.jumlahTx, totalBiaya: d.totalBiaya, sejak: d.startOfDay.toISOString(),
+      totalTunai: d.totalTunai, jumlahTx: d.jumlahTx, totalBiaya: d.totalBiaya, qris: d.qris || 0, sejak: d.startOfDay.toISOString(),
       setoran: Number(hasil && hasil.setoran || 0), kasDitinggal: Number(hasil && hasil.kas_ditinggal != null ? hasil.kas_ditinggal : kasFisik),
       danaStok: Number(hasil && hasil.dana_stok || 0), danaOperasional: Number(hasil && hasil.dana_operasional || 0)
     });
@@ -3340,7 +3351,8 @@ async function tampilkanLaporanKas(d){
     <div class="lk-status ${status[0]}">${status[1]}</div>
     <div class="lk-judul">Uang masuk</div>
     <div class="lk-row"><span>Kas awal (modal kembalian)</span><b>${fmt(d.kasAwal)}</b></div>
-    <div class="lk-row"><span>Penjualan tunai (${d.jumlahTx} transaksi)</span><b>${fmt(d.totalTunai)}</b></div>
+    <div class="lk-row"><span>Penjualan (${d.jumlahTx} transaksi)</span><b>${fmt(d.totalTunai)}</b></div>
+    ${d.qris ? `<div class="lk-row"><span>📱 QRIS (masuk rekening)</span><b>− ${fmt(d.qris)}</b></div>` : ''}
     <div class="lk-judul">Uang keluar dari Kas Outlet</div>
     ${biaya.length ? biaya.map(b=>`<div class="lk-row kecil"><span>${esc(namaBiaya(b))} · ${jam(b.created_at)}${b.pencatat ? ' · '+esc(b.pencatat) : ''}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : '− ' + fmt(b.jumlah)}</span></div>`).join('')
       : '<div class="lk-row kecil"><span>Tidak ada belanja tunai</span><span></span></div>'}
@@ -3368,6 +3380,7 @@ async function tampilkanLaporanKas(d){
   t += namaCabang + '\n' + tglStr + ' ' + jamStr + '\nKasir: ' + namaKasir + '\n' + garis;
   t += baris('Kas awal', fmt(d.kasAwal));
   t += baris('Penjualan (' + d.jumlahTx + ' trx)', fmt(d.totalTunai));
+  if(d.qris) t += baris('QRIS (rekening)', '-' + fmt(d.qris));
   t += garis + 'Uang keluar:\n';
   if(biaya.length){ biaya.forEach(b=>{ t += baris(' ' + namaBiaya(b) + ' ' + jam(b.created_at) + (b.pencatat ? ' ' + b.pencatat : ''), (Number(b.jumlah) < 0 ? '+' + fmt(-Number(b.jumlah)) : '-' + fmt(b.jumlah))); }); }
   else { t += ' (tidak ada)\n'; }
@@ -5177,7 +5190,7 @@ function aturTombolBayar(menyimpan, metode){
   const t = document.getElementById('receiptBayarBtn'), g = document.getElementById('receiptGrabBtn'), sp = document.getElementById('receiptShopeeBtn'), q = document.getElementById('receiptQrisBtn');
   t.disabled = menyimpan; if(g) g.disabled = menyimpan; if(sp) sp.disabled = menyimpan; if(q) q.disabled = menyimpan;
   if(q) q.textContent = (menyimpan && metode === 'qris') ? 'Menyimpan...' : '📱 BAYAR QRIS';
-  t.textContent = (menyimpan && metode === 'tunai') ? 'Menyimpan...' : '💵 BAYAR TUNAI';
+  t.textContent = (menyimpan && metode === 'tunai') ? 'Menyimpan...' : '💵 BAYAR';
   if(g) g.textContent = (menyimpan && metode === 'grab') ? 'Menyimpan...' : '🛵 GrabFood';
   if(sp) sp.textContent = (menyimpan && metode === 'shopee') ? 'Menyimpan...' : '🛵 ShopeeFood';
 }

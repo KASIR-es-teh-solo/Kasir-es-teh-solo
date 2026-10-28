@@ -1,0 +1,4 @@
+-- 2026-10-28 (Boss Puspita): kasir 1 tombol BAYAR (tunai & QRIS). Total QRIS diisi dari mutasi saat tutup kas.
+-- kas_shift.qris (numeric, default 0); kas_tutup_v3 = kas_tutup_v2 + simpan p_qris.
+-- brankas_online_data / brankas_online_cairkan: saldo QRIS = transaksi qris lama + sum(kas_shift.qris) - brankas_online qris.
+-- Lengkap di migrasi qris_input_tutup_kas_2026_10_28.
