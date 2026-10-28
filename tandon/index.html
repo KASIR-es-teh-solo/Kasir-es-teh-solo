@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="app-version" content="tandon-2026-10-28.3">
+<meta name="app-version" content="tandon-2026-10-28.4">
 <meta name="theme-color" content="#0b1a12">
 <title>Tandon Dollar</title>
 <link rel="icon" href="ikon-192.png?v=2">
@@ -259,7 +259,7 @@ function htmlGaji(){
 }
 async function ambilGaji(){
   const g = gaji; if(!g) return;
-  if(!(await yakin('💵 Ambil Gaji ' + fmt(g.jumlah), `Pastikan urusan aplikasi kasir sudah beres (tutup kas & cairkan QRIS).\n\nKas Outlet otomatis berkurang ${fmt(g.jumlah)}.\nAmbil uangnya dari Kas Outlet lalu serahkan ke Boss Puspita.`))) return;
+  if(!(await yakin('💵 Ambil Gaji ' + fmt(g.jumlah), `Pastikan urusan aplikasi kasir sudah beres (tutup kas).\n\nKas Outlet otomatis berkurang ${fmt(g.jumlah)}.\nAmbil uangnya dari Kas Outlet lalu serahkan ke Boss Puspita.`))) return;
   const { error } = await sb.rpc('gaji_owner_ambil', { p_cabang: g.cabang });
   if(error){ toast('Gagal: ' + error.message); return; }
   toast('✅ Gaji ' + fmt(g.jumlah) + ' tercatat'); muat();

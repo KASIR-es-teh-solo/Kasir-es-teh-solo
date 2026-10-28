@@ -1,0 +1,4 @@
+-- 2026-10-28 (Boss Leo): semua QRIS dihapus (migrasi hapus_qris_semua_2026_10_28).
+-- paksa_metode_tunai: selain 'online' -> 'tunai'. transaksi qris lama -> tunai.
+-- laporan_biaya_kas & brankas_online_data/cairkan: platform 'qris' tidak dihitung lagi (catatan lama tetap ada).
+-- kolom kas_shift.qris & fungsi kas_tutup_v3 dibiarkan (tidak dipakai aplikasi).

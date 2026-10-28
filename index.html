@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-10-28.1">
+<meta name="app-version" content="2026-10-28.2">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -474,7 +474,7 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
   .bo-total{color:#fff;font-weight:800;font-size:16px;margin:0 0 12px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
   .bo-kartu-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-bottom:18px}
   .bo-kartu{border-radius:16px;padding:16px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  .bo-kartu.grab{background:linear-gradient(135deg,#00b14f,#007a37)}.bo-kartu.shopee{background:linear-gradient(135deg,#ff6a3d,#d73211)}.bo-kartu.lain{background:linear-gradient(135deg,#555,#2a2a2a)}.bo-kartu.qris{background:linear-gradient(135deg,#1e88e5,#0d47a1)}
+  .bo-kartu.grab{background:linear-gradient(135deg,#00b14f,#007a37)}.bo-kartu.shopee{background:linear-gradient(135deg,#ff6a3d,#d73211)}.bo-kartu.lain{background:linear-gradient(135deg,#555,#2a2a2a)}
   .bo-kartu .bo-nama{font-weight:800;font-size:15px}.bo-kartu .bo-saldo{font-size:28px;font-weight:800;margin:4px 0}
   .bo-kartu .bo-info{font-size:12.5px;line-height:1.5;opacity:.95}
   .bo-kartu .bo-btn{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -2002,12 +2002,11 @@ var APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).con
     <div class="receipt-total"><span>TOTAL</span><span id="receiptTotal">Rp 0</span></div>
     <div class="sub" style="margin-top:10px;">Terima kasih sudah pesan!</div>
     <button class="receipt-close" id="receiptBayarBtn" onclick="konfirmasiBayar('tunai')" style="margin-top:10px;padding:26px 12px;font-size:26px;font-weight:800;letter-spacing:1px;border-radius:14px;">💵 BAYAR</button>
-    <!-- 2026-10-28 (Boss Puspita): tombol QRIS dihapus. Tunai & QRIS sama-sama tekan BAYAR; total QRIS diisi dari mutasi saat tutup kas -->
     <div style="display:flex;gap:8px;margin-top:22px;">
       <button class="receipt-close" id="receiptGrabBtn" onclick="konfirmasiBayar('grab')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#00b14f;color:#fff;border:2px solid #00873c;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 GrabFood</button>
       <button class="receipt-close" id="receiptShopeeBtn" onclick="konfirmasiBayar('shopee')" style="flex:1;min-width:0;margin:0;padding:14px 4px;font-size:15px;background:#ee4d2d;color:#fff;border:2px solid #c73a1d;font-weight:800;border-radius:12px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.25);white-space:nowrap;">🛵 ShopeeFood</button>
     </div>
-    <div class="sub" style="margin-top:4px;font-size:11px;">Bayar tunai atau QRIS: tekan BAYAR. Pesanan online tidak masuk Kas Outlet.</div>
+    <div class="sub" style="margin-top:4px;font-size:11px;">Pesanan online tidak masuk Kas Outlet.</div>
     <button class="receipt-close" onclick="tutupKonfirmasiBayar()" style="background:transparent;color:var(--forest-dark);border:1px solid var(--line-soft);margin-top:8px;">KEMBALI</button>
   </div>
 </div>
@@ -3031,10 +3030,6 @@ async function ambilDataTutupKas(){
     sb.rpc('laporan_biaya_kas', { p_cabang: activeCabangId, p_sejak: startOfDay.toISOString() })
   ]);
   if(txRes.error) throw new Error('Gagal mengambil data transaksi: ' + txRes.error.message);
-  // 2026-10-26: QRIS dicatat terpisah, hanya ditampilkan (tidak dihitung di Kas Outlet)
-  let totalQris = 0, jumlahQris = 0;
-  try{ const qr = await sb.from('transaksi').select('total').eq('cabang_id', activeCabangId).eq('status','selesai').eq('metode_bayar','qris').gt('masuk_at', startOfDay.toISOString());
-       totalQris = (qr.data || []).reduce((a,t)=>a+Number(t.total),0); jumlahQris = (qr.data || []).length; }catch(e){}
   if(byRes.error) throw new Error('Gagal mengambil data uang keluar: ' + byRes.error.message);
   let biaya = (byRes.data || []).filter(b => new Date(b.created_at) > startOfDay);
   if(!lihatUrusanOwner()){
@@ -3048,7 +3043,7 @@ async function ambilDataTutupKas(){
   let dana = { stok: 0, operasional: 0, rincian: {} };
   try{ const dr = await sb.rpc('dana_hitung_sisih', { p_cabang: activeCabangId }); if(!dr.error && dr.data) dana = dr.data; }catch(e){}
   return { paten, patenAktif, kasToko, startOfDay, kasAwal, kasAwalPaten: !!(lastKas && lastKas.kas_ditinggal != null), adaKasLalu: !!lastKas,
-           jumlahTx: (txRes.data || []).length, totalTunai, totalQris, jumlahQris, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya, kasDasar: kasAwal + totalTunai - totalBiaya, qris: 0,
+           jumlahTx: (txRes.data || []).length, totalTunai, biaya, totalBiaya, kasSistem: kasAwal + totalTunai - totalBiaya,
            danaStok: Number(dana.stok || 0), danaOperasional: Number(dana.operasional || 0), danaRincian: dana.rincian || {} };
 }
 
@@ -3079,18 +3074,15 @@ function kasLangkah(n){
     const isOwner1 = currentProfile && currentProfile.role === 'owner';
     const alasan1 = ['Salah kembalian','Lupa catat belanja','Uang receh','Lainnya'];
     body.innerHTML = `
-      <div class="tk-sub">Seharusnya: <b class="tkSeharusnya">${fmt(d.kasSistem)}</b></div>
+      <div class="tk-sub">Seharusnya: <b>${fmt(d.kasSistem)}</b></div>
       <div class="tk-list">
         <div class="tk-row"><span>Saldo Kas Outlet<small>dari tutup kas terakhir${isOwner1 ? ` · <a href="#" onclick="ubahKasAwalTK();return false;">ubah</a>` : ''}</small></span><b>${fmt(d.kasAwal)}</b></div>
-        <div class="tk-row"><span>+ Penjualan<small>${d.jumlahTx} transaksi · tunai + QRIS</small></span><b>${fmt(d.totalTunai)}</b></div>
+        <div class="tk-row"><span>+ Penjualan<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
         <details class="tk-row" style="display:block;"><summary style="display:flex;justify-content:space-between;cursor:pointer;list-style:none;"><span>− Uang keluar Kas Outlet<small>${d.biaya.length} catatan · ketuk untuk lihat</small></span><b>${fmt(d.totalBiaya)}</b></summary>
           ${d.biaya.map(b=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0 0 10px;"><span>${ikon(b.kategori)} ${namaB(b)} · ${jam(b.created_at)}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : fmt(b.jumlah)}</span></div>`).join('') || '<div style="font-size:12.5px;padding:4px 0 0 10px;">Belum ada</div>'}
         </details>
-        <div class="tk-row" style="display:block;"><span style="display:block;">− 📱 QRIS hari ini<small>lihat total di mutasi QRIS · isi 0 kalau tidak ada</small></span>
-          <input type="text" inputmode="numeric" class="input-rupiah" id="kasQrisInput" placeholder="0" value="${d.qris ? Number(d.qris).toLocaleString('id-ID') : ''}" oninput="kasQrisLive()" autocomplete="off" style="width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1.5px solid #1565c0;font-size:18px;font-weight:800;box-sizing:border-box;">
-          ${d.totalQris ? `<small style="display:block;margin-top:4px;color:#0d47a1;">Sudah tercatat lewat tombol QRIS lama: ${fmt(d.totalQris)} (${d.jumlahQris} transaksi). Isi sisanya saja, jangan dobel.</small>` : ''}</div>
       </div>
-      <div class="tk-big"><small>Seharusnya Kas Outlet sekarang</small><b class="tkSeharusnya">${fmt(d.kasSistem)}</b></div>
+      <div class="tk-big"><small>Seharusnya Kas Outlet sekarang</small><b>${fmt(d.kasSistem)}</b></div>
       <div style="font-weight:800;font-size:14px;color:#111;">Uang Kas Outlet yang dihitung sekarang</div>
       <input type="text" inputmode="numeric" class="input-rupiah tk-input" id="kasFisikInput" placeholder="0" oninput="kasHitungLive()" autocomplete="off">
       <div id="tkStatus"></div>
@@ -3133,7 +3125,6 @@ function kasLangkah(n){
         <div class="tk-row"><span>+ Penjualan tunai<small>${d.jumlahTx} transaksi</small></span><b>${fmt(d.totalTunai)}</b></div>
         <div class="tk-row"><span>− Uang keluar Kas Outlet<small>belanja${(currentProfile && currentProfile.role !== 'kasir') ? ' + simpanan' : ''}</small></span><b>${fmt(d.totalBiaya)}</b></div>
       </div>
-      ${d.totalQris ? `<div class="tk-row" style="opacity:.85;"><span>📱 QRIS hari ini<small>${d.jumlahQris} transaksi · masuk rekening, tidak dihitung di Kas Outlet</small></span><b>${fmt(d.totalQris)}</b></div>` : ''}
       <div class="tk-big"><small>${d.patenAktif ? 'Seharusnya ada di Kas Outlet' : 'Seharusnya Kas Outlet sekarang'}</small><b>${fmt(d.kasSistem)}</b></div>
       <button class="login-btn" onclick="kasLangkah(3)">Lanjut hitung uang ▶</button>
       <button class="tk-btn-o" onclick="kasLangkah(1)">◀ Kembali</button>`;
@@ -3163,19 +3154,10 @@ async function ubahKasAwalTK(){
   if(v === null) return;
   const n = Number(String(v).replace(/[^0-9]/g, ''));
   if(!Number.isFinite(n) || n < 0) return;
-  kasTK.kasAwal = n; kasTK.kasDasar = n + kasTK.totalTunai - kasTK.totalBiaya; kasTK.kasSistem = kasTK.kasDasar - (kasTK.qris || 0);
+  kasTK.kasAwal = n; kasTK.kasSistem = n + kasTK.totalTunai - kasTK.totalBiaya;
   kasLangkah(1);
 }
 
-// 2026-10-28: QRIS diisi total dari mutasi -> "seharusnya" Kas Outlet dikurangi QRIS
-function kasQrisLive(){
-  const d = kasTK; if(!d) return;
-  const q = angkaRupiah('kasQrisInput');
-  d.qris = isNaN(q) ? 0 : q;
-  d.kasSistem = d.kasDasar - d.qris;
-  document.querySelectorAll('#kasModalBody .tkSeharusnya').forEach(el => el.textContent = fmt(d.kasSistem));
-  kasHitungLive();
-}
 function kasHitungLive(){
   const d = kasTK; const fisik = angkaRupiah('kasFisikInput');
   const st = document.getElementById('tkStatus'), al = document.getElementById('tkAlasan'), se = document.getElementById('tkSetor');
@@ -3284,20 +3266,19 @@ async function submitHitungKas(){
   try{ baru = await ambilDataTutupKas(); }
   catch(e){ btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas'; errBox.textContent = e.message; errBox.classList.add('show'); return; }
   const kasAwalDipakai = (currentProfile && currentProfile.role === 'owner') ? kasTK.kasAwal : baru.kasAwal;
-  baru.kasDasar = kasAwalDipakai + baru.totalTunai - baru.totalBiaya; baru.kasAwal = kasAwalDipakai;
-  baru.qris = kasTK.qris || 0; baru.kasSistem = baru.kasDasar - baru.qris;
+  baru.kasSistem = kasAwalDipakai + baru.totalTunai - baru.totalBiaya; baru.kasAwal = kasAwalDipakai;
   if(baru.kasSistem !== kasTK.kasSistem){
     kasTK = Object.assign(baru, { alasan: kasTK.alasan });
     btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
-    document.querySelectorAll('#kasModalBody .tkSeharusnya').forEach(el => el.textContent = fmt(kasTK.kasSistem));
+    document.querySelector('#kasModalBody .tk-sub').innerHTML = `Seharusnya: <b>${fmt(kasTK.kasSistem)}</b>`; const tb = document.querySelector('#kasModalBody .tk-big b'); if(tb) tb.textContent = fmt(kasTK.kasSistem);
     kasHitungLive();
     errBox.textContent = 'Ada transaksi / belanja baru, angka "seharusnya" diperbarui. Cek lagi lalu Simpan.'; errBox.classList.add('show');
     return;
   }
   const d = kasTK;
-  const { data: hasil, error } = await sb.rpc('kas_tutup_v3', {
+  const { data: hasil, error } = await sb.rpc('kas_tutup_v2', {
     p_cabang: activeCabangId, p_kas_awal: d.kasAwal, p_kas_sistem: d.kasSistem, p_kas_fisik: kasFisik,
-    p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString(), p_qris: d.qris || 0
+    p_total_biaya: d.totalBiaya, p_catatan: catatan || null, p_waktu_buka: d.startOfDay.toISOString()
   });
   btn.disabled = false; btn.textContent = '💾 Simpan Tutup Kas';
   if(error){ errBox.textContent = 'Gagal menyimpan: ' + error.message; errBox.classList.add('show'); return; }
@@ -3309,7 +3290,7 @@ async function submitHitungKas(){
   try{
     await tampilkanLaporanKas({
       kasAwal: d.kasAwal, kasFisik, kasSistem: d.kasSistem, selisih, catatan,
-      totalTunai: d.totalTunai, jumlahTx: d.jumlahTx, totalBiaya: d.totalBiaya, qris: d.qris || 0, sejak: d.startOfDay.toISOString(),
+      totalTunai: d.totalTunai, jumlahTx: d.jumlahTx, totalBiaya: d.totalBiaya, sejak: d.startOfDay.toISOString(),
       setoran: Number(hasil && hasil.setoran || 0), kasDitinggal: Number(hasil && hasil.kas_ditinggal != null ? hasil.kas_ditinggal : kasFisik),
       danaStok: Number(hasil && hasil.dana_stok || 0), danaOperasional: Number(hasil && hasil.dana_operasional || 0)
     });
@@ -3352,7 +3333,6 @@ async function tampilkanLaporanKas(d){
     <div class="lk-judul">Uang masuk</div>
     <div class="lk-row"><span>Kas awal (modal kembalian)</span><b>${fmt(d.kasAwal)}</b></div>
     <div class="lk-row"><span>Penjualan (${d.jumlahTx} transaksi)</span><b>${fmt(d.totalTunai)}</b></div>
-    ${d.qris ? `<div class="lk-row"><span>📱 QRIS (masuk rekening)</span><b>− ${fmt(d.qris)}</b></div>` : ''}
     <div class="lk-judul">Uang keluar dari Kas Outlet</div>
     ${biaya.length ? biaya.map(b=>`<div class="lk-row kecil"><span>${esc(namaBiaya(b))} · ${jam(b.created_at)}${b.pencatat ? ' · '+esc(b.pencatat) : ''}</span><span>${Number(b.jumlah) < 0 ? '+ ' + fmt(-Number(b.jumlah)) : '− ' + fmt(b.jumlah)}</span></div>`).join('')
       : '<div class="lk-row kecil"><span>Tidak ada belanja tunai</span><span></span></div>'}
@@ -3380,7 +3360,6 @@ async function tampilkanLaporanKas(d){
   t += namaCabang + '\n' + tglStr + ' ' + jamStr + '\nKasir: ' + namaKasir + '\n' + garis;
   t += baris('Kas awal', fmt(d.kasAwal));
   t += baris('Penjualan (' + d.jumlahTx + ' trx)', fmt(d.totalTunai));
-  if(d.qris) t += baris('QRIS (rekening)', '-' + fmt(d.qris));
   t += garis + 'Uang keluar:\n';
   if(biaya.length){ biaya.forEach(b=>{ t += baris(' ' + namaBiaya(b) + ' ' + jam(b.created_at) + (b.pencatat ? ' ' + b.pencatat : ''), (Number(b.jumlah) < 0 ? '+' + fmt(-Number(b.jumlah)) : '-' + fmt(b.jumlah))); }); }
   else { t += ' (tidak ada)\n'; }
@@ -4550,7 +4529,7 @@ async function isiBerandaAdmin(){
     const pp = (data && data.per_platform) || {};
     set('admOnline', fmt((data && data.saldo) || 0));
     admSetV('brankasonline', fmt((data && data.saldo) || 0));
-    set('admOnlineRinci', `Grab ${fmt((pp.grab || {}).saldo || 0)} · Shopee ${fmt((pp.shopee || {}).saldo || 0)} · QRIS ${fmt((pp.qris || {}).saldo || 0)}`);
+    set('admOnlineRinci', `Grab ${fmt((pp.grab || {}).saldo || 0)} · Shopee ${fmt((pp.shopee || {}).saldo || 0)}`);
   }catch(e){ set('admOnline', '-'); }
   // barang hampir habis: cup ≤ batas + bahan yang stoknya habis
   try{
@@ -5164,7 +5143,7 @@ function bukaKonfirmasiBayar(){
   if(diskon > subtotal) diskon = subtotal;
   const totalPrice = subtotal - diskon;
 
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
+  const labelMetode = { tunai:'💵 Tunai', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
   const lines = cart.map(c=>`
     <div class="receipt-line"><span>${escTG(c.nama)} (${escTG(c.size)}) x${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>
   `).join('');
@@ -5187,9 +5166,8 @@ function tutupKonfirmasiBayar(){
 // baru di sini transaksi BENERAN diproses & masuk database
 // tombol BAYAR TUNAI & PESANAN ONLINE dikunci bersamaan saat menyimpan (anti dobel)
 function aturTombolBayar(menyimpan, metode){
-  const t = document.getElementById('receiptBayarBtn'), g = document.getElementById('receiptGrabBtn'), sp = document.getElementById('receiptShopeeBtn'), q = document.getElementById('receiptQrisBtn');
+  const t = document.getElementById('receiptBayarBtn'), g = document.getElementById('receiptGrabBtn'), sp = document.getElementById('receiptShopeeBtn');
   t.disabled = menyimpan; if(g) g.disabled = menyimpan; if(sp) sp.disabled = menyimpan; if(q) q.disabled = menyimpan;
-  if(q) q.textContent = (menyimpan && metode === 'qris') ? 'Menyimpan...' : '📱 BAYAR QRIS';
   t.textContent = (menyimpan && metode === 'tunai') ? 'Menyimpan...' : '💵 BAYAR';
   if(g) g.textContent = (menyimpan && metode === 'grab') ? 'Menyimpan...' : '🛵 GrabFood';
   if(sp) sp.textContent = (menyimpan && metode === 'shopee') ? 'Menyimpan...' : '🛵 ShopeeFood';
@@ -5205,7 +5183,7 @@ async function konfirmasiBayar(metode){
   }
   // 'online' = pesanan Shopee/Grab: harga outlet, stok berkurang, TIDAK masuk saldo kas laci
   // 2026-10-19: online dipisah GrabFood / ShopeeFood (server menyimpan metode 'online' + platform)
-  selectedMetodeBayar = ['grab','shopee','online','qris'].includes(metode) ? metode : 'tunai';
+  selectedMetodeBayar = ['grab','shopee','online'].includes(metode) ? metode : 'tunai';
   aturTombolBayar(true, selectedMetodeBayar);
 
   const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
@@ -5591,7 +5569,7 @@ function disconnectPrinter(){
 }
 
 function buildReceiptText(items, total, diskon, metodeBayar){
-  const labelMetode = { tunai:'Tunai', qris:'QRIS', transfer:'Transfer', online:'Online', grab:'GrabFood', shopee:'ShopeeFood' };
+  const labelMetode = { tunai:'Tunai', transfer:'Transfer', online:'Online', grab:'GrabFood', shopee:'ShopeeFood' };
   let t = "ES TEH S.O.L.O\nKesegaran Alami\n--------------------------\n";
   items.forEach(c=>{
     t += `${c.nama} (${c.size}) x${c.qty}\n   ${fmt(c.price*c.qty)}\n`;
@@ -6413,7 +6391,7 @@ function renderTxList(list){
     txList.innerHTML = '<div class="empty-msg">Tidak ada transaksi.</div>';
     return;
   }
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
+  const labelMetode = { tunai:'💵 Tunai', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
   txList.innerHTML = list.map(t=>{
     const dibatalkan = t.status === 'dibatalkan';
     return `
@@ -8365,7 +8343,7 @@ async function loadPenjualanHariIni(){
   const totalDiskon = sukses.reduce((s,t)=>s+Number(t.diskon||0),0);
   const cup = sukses.reduce((s,t)=>s+(t.transaksi_item||[]).reduce((a,i)=>a+Number(i.qty||0),0),0);
 
-  const labelMetode = { tunai:'💵 Tunai', qris:'📱 QRIS', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
+  const labelMetode = { tunai:'💵 Tunai', transfer:'🏦 Transfer', online:'🛵 Online', grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood' };
   const perMetode = {};
   sukses.forEach(t=>{
     const m = (t.metode_bayar === 'online' && t.platform) ? t.platform : (t.metode_bayar || 'tunai');
@@ -9252,7 +9230,7 @@ async function simpanPengaturanLaba(){
   loadLabaBersih();
 }
 
-const BO_NAMA = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', qris:'📱 QRIS', lain:'🛵 Online lain (data lama)' };
+const BO_NAMA = { grab:'🟢 GrabFood', shopee:'🟠 ShopeeFood', lain:'🛵 Online lain (data lama)' };
 let brankasOnlinePer = {};
 async function loadBrankasOnline(){
   const list = document.getElementById('brankasOnlineList');
@@ -9266,7 +9244,7 @@ async function loadBrankasOnline(){
   brankasOnlineSaldo = Number(data.saldo || 0);
   brankasOnlinePer = data.per_platform || {};
   document.getElementById('brankasOnlineSaldo').textContent = fmt(brankasOnlineSaldo);
-  kartu.innerHTML = ['grab','shopee','qris','lain'].filter(pf => pf !== 'lain' || Number((brankasOnlinePer.lain||{}).saldo) !== 0).map(pf => {
+  kartu.innerHTML = ['grab','shopee','lain'].filter(pf => pf !== 'lain' || Number((brankasOnlinePer.lain||{}).saldo) !== 0).map(pf => {
     const d = brankasOnlinePer[pf] || {};
     return `<div class="bo-kartu ${pf}">
       <div class="bo-nama">${BO_NAMA[pf]} · belum cair</div>
@@ -9277,7 +9255,7 @@ async function loadBrankasOnline(){
     </div>`;
   }).join('');
   const rows = data.riwayat || [];
-  const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} ${r.platform === 'qris' ? 'transaksi' : 'pesanan'}`
+  const label = r => r.jenis === 'masuk' ? `${BO_NAMA[r.platform] || '🛵 Online'} · ${r.jumlah_pesanan} pesanan`
     : r.jenis === 'cair' ? `🏦 ${BO_NAMA[r.platform] || 'Online'} cair ke rekening · diterima ${fmt(r.diterima || 0)}`
     : r.jenis === 'selisih' ? `✂️ Potongan komisi ${BO_NAMA[r.platform] || 'Online'}`
     : `💵 ${BO_NAMA[r.platform] || 'Online'} dicairkan ke Kas Outlet`;
