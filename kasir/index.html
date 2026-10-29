@@ -5,14 +5,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kasir Es Teh S.O.L.O</title>
+<title>Kasir Outlet Es Teh S.O.L.O</title>
 <meta name="theme-color" content="#0c1f14">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230c1f14'/%3E%3Ccircle cx='100' cy='100' r='80' fill='%23f7f4ea'/%3E%3Ctext x='100' y='135' font-size='100' text-anchor='middle'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230c1f14'/%3E%3Ccircle cx='100' cy='100' r='80' fill='%23f7f4ea'/%3E%3Ctext x='100' y='135' font-size='100' text-anchor='middle'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="kasir-2026-10-29.2">
+<meta name="app-version" content="kasir-2026-10-29.3">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -861,13 +861,9 @@ if(APP_KASIR){
   <div class="login-box">
     <div class="badge">🌲</div>
     <h1>Es Teh S.O.L.O</h1>
-    <p class="sub">Kasir Online — Silakan Login</p>
+    <p class="sub">Kasir Outlet — Silakan Login</p>
 
-    <div class="role-tabs">
-      <button type="button" class="role-tab active" data-role="owner" onclick="selectLoginRole('owner', this)">👑 Owner</button>
-      <button type="button" class="role-tab" data-role="admin" onclick="selectLoginRole('admin', this)">🛠️ Admin</button>
-      <button type="button" class="role-tab" data-role="kasir" onclick="selectLoginRole('kasir', this)">🧾 Kasir</button>
-    </div>
+    <div class="role-tabs" style="display:none;"></div>
 
     <div class="login-error" id="loginError"></div>
     <div class="field">
@@ -878,7 +874,7 @@ if(APP_KASIR){
       <label>Password</label>
       <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
     </div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Masuk sebagai <span id="loginRoleLabel">Owner</span></button>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Masuk</button>
   </div>
 </div>
 <script>
