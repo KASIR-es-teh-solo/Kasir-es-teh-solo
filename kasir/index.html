@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="kasir-2026-10-29.3">
+<meta name="app-version" content="kasir-2026-10-29.4">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -746,6 +746,8 @@ if(APP_KASIR){
   #penjualanHariIniOverlay .trx-batal-label{color:#c0392b !important;}
   /* Hari Ini: Penjualan + Transaksi dalam satu tampilan, dipisah sekat */
   #penjualanHariIniOverlay .hari-ini-modal{max-width:760px;}
+  /* 2026-10-29: tombol X tutup di pojok kanan atas (ikut terlihat saat jendela di-scroll) */
+  .tutup-x{position:sticky;top:-6px;float:right;z-index:5;width:40px;height:40px;margin:-8px -8px 0 8px;border-radius:50%;border:none;background:#c0392b;color:#fff;font-size:22px;font-weight:900;line-height:40px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;}
   .hari-ini-judul{font-weight:800;font-size:15px;margin:4px 0 8px;}
   .hari-ini-sekat{height:0;border-top:3px solid #0c1f14;margin:14px 0;opacity:.85 !important;}
   @media (min-width:640px){
@@ -1640,6 +1642,7 @@ if(APP_KASIR){
 <!-- Hari Ini (kasir & owner, cabang aktif): Penjualan Hari Ini + Transaksi Hari Ini jadi satu, dipisah sekat -->
 <div class="overlay" id="penjualanHariIniOverlay">
   <div class="modal hari-ini-modal">
+    <button type="button" class="tutup-x" onclick="tutupPenjualanHariIni()" title="Tutup" aria-label="Tutup">✕</button>
     <h3>🧾 Pesanan Hari Ini</h3>
     <p id="phiSubjudul" style="font-size:12px;opacity:.95;font-weight:600;">-</p>
     <span id="tjSubjudul" class="hidden"></span>
@@ -1658,13 +1661,13 @@ if(APP_KASIR){
     </div>
     <button class="login-btn" style="margin-top:12px;background:#ee4d2d;border-color:#c73a1d;" onclick="bukaPesananOnline('semua')">🛵 Riwayat Pesanan ShopeeFood & GrabFood</button>
     <button class="login-btn" style="margin-top:8px;" onclick="loadHariIniGabung()">🔄 Perbarui</button>
-    <button class="modal-close" onclick="tutupPenjualanHariIni()">Tutup</button>
   </div>
 </div>
 
 <!-- 2026-10-28 (Boss Leo): riwayat pesanan online per pesanan (menu), untuk dicocokkan dengan Shopee Partner / GrabMerchant -->
 <div class="overlay" id="pesananOnlineOverlay" style="z-index:9500;">
   <div class="modal" style="max-width:520px;">
+    <button type="button" class="tutup-x" onclick="document.getElementById('pesananOnlineOverlay').classList.remove('show')" title="Tutup" aria-label="Tutup">✕</button>
     <h3>🛵 Riwayat Pesanan Online</h3>
     <p id="poSub" style="font-size:12px;font-weight:600;margin:0 0 8px;">-</p>
     <div id="poPlatform" style="display:flex;gap:6px;margin-bottom:6px;"></div>
@@ -1672,7 +1675,6 @@ if(APP_KASIR){
     <div id="poRingkas" style="font-size:13px;font-weight:700;margin-bottom:8px;"></div>
     <div id="poList" style="max-height:55vh;overflow:auto;"><div class="empty-msg">Memuat...</div></div>
     <p style="font-size:11px;margin:8px 0 0;">Harga di sini = harga outlet. Jam = saat kasir menekan tombol ShopeeFood/GrabFood.</p>
-    <button class="modal-close" onclick="document.getElementById('pesananOnlineOverlay').classList.remove('show')">Tutup</button>
   </div>
 </div>
 
