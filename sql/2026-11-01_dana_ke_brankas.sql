@@ -1,0 +1,4 @@
+-- 2026-11-01: Owner memindah uang amplop (Dana Stok / Dana Operasional) ke Brankas.
+-- Brankas masuk pakai kas_shift_id nol: tidak memotong Kas Outlet & tidak dihitung Simpanan Harian.
+-- Fungsi: public.dana_ke_brankas(p_cabang uuid, p_pos text, p_jumlah numeric, p_keterangan text)
+-- (isi lengkap ada di migration dana_ke_brankas_2026_11_01)

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-10-28.5">
+<meta name="app-version" content="owner-2026-11-01.1">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -673,7 +673,7 @@ async function muatDana(cabs){
       ${belumTot > 0 ? `<div class="sub">MASIH DI KAS OUTLET · BELUM DIPINDAH</div>
       ${[['stok','📦 Dana Stok'],['operasional','🏠 Dana Operasional']].filter(([k]) => blm(k) > 0).map(([k, l]) => `<div class="baris"><span>${l}</span><span class="kanan" style="display:flex;gap:8px;align-items:center;">${fmt(blm(k))}${satu ? ` <button class="btn" onclick="danaPindah('${satu.id}','${k}',${blm(k)})">Pindahkan</button>` : ''}</span></div>`).join('')}
       <div class="info" style="margin-top:6px;">Tekan <b>Pindahkan</b> saat uangnya benar-benar dimasukkan ke amplop. Kas Outlet ikut berkurang.</div>` : '<div class="info" style="margin-top:6px;">✅ Semua uang amplop sudah dipindah dari Kas Outlet.</div>'}
-      ${satu ? '' : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk memindah / koreksi amplop.</div>'}
+      ${satu ? `<button class="btn" style="margin:10px 0 0;width:100%;" onclick="danaKeBrankas('${satu.id}')">🔒 Pindah amplop ke Brankas</button>` : '<div class="info" style="margin-top:6px;">Pilih satu cabang untuk memindah / koreksi amplop.</div>'}
       <details class="fold" style="margin-top:8px;"><summary><span class="ft"><b>Riwayat & koreksi amplop</b><small>${rows.length} catatan terakhir</small></span><span class="pan">▾</span></summary>
         ${satu ? `<button class="btn" style="margin:8px 0;" onclick="danaKoreksi('${satu.id}')">✏️ Koreksi amplop</button><div class="info">Pakai kalau isi amplop fisik beda dengan angka di sini. Tercatat di Log Aktivitas.</div>` : ''}
         ${rows.map(r => `<div class="baris"><span>${esc(r.judul)}<small>${jamWIB(r.t)} · ${r.pos}${cabs.length > 1 ? ' · ' + esc(namaCab(r.cab)) : ''}</small></span><span class="kanan ${r.n < 0 ? 'min' : 'plus'}">${r.n < 0 ? '−' : '+'} ${fmt(Math.abs(r.n))}</span></div>`).join('') || '<div class="kosong">Belum ada.</div>'}
@@ -726,6 +726,18 @@ async function danaPindah(cabangId, pos, saran){
   const { error } = await sb.rpc('dana_pindahkan', { p_cabang: cabangId, p_pos: pos, p_jumlah: r.jumlah, p_keterangan: r.ket || null });
   if(error){ alert('Gagal: ' + error.message); return; }
   alert(`✅ ${fmt(r.jumlah)} dipindah ke amplop ${nama}. Kas Outlet berkurang ${fmt(r.jumlah)}.`);
+  muatPanel(); muatBeranda();
+}
+// 2026-11-01: kembalikan uang amplop ke Brankas (mis. ganti Brankas yang dipakai beli stok). Kas Outlet tidak berubah.
+async function danaKeBrankas(cabangId){
+  const pos = await pilihTombol('Pindah ke Brankas dari amplop mana?', [['stok','📦 Dana Stok'],['operasional','🏠 Dana Operasional']]);
+  if(!pos) return;
+  const nama = pos === 'stok' ? 'Dana Stok' : 'Dana Operasional';
+  const r = await mintaNominal(`Pindah dari ${nama} ke Brankas berapa?`, '', true);
+  if(!r) return;
+  const { error } = await sb.rpc('dana_ke_brankas', { p_cabang: cabangId, p_pos: pos, p_jumlah: r.jumlah, p_keterangan: r.ket || null });
+  if(error){ alert('Gagal: ' + error.message); return; }
+  alert(`✅ ${fmt(r.jumlah)} dipindah dari ${nama} ke Brankas.`);
   muatPanel(); muatBeranda();
 }
 async function danaGaji(cabangId, aktif, gas){
