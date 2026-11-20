@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="kasir-2026-11-20.1">
+<meta name="app-version" content="kasir-2026-11-21.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -7633,8 +7633,17 @@ async function tahanTutupKasUntukOpname(body){
     const { data } = await sb.rpc('kasir_opname_status', { p_cabang: getActiveCabangId() });
     if(!data || !data.wajib_sebelum_tutup_kas) return false;
     opnameKasirSt = Object.assign({}, data, { menu_buka: true });
-    body.innerHTML = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#1a1a1a;">Hari ini <b>Jumat</b>: isi <b>Stok Opname</b> dulu sebelum tutup kas.</p>
-      <button class="login-btn" onclick="document.getElementById('kasOverlay').classList.remove('show'); bukaOpnameKasir();">📋 Isi Stok Opname</button>`;
+    const tutup = "document.getElementById('kasOverlay').classList.remove('show');";
+    if(data.hitung_ulang){
+      body.innerHTML = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#1a1a1a;">Ada barang yang perlu <b>dihitung ulang</b>. Kirim hitung ulang dulu, lalu chat MeyAdmin <b>"SO selesai"</b>.</p>
+        <button class="login-btn" onclick="${tutup} bukaOpnameKasir();">📋 Hitung Ulang SO</button>`;
+    } else if(data.sudah_kirim){
+      body.innerHTML = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#1a1a1a;">Stok Opname sudah terkirim ✓<br>Chat MeyAdmin <b>"SO selesai"</b> supaya dicek. Tutup kas terbuka setelah MeyAdmin mengecek.</p>
+        <button class="login-btn" onclick="bukaKasModal()">🔄 Cek lagi</button>`;
+    } else {
+      body.innerHTML = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#1a1a1a;">Hari ini <b>Jumat</b>: isi <b>Stok Opname</b> dulu sebelum tutup kas. Setelah dikirim, chat MeyAdmin <b>"SO selesai"</b>.</p>
+        <button class="login-btn" onclick="${tutup} bukaOpnameKasir();">📋 Isi Stok Opname</button>`;
+    }
     return true;
   }catch(e){ return false; }
 }
@@ -7654,7 +7663,7 @@ async function bukaOpnameKasir(){
   document.getElementById('opnameOverlay').classList.add('show');
   const st = (await sb.rpc('kasir_opname_status', { p_cabang: cabangId })).data || {};
   if(!st.menu_buka && !st.wajib_sebelum_tutup_kas){ list.innerHTML = '<div class="empty-msg">Stok opname dibuka tiap Jumat jam 20.30.</div>'; document.getElementById('opnameSimpanBtn').classList.add('hidden'); return; }
-  if(st.sudah_kirim && !st.hitung_ulang){ list.innerHTML = '<div class="empty-msg">Stok opname minggu ini sudah dikirim ✓<br>Hasilnya sedang dicek.</div>'; document.getElementById('opnameSimpanBtn').classList.add('hidden'); return; }
+  if(st.sudah_kirim && !st.hitung_ulang){ list.innerHTML = '<div class="empty-msg">Stok opname minggu ini sudah dikirim ✓<br>Chat MeyAdmin <b>"SO selesai"</b> supaya dicek.</div>'; document.getElementById('opnameSimpanBtn').classList.add('hidden'); return; }
   document.getElementById('opnameSimpanBtn').classList.remove('hidden');
   intro.innerHTML = st.hitung_ulang
     ? '<b>Hitung ulang</b> barang di bawah ini dengan teliti.' + (st.hitung_ulang.catatan ? '<br><span style="font-size:12px;opacity:.85;">Catatan: ' + escOp(st.hitung_ulang.catatan) + '</span>' : '')
@@ -7691,7 +7700,7 @@ async function kirimOpnameKasir(){
   btn.disabled = false; btn.textContent = 'Kirim';
   if(error){ errBox.textContent = 'Gagal mengirim: ' + error.message; errBox.classList.add('show'); return; }
   const hasil = document.getElementById('opnameHasil');
-  hasil.innerHTML = '<p style="margin-top:0;"><b>Terkirim ✓</b></p><p style="font-size:13px;line-height:1.5;">Hasil hitungan sedang dicek. Kalau ada barang yang perlu dihitung ulang, nanti muncul menu <b>Hitung Ulang SO</b> di Beranda.</p>';
+  hasil.innerHTML = '<p style="margin-top:0;"><b>Terkirim ✓</b></p><p style="font-size:13px;line-height:1.5;">Sekarang chat MeyAdmin <b>"SO selesai"</b> supaya hasilnya dicek. Tutup kas terbuka setelah dicek. Kalau ada barang yang perlu dihitung ulang, muncul menu <b>Hitung Ulang SO</b> di Beranda.</p>';
   document.getElementById('opnameIsi').classList.add('hidden');
   hasil.classList.remove('hidden');
   document.getElementById('opnameTutupBtn').textContent = 'Selesai';
