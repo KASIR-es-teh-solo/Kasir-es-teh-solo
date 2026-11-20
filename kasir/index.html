@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="kasir-2026-11-05.1">
+<meta name="app-version" content="kasir-2026-11-20.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -3078,6 +3078,7 @@ async function bukaKasModal(){
   document.getElementById('kasOverlay').classList.add('show');
   // transaksi offline yang belum terkirim -> wajib sinkron dulu (kalau tidak, kas "lebih" palsu)
   if(tampilkanPeringatanAntrianKas()) return;
+  if(await tahanTutupKasUntukOpname(body)) return;
   try{ kasTK = await ambilDataTutupKas(); await cekPengingatSetoran(); }
   catch(e){ body.innerHTML = `<div class="login-error show">${escTG(e.message)}</div><button class="login-btn" onclick="bukaKasModal()">Coba lagi</button>`; return; }
   kasTK.alasan = '';
@@ -4235,7 +4236,7 @@ const AKSI_MENU = {
   log:()=>showDashPanel('logaktivitas'), riwayatkas:()=>showDashPanel('riwayatkas'),
   sop:()=>showSOPView(), karyawan:()=>showDashPanel('karyawan'), pengaturan:()=>showSettingsView(),
   pengaturanKasir:()=>bukaPengaturanKasir(), password:()=>openGantiPasswordModal(), izin:()=>bukaIzinKeluarModal(),
-  opname:()=>bukaOpname(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
+  opname:()=>bukaOpname(), opnameKasir:()=>bukaOpnameKasir(), uangLaci:()=>tampilkanGrid('uangLaci'), keluar:()=>doLogout()
 };
 function jalankanMenu(k){ const f = AKSI_MENU[k]; if(f) f(); }
 // [ikon, nama, aksi]
@@ -4376,7 +4377,7 @@ function tampilkanBeranda(){
       <div><b id="bdKe4">${ringKe4[0]}</b><small>${ringKe4[1]}</small></div>
     </div>
     <div id="bdPeringatan" class="bd-peringatan hidden"></div>
-    <div class="bd-kats bd-utama">${htmlKotakMenu('Menu Utama', menuRoleIni().kategori.flatMap(([j, items]) => items))}</div>`;
+    <div class="bd-kats bd-utama">${htmlKotakMenu('Menu Utama', menuRoleIni().kategori.flatMap(([j, items]) => items).concat(isKasirBd && opnameKasirSt && opnameKasirSt.menu_buka ? [['📋', opnameKasirSt.hitung_ulang ? 'Hitung Ulang SO' : (opnameKasirSt.sudah_kirim ? 'Stok Opname ✓' : 'Stok Opname'), 'opnameKasir']] : []))}</div>`;
   simpanViewState({ type:'beranda' });
   isiRingkasBeranda(role);
 }
@@ -7512,6 +7513,7 @@ async function opnameStatus(cabangId){
 let opnameSudahDiingatkan = false;
 async function cekJadwalOpname(){
   if(!navigator.onLine || !currentProfile || currentProfile.role === 'owner') return;
+  if(currentProfile.role === 'kasir'){ cekOpnameKasir(); return; }
   try{
     const { aktif, perlu } = await opnameStatus(getActiveCabangId());
     const el = document.querySelector('.v[data-v="opname"]');
@@ -7536,6 +7538,9 @@ async function bukaOpname(){
   document.getElementById('opnameHasil').classList.add('hidden');
   document.getElementById('opnameError').classList.remove('show');
   document.getElementById('opnameTutupBtn').textContent = 'Batal';
+  document.getElementById('opnameSimpanBtn').setAttribute('onclick', 'simpanOpname()');
+  document.getElementById('opnameSimpanBtn').textContent = 'Simpan';
+  document.getElementById('opnameSimpanBtn').classList.remove('hidden');
   const list = document.getElementById('opnameList');
   list.innerHTML = '<div class="empty-msg">Memuat...</div>';
   document.getElementById('opnameOverlay').classList.add('show');
@@ -7600,6 +7605,97 @@ async function simpanOpname(){
   hasil.classList.remove('hidden');
   document.getElementById('opnameTutupBtn').textContent = 'Selesai';
   cekJadwalOpname();
+}
+
+
+// ================== STOK OPNAME KASIR (2026-11-20) ==================
+// Tiap Jumat: menu muncul 20.30 WIB. Kasir isi jumlah fisik TANPA melihat angka stok aplikasi.
+// Stok aplikasi baru berubah setelah dicek MeyAdmin (WhatsApp) / Owner. Hari Jumat tutup kas ditahan sampai SO dikirim.
+let opnameKasirSt = null, opnameKasirTimer = null, opnameKasirBarang = [], opnameKasirToast = '';
+async function cekOpnameKasir(){
+  try{
+    const { data, error } = await sb.rpc('kasir_opname_status', { p_cabang: getActiveCabangId() });
+    if(error || !data) return;
+    const lama = JSON.stringify(opnameKasirSt); opnameKasirSt = data;
+    if(lama !== JSON.stringify(data) && !document.getElementById('berandaView').classList.contains('hidden')) tampilkanBeranda();
+    const kunci = (data.hitung_ulang ? 'ulang' + data.hitung_ulang.id : '') + (data.menu_buka && !data.sudah_kirim ? 'buka' : '');
+    if(kunci && kunci !== opnameKasirToast){
+      opnameKasirToast = kunci;
+      showSuccessToast('📋', data.hitung_ulang ? 'Ada barang yang perlu dihitung ulang' : 'Waktunya stok opname',
+        data.hitung_ulang ? 'Buka menu Hitung Ulang SO di Beranda.' : 'Hitung semua barang, lalu isi di menu Stok Opname di Beranda.');
+    }
+  }catch(e){}
+  if(!opnameKasirTimer) opnameKasirTimer = setInterval(cekOpnameKasir, 5 * 60 * 1000);
+}
+async function tahanTutupKasUntukOpname(body){
+  if(!currentProfile || currentProfile.role !== 'kasir') return false;
+  try{
+    const { data } = await sb.rpc('kasir_opname_status', { p_cabang: getActiveCabangId() });
+    if(!data || !data.wajib_sebelum_tutup_kas) return false;
+    opnameKasirSt = Object.assign({}, data, { menu_buka: true });
+    body.innerHTML = `<p style="margin:0 0 12px;font-size:14px;line-height:1.5;color:#1a1a1a;">Hari ini <b>Jumat</b>: isi <b>Stok Opname</b> dulu sebelum tutup kas.</p>
+      <button class="login-btn" onclick="document.getElementById('kasOverlay').classList.remove('show'); bukaOpnameKasir();">📋 Isi Stok Opname</button>`;
+    return true;
+  }catch(e){ return false; }
+}
+function satuanTampilOpname(b){ return b.satuan === 'pcs' ? 'pcs' : b.satuan; }
+async function bukaOpnameKasir(){
+  const cabangId = getActiveCabangId();
+  if(!cabangId){ alert('Belum ada cabang aktif.'); return; }
+  document.getElementById('opnameIsi').classList.remove('hidden');
+  document.getElementById('opnameHasil').classList.add('hidden');
+  document.getElementById('opnameError').classList.remove('show');
+  document.getElementById('opnameTutupBtn').textContent = 'Batal';
+  document.getElementById('opnameSimpanBtn').setAttribute('onclick', 'kirimOpnameKasir()');
+  document.getElementById('opnameSimpanBtn').textContent = 'Kirim';
+  const intro = document.querySelector('#opnameIsi > p');
+  const list = document.getElementById('opnameList');
+  list.innerHTML = '<div class="empty-msg">Memuat...</div>';
+  document.getElementById('opnameOverlay').classList.add('show');
+  const st = (await sb.rpc('kasir_opname_status', { p_cabang: cabangId })).data || {};
+  if(!st.menu_buka && !st.wajib_sebelum_tutup_kas){ list.innerHTML = '<div class="empty-msg">Stok opname dibuka tiap Jumat jam 20.30.</div>'; document.getElementById('opnameSimpanBtn').classList.add('hidden'); return; }
+  if(st.sudah_kirim && !st.hitung_ulang){ list.innerHTML = '<div class="empty-msg">Stok opname minggu ini sudah dikirim ✓<br>Hasilnya sedang dicek.</div>'; document.getElementById('opnameSimpanBtn').classList.add('hidden'); return; }
+  document.getElementById('opnameSimpanBtn').classList.remove('hidden');
+  intro.innerHTML = st.hitung_ulang
+    ? '<b>Hitung ulang</b> barang di bawah ini dengan teliti.' + (st.hitung_ulang.catatan ? '<br><span style="font-size:12px;opacity:.85;">Catatan: ' + escOp(st.hitung_ulang.catatan) + '</span>' : '')
+    : 'Hitung <b>semua</b> barang yang ada sekarang, lalu ketik jumlahnya. Barang habis isi <b>0</b>.';
+  const { data, error } = await sb.rpc('kasir_opname_daftar', { p_cabang: cabangId });
+  if(error){ list.innerHTML = `<div class="empty-msg">Gagal memuat: ${escOp(error.message)}</div>`; return; }
+  opnameKasirBarang = data || [];
+  const baris = (id, label, sat) => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line-soft);border-radius:10px;padding:8px 10px;">
+      <span style="min-width:0;"><b>${label}</b><div style="font-size:12px;opacity:.8;">${escOp(sat)}</div></span>
+      <input type="text" inputmode="decimal" class="input-rupiah" id="${id}" placeholder="—" style="width:96px;text-align:right;"></div>`;
+  list.innerHTML = opnameKasirBarang.map((b, i) => (Number(b.konversi) > 0 && b.satuan_beli)
+    ? baris('opk_' + i + '_a', escOp(b.nama) + ' (kering)', b.satuan_beli) + baris('opk_' + i + '_b', escOp(b.nama) + ' (sudah diseduh)', b.satuan + ' di kulkas & termos')
+    : baris('opk_' + i, escOp(b.nama), satuanTampilOpname(b))).join('');
+}
+async function kirimOpnameKasir(){
+  const errBox = document.getElementById('opnameError');
+  errBox.classList.remove('show');
+  const items = []; let kosong = 0;
+  opnameKasirBarang.forEach((b, i) => {
+    if(Number(b.konversi) > 0 && b.satuan_beli){
+      const a = angkaRupiah('opk_' + i + '_a'), c = angkaRupiah('opk_' + i + '_b');
+      if(isNaN(a) || isNaN(c)){ kosong++; return; }
+      items.push({ id: b.id, fisik: a * Number(b.konversi) + c });
+    } else {
+      const v = angkaRupiah('opk_' + i);
+      if(isNaN(v)){ kosong++; return; }
+      items.push({ id: b.id, fisik: v });
+    }
+  });
+  if(kosong){ errBox.textContent = kosong + ' kolom belum diisi. Barang yang habis isi 0.'; errBox.classList.add('show'); return; }
+  const btn = document.getElementById('opnameSimpanBtn');
+  btn.disabled = true; btn.textContent = 'Mengirim...';
+  const { error } = await sb.rpc('kasir_opname_kirim', { p_cabang: getActiveCabangId(), p_items: items });
+  btn.disabled = false; btn.textContent = 'Kirim';
+  if(error){ errBox.textContent = 'Gagal mengirim: ' + error.message; errBox.classList.add('show'); return; }
+  const hasil = document.getElementById('opnameHasil');
+  hasil.innerHTML = '<p style="margin-top:0;"><b>Terkirim ✓</b></p><p style="font-size:13px;line-height:1.5;">Hasil hitungan sedang dicek. Kalau ada barang yang perlu dihitung ulang, nanti muncul menu <b>Hitung Ulang SO</b> di Beranda.</p>';
+  document.getElementById('opnameIsi').classList.add('hidden');
+  hasil.classList.remove('hidden');
+  document.getElementById('opnameTutupBtn').textContent = 'Selesai';
+  cekOpnameKasir();
 }
 
 // ================== BARANG RUSAK / TERBUANG ==================
