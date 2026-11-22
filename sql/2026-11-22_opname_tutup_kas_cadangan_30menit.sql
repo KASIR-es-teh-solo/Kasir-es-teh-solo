@@ -1,0 +1,4 @@
+-- 2026-11-22 Cadangan tutup kas Jumat: kalau MeyAdmin belum mengecek SO 30 menit setelah SO terakhir dikirim,
+-- kasir_opname_status mengembalikan wajib_sebelum_tutup_kas = false (buka_otomatis_30_menit = true).
+-- SO tetap status menunggu & dicek_at kosong; MeyAdmin tetap wajib mengecek. Isi fungsi lengkap ada di migrasi Supabase
+-- "opname_tutup_kas_cadangan_30menit" (perubahan: variabel v_kirim_terakhir & v_otomatis).
