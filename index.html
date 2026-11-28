@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kasir Es Teh S.O.L.O">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Kasir%20Es%20Teh%20S.O.L.O%22%2C%22short_name%22%3A%22Es%20Teh%20S.O.L.O%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf6ec%22%2C%22theme_color%22%3A%22%230c1f14%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%2527http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%2527%2520viewBox%3D%25270%25200%2520200%2520200%2527%253E%253Crect%2520width%3D%2527200%2527%2520height%3D%2527200%2527%2520rx%3D%252740%2527%2520fill%3D%2527%25230c1f14%2527%2F%253E%253Ccircle%2520cx%3D%2527100%2527%2520cy%3D%2527100%2527%2520r%3D%252780%2527%2520fill%3D%2527%2523f7f4ea%2527%2F%253E%253Ctext%2520x%3D%2527100%2527%2520y%3D%2527135%2527%2520font-size%3D%2527100%2527%2520text-anchor%3D%2527middle%2527%253E%25F0%259F%258C%25B2%253C%2Ftext%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
-<meta name="app-version" content="2026-11-05.1">
+<meta name="app-version" content="2026-11-28.1">
 <script>
 // ===== VERSI APLIKASI =====
 // Satu-satunya tempat nomor versi: tag <meta name="app-version"> di atas. Naikkan setiap publish
@@ -9243,12 +9243,17 @@ async function brankasOnlineCairkan(pf){
   if(role !== 'owner' && role !== 'admin'){ alert('Khusus Owner & Admin.'); return; }
   const saldo = Number((brankasOnlinePer[pf] || {}).saldo || 0);
   if(saldo <= 0){ alert(`${BO_NAMA[pf]} belum ada yang perlu dicairkan.`); return; }
-  const b = await mintaRupiah(`Cairkan ${BO_NAMA[pf]}\nPesanan belum cair: ${fmt(saldo)}\n\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, String(saldo));
+  // 2026-11-28 (Boss Leo): bisa dicairkan SEBAGIAN (mis. pesanan hari ini belum cair); isi kosong = seluruh saldo
+  const bj = await mintaRupiah(`Cairkan ${BO_NAMA[pf]}\nPesanan belum cair: ${fmt(saldo)}\n\nBerapa PESANAN yang dicairkan sekarang?\n(isi lebih kecil kalau sebagian pesanan belum masuk, mis. pesanan hari ini)`, String(saldo));
+  if(bj === null) return;
+  const jumlah = Number(String(bj).replace(/[^0-9]/g,''));
+  if(String(bj).trim() === '' || isNaN(jumlah) || jumlah <= 0 || jumlah > saldo){ alert(`Isi antara 1 sampai ${fmt(saldo)}.`); return; }
+  const b = await mintaRupiah(`Cairkan ${BO_NAMA[pf]}\nPesanan yang dicairkan: ${fmt(jumlah)}\n\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, String(jumlah));
   if(b === null) return;
   const diterima = Number(String(b).replace(/[^0-9]/g,''));
-  if(String(b).trim() === '' || isNaN(diterima) || diterima > saldo){ alert(`Isi antara 0 sampai ${fmt(saldo)}.`); return; }
-  if(!confirm(`${BO_NAMA[pf]} dicairkan:\nPesanan ${fmt(saldo)}\nMasuk Kas Outlet ${fmt(diterima)}\nPotongan komisi ${fmt(saldo - diterima)}\n\nPastikan uangnya benar-benar dimasukkan ke Kas Outlet. Simpan?`)) return;
-  const { error } = await sb.rpc('brankas_online_cairkan', { p_cabang: activeCabangId, p_platform: pf, p_diterima: diterima });
+  if(String(b).trim() === '' || isNaN(diterima) || diterima > jumlah){ alert(`Isi antara 0 sampai ${fmt(jumlah)}.`); return; }
+  if(!confirm(`${BO_NAMA[pf]} dicairkan:\nPesanan ${fmt(jumlah)}\nMasuk Kas Outlet ${fmt(diterima)}\nPotongan komisi ${fmt(jumlah - diterima)}\nSisa belum cair ${fmt(saldo - jumlah)}\n\nPastikan uangnya benar-benar dimasukkan ke Kas Outlet. Simpan?`)) return;
+  const { error } = await sb.rpc('brankas_online_cairkan_sebagian', { p_cabang: activeCabangId, p_platform: pf, p_jumlah: jumlah, p_diterima: diterima });
   if(error){ alert('Gagal: ' + error.message); return; }
   showSuccessToast('💵', 'Masuk Kas Outlet', `${fmt(diterima)} dari ${BO_NAMA[pf]}`);
   await loadBrankasOnline();

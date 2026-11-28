@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="owner-2026-11-01.1">
+<meta name="app-version" content="owner-2026-11-28.1">
 <title>Pusat Kendali Owner · Es Teh S.O.L.O</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.1"></script>
 <style>
@@ -632,12 +632,16 @@ async function boMuatPesanan(id){
   }).join('') || '<div class="kosong">Belum ada pesanan online di periode ini.</div>');
 }
 async function boCairkan(cabangId, pf, saldo){
-  const r = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan belum cair ${fmt(saldo)}.\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, saldo, false);
+  // 2026-11-28 (Boss Leo): bisa dicairkan SEBAGIAN (mis. pesanan hari ini belum cair); default = seluruh saldo
+  const rj = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan belum cair ${fmt(saldo)}.\nBerapa PESANAN yang dicairkan sekarang?\n(isi lebih kecil kalau sebagian belum masuk, mis. pesanan hari ini)`, saldo, false);
+  if(!rj) return;
+  if(rj.jumlah > saldo){ alert('Pesanan yang dicairkan tidak boleh lebih dari ' + fmt(saldo)); return; }
+  const r = await mintaNominal(`Cairkan ${BO_PF[pf]}\nPesanan yang dicairkan ${fmt(rj.jumlah)}.\nBerapa uang yang DITERIMA? (ganti kalau dipotong komisi)`, rj.jumlah, false);
   if(!r) return;
-  if(r.jumlah > saldo){ alert('Uang diterima tidak boleh lebih dari ' + fmt(saldo)); return; }
-  const { data, error } = await sb.rpc('brankas_online_cairkan', { p_cabang: cabangId, p_platform: pf, p_diterima: r.jumlah });
+  if(r.jumlah > rj.jumlah){ alert('Uang diterima tidak boleh lebih dari ' + fmt(rj.jumlah)); return; }
+  const { data, error } = await sb.rpc('brankas_online_cairkan_sebagian', { p_cabang: cabangId, p_platform: pf, p_jumlah: rj.jumlah, p_diterima: r.jumlah });
   if(error){ alert('Gagal: ' + error.message); return; }
-  alert(`✅ ${BO_PF[pf]} dicairkan.\nMasuk Kas Outlet ${fmt(data.diterima)} · potongan komisi ${fmt(data.komisi)}`);
+  alert(`✅ ${BO_PF[pf]} dicairkan.\nMasuk Kas Outlet ${fmt(data.diterima)} · potongan komisi ${fmt(data.komisi)}` + (Number(data.sisa) > 0 ? `\nSisa belum cair ${fmt(data.sisa)}` : ''));
   muatSemua();
 }
 
